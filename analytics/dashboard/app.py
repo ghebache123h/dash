@@ -136,137 +136,174 @@ def parse_metadata(value: Any) -> dict[str, Any]:
 
 
 def load_distinct_values(column: str) -> list[str]:
-    if is_sqlite():
-        rows = run_query(
-            f"SELECT DISTINCT {column} AS value FROM analytics_events WHERE {column} IS NOT NULL AND {column} != '' ORDER BY 1"
-        )
-    else:
-        rows = run_query(
-            f"SELECT DISTINCT {column} AS value FROM analytics_events WHERE {column} IS NOT NULL AND {column} <> '' ORDER BY 1"
-        )
-    return [row["value"] for row in rows if row.get("value")]
+    try:
+        if is_sqlite():
+            rows = run_query(
+                f"SELECT DISTINCT {column} AS value FROM analytics_events WHERE {column} IS NOT NULL AND {column} != '' ORDER BY 1"
+            )
+        else:
+            rows = run_query(
+                f"SELECT DISTINCT {column} AS value FROM analytics_events WHERE {column} IS NOT NULL AND {column} <> '' ORDER BY 1"
+            )
+        return [row["value"] for row in rows if row.get("value")]
+    except Exception as e:
+        if "does not exist" in str(e) or "no such table" in str(e):
+            return []
+        raise e
 
 
 def load_events_range(start_utc: datetime, end_utc: datetime) -> pd.DataFrame:
-    if is_sqlite():
-        rows = run_query(
-            """
-            SELECT
-              event_time,
-              event_type,
-              conversation_id,
-              customer_id,
-              channel,
-              direction,
-              category,
-              intent,
-              otp_status,
-              escalation_reason,
-              token_input,
-              token_output,
-              metadata,
-              event_key
-            FROM analytics_events
-            WHERE event_time >= :start_dt
-              AND event_time <= :end_dt
-            ORDER BY event_time DESC
-            """,
-            {"start_dt": start_utc.isoformat(), "end_dt": end_utc.isoformat()},
-        )
-    else:
-        rows = run_query(
-            """
-            SELECT
-              event_time,
-              event_type,
-              conversation_id,
-              customer_id,
-              channel,
-              direction,
-              category,
-              intent,
-              otp_status,
-              escalation_reason,
-              token_input,
-              token_output,
-              metadata,
-              event_key
-            FROM analytics_events
-            WHERE event_time >= %(start_dt)s
-              AND event_time <= %(end_dt)s
-            ORDER BY event_time DESC
-            """,
-            {"start_dt": start_utc, "end_dt": end_utc},
-        )
+    try:
+        if is_sqlite():
+            rows = run_query(
+                """
+                SELECT
+                  event_time,
+                  event_type,
+                  conversation_id,
+                  customer_id,
+                  channel,
+                  direction,
+                  category,
+                  intent,
+                  otp_status,
+                  escalation_reason,
+                  token_input,
+                  token_output,
+                  metadata,
+                  event_key
+                FROM analytics_events
+                WHERE event_time >= :start_dt
+                  AND event_time <= :end_dt
+                ORDER BY event_time DESC
+                """,
+                {"start_dt": start_utc.isoformat(), "end_dt": end_utc.isoformat()},
+            )
+        else:
+            rows = run_query(
+                """
+                SELECT
+                  event_time,
+                  event_type,
+                  conversation_id,
+                  customer_id,
+                  channel,
+                  direction,
+                  category,
+                  intent,
+                  otp_status,
+                  escalation_reason,
+                  token_input,
+                  token_output,
+                  metadata,
+                  event_key
+                FROM analytics_events
+                WHERE event_time >= %(start_dt)s
+                  AND event_time <= %(end_dt)s
+                ORDER BY event_time DESC
+                """,
+                {"start_dt": start_utc, "end_dt": end_utc},
+            )
 
-    if not rows:
-        return pd.DataFrame(
-            columns=[
-                "event_time",
-                "event_type",
-                "conversation_id",
-                "customer_id",
-                "channel",
-                "direction",
-                "category",
-                "intent",
-                "otp_status",
-                "escalation_reason",
-                "token_input",
-                "token_output",
-                "metadata",
-                "event_key",
-            ]
-        )
+        if not rows:
+            return pd.DataFrame(
+                columns=[
+                    "event_time",
+                    "event_type",
+                    "conversation_id",
+                    "customer_id",
+                    "channel",
+                    "direction",
+                    "category",
+                    "intent",
+                    "otp_status",
+                    "escalation_reason",
+                    "token_input",
+                    "token_output",
+                    "metadata",
+                    "event_key",
+                ]
+            )
 
-    df = pd.DataFrame(rows)
-    df["event_time"] = pd.to_datetime(df["event_time"], utc=True, errors="coerce")
-    df["token_input"] = pd.to_numeric(df["token_input"], errors="coerce").fillna(0).astype(int)
-    df["token_output"] = pd.to_numeric(df["token_output"], errors="coerce").fillna(0).astype(int)
-    return df
+        df = pd.DataFrame(rows)
+        df["event_time"] = pd.to_datetime(df["event_time"], utc=True, errors="coerce")
+        df["token_input"] = pd.to_numeric(df["token_input"], errors="coerce").fillna(0).astype(int)
+        df["token_output"] = pd.to_numeric(df["token_output"], errors="coerce").fillna(0).astype(int)
+        return df
+    except Exception as e:
+        if "does not exist" in str(e) or "no such table" in str(e):
+            return pd.DataFrame(
+                columns=[
+                    "event_time",
+                    "event_type",
+                    "conversation_id",
+                    "customer_id",
+                    "channel",
+                    "direction",
+                    "category",
+                    "intent",
+                    "otp_status",
+                    "escalation_reason",
+                    "token_input",
+                    "token_output",
+                    "metadata",
+                    "event_key",
+                ]
+            )
+        raise e
 
 
 def load_inbound_all_time() -> pd.DataFrame:
-    if is_sqlite():
-        rows = run_query(
-            """
-            SELECT conversation_id, customer_id, channel, category, event_time
-            FROM analytics_events
-            WHERE event_type = 'inbound_message'
-              AND conversation_id IS NOT NULL
-            """
-        )
-    else:
-        rows = run_query(
-            """
-            SELECT conversation_id, customer_id, channel, category, event_time
-            FROM analytics_events
-            WHERE event_type = 'inbound_message'
-              AND conversation_id IS NOT NULL
-            """
-        )
+    try:
+        if is_sqlite():
+            rows = run_query(
+                """
+                SELECT conversation_id, customer_id, channel, category, event_time
+                FROM analytics_events
+                WHERE event_type = 'inbound_message'
+                  AND conversation_id IS NOT NULL
+                """
+            )
+        else:
+            rows = run_query(
+                """
+                SELECT conversation_id, customer_id, channel, category, event_time
+                FROM analytics_events
+                WHERE event_type = 'inbound_message'
+                  AND conversation_id IS NOT NULL
+                """
+            )
 
-    if not rows:
-        return pd.DataFrame(columns=["conversation_id", "customer_id", "channel", "category", "event_time"])
-    df = pd.DataFrame(rows)
-    df["event_time"] = pd.to_datetime(df["event_time"], utc=True, errors="coerce")
-    return df
+        if not rows:
+            return pd.DataFrame(columns=["conversation_id", "customer_id", "channel", "category", "event_time"])
+        df = pd.DataFrame(rows)
+        df["event_time"] = pd.to_datetime(df["event_time"], utc=True, errors="coerce")
+        return df
+    except Exception as e:
+        if "does not exist" in str(e) or "no such table" in str(e):
+            return pd.DataFrame(columns=["conversation_id", "customer_id", "channel", "category", "event_time"])
+        raise e
 
 
 def get_pricing_row() -> dict[str, float]:
-    rows = run_query(
-        """
-        SELECT input_price_per_million, output_price_per_million
-        FROM pricing_settings
-        WHERE id = 1
-        """
-    )
-    if not rows:
-        return {"input_price_per_million": 0.0, "output_price_per_million": 0.0}
-    return {
-        "input_price_per_million": float(rows[0]["input_price_per_million"] or 0),
-        "output_price_per_million": float(rows[0]["output_price_per_million"] or 0),
-    }
+    try:
+        rows = run_query(
+            """
+            SELECT input_price_per_million, output_price_per_million
+            FROM pricing_settings
+            WHERE id = 1
+            """
+        )
+        if not rows:
+            return {"input_price_per_million": 0.0, "output_price_per_million": 0.0}
+        return {
+            "input_price_per_million": float(rows[0]["input_price_per_million"] or 0),
+            "output_price_per_million": float(rows[0]["output_price_per_million"] or 0),
+        }
+    except Exception as e:
+        if "does not exist" in str(e) or "no such table" in str(e):
+            return {"input_price_per_million": 0.0, "output_price_per_million": 0.0}
+        raise e
 
 
 def save_pricing(input_price: float, output_price: float) -> None:
