@@ -89,8 +89,12 @@ def apply_migrations(migrations_dir: str) -> None:
                 continue
 
             sql_text = file_path.read_text(encoding="utf-8")
+            # psycopg execute doesn't support multiple statements, so we split by semicolon
+            sql_statements = [s.strip() for s in sql_text.split(";") if s.strip()]
+            
             with conn.cursor() as cur:
-                cur.execute(sql_text)
+                for statement in sql_statements:
+                    cur.execute(statement)
                 cur.execute(
                     "INSERT INTO schema_migrations (version) VALUES (%s)",
                     (version,),
