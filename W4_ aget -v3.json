@@ -1,0 +1,424 @@
+{
+  "name": "W4: aget -v3",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        }
+      },
+      "id": "7c774ee9-1bab-4aa3-bb37-d5040ac14388",
+      "name": "Cron: Poll cooldown queues",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -1824,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "keys",
+        "keyPattern": "queue:*",
+        "getValues": false
+      },
+      "id": "b5c75ad6-7c3c-4fe7-8f01-185f2fb61564",
+      "name": "Redis KEYS: queue:*",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        240
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/* Expand Redis KEYS output to one item per queue key */\nlet keys = $json.keys ?? $json.value ?? $json.result ?? Object.values($json)[0] ?? [];\nif (typeof keys === 'string') {\n  if (keys.includes(',')) keys = keys.split(',').map(s => s.trim()).filter(Boolean);\n  else keys = [keys];\n}\nif (!Array.isArray(keys)) keys = [];\n\nreturn keys\n  .filter(k => typeof k === 'string' && k.startsWith('queue:'))\n  .map(k => ({ json: { queue_key: k, account_key: k.replace(/^queue:/, '') } }));\n"
+      },
+      "id": "c130f80a-c504-4360-be39-238206ac2f33",
+      "name": "Code: Expand queue keys",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1392,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ 'account_lock:' + $('Code: Expand queue keys').item.json.account_key }}",
+        "options": {}
+      },
+      "id": "707f69e4-0cfa-42db-bafe-9a99668168a7",
+      "name": "Redis GET: account_lock (Poller)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1168,
+        240
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ 'rate_limit:' + $('Code: Expand queue keys').item.json.account_key }}",
+        "options": {}
+      },
+      "id": "ce84fa58-c39a-4736-b460-c525c2104e39",
+      "name": "Redis GET: rate_limit_window (Poller)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -944,
+        240
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "llen",
+        "list": "={{ $('Code: Expand queue keys').item.json.queue_key }}"
+      },
+      "id": "ae20d5a9-3743-4d6b-b3dc-d9bb81844d47",
+      "name": "Redis LLEN: queue (Poller)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        240
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/* Decide if this account can be dispatched right now */\nconst base = $('Code: Expand queue keys').item.json;\n\n// Queue length (LLEN output is: { \"queue:xxx\": <number> })\nconst lenRaw = $json.length ?? $json.value ?? $json.result ?? Object.values($json)[0] ?? 0;\nconst queueLen = Number(lenRaw) || 0;\n\n// account_lock value (Redis GET usually returns: { propertyName: <value> })\nconst lockObj = $('Redis GET: account_lock (Poller)').item.json || {};\nconst lockVal = lockObj.value ?? lockObj.propertyName ?? Object.values(lockObj)[0];\nconst hasLock = lockVal !== undefined && lockVal !== null && String(lockVal).trim() !== '';\n\n// rate_limit timestamps (Redis GET returns: { propertyName: \"[... ]\" })\nconst rlObj = $('Redis GET: rate_limit_window (Poller)').item.json || {};\nconst rlVal = rlObj.value ?? rlObj.propertyName ?? Object.values(rlObj)[0];\nconst raw = (rlVal ?? '[]').toString();\nlet arr = [];\ntry {\n  const parsed = JSON.parse(raw);\n  if (Array.isArray(parsed)) arr = parsed.map(v => Number(v)).filter(Number.isFinite);\n} catch { arr = []; }\n\nconst now = Math.floor(Date.now() / 1000);\nconst windowMinutes = 30;\nconst maxAttempts = 5;\nconst windowSeconds = Math.max(60, Math.floor(windowMinutes * 60));\nconst cutoff = now - windowSeconds;\nconst recent = arr.filter(ts => ts >= cutoff);\nconst canProceed = recent.length < maxAttempts;\nlet cooldownMinutes = 0;\nif (!canProceed && recent.length > 0) {\n  const oldest = Math.min(...recent);\n  const waitSec = Math.max(0, windowSeconds - (now - oldest));\n  cooldownMinutes = Math.ceil(waitSec / 60);\n}\n\nconst canDispatch = queueLen > 0 && !hasLock && canProceed;\n\nreturn {\n  json: {\n    ...base,\n    queue_len: queueLen,\n    has_lock: hasLock,\n    can_proceed: canProceed,\n    cooldown_minutes: cooldownMinutes,\n    can_dispatch: canDispatch\n  }\n};\n"
+      },
+      "id": "6d9ab8a9-7b1a-410d-a65f-71e236ddfa4e",
+      "name": "Code: Decide dispatch (cooldown+lock)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pop",
+        "list": "={{ $json.queue_key }}",
+        "propertyName": "popped",
+        "options": {}
+      },
+      "id": "7e3e644b-7c9a-4857-bd47-571488d1d23f",
+      "name": "Redis POP: next queue item",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        80,
+        128
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/* Parse popped queue item + shape it for Workflow 2 */\nconst popped = $json.popped;\nif (!popped) return { json: { popped: false } };\n\n// Redis POP node tries JSON.parse automatically; so popped may already be an object.\nconst item = typeof popped === 'string' ? (() => { try { return JSON.parse(popped); } catch { return null; } })() : popped;\nif (!item || typeof item !== 'object') return { json: { popped: true, raw_item: popped } };\n\nreturn {\n  json: {\n    email: item.email,\n    order_number: item.order_number,\n    phone: item.phone,\n    conversation_id: item.conversation_id,\n    chatwoot_account_id: item.chatwoot_account_id,\n    ExcutedBy: 'ai'\n  }\n};\n"
+      },
+      "id": "562664e9-c185-4ea2-acd4-b8434152ff02",
+      "name": "Code: Build W2 input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3878123f-9533-45a9-b7bc-4b67f74050ac",
+              "leftValue": "={{ $json.can_dispatch }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -224,
+        240
+      ],
+      "id": "9926bf5d-f8f7-484d-9c42-f2b217d04186",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "2tBDvy2AVgJsrs2l",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/2tBDvy2AVgJsrs2l",
+          "cachedResultName": "wf2- agent v3"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{$json.email}}",
+            "order_number": "={{$json.order_number}}",
+            "phone": "={{$json.phone}}",
+            "conversation_id": "={{$json.conversation_id}}",
+            "chatwoot_account_id": "={{$json.chatwoot_account_id}}",
+            "ExcutedBy": "={{$json.ExcutedBy}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "order_number",
+              "displayName": "order_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "chatwoot_account_id",
+              "displayName": "chatwoot_account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "ExcutedBy",
+              "displayName": "ExcutedBy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        544,
+        128
+      ],
+      "id": "f795b030-23fc-4ab7-8e0b-30995f9d13a9",
+      "name": "Call 'wf2- agent v3'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cron: Poll cooldown queues": {
+      "main": [
+        [
+          {
+            "node": "Redis KEYS: queue:*",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis KEYS: queue:*": {
+      "main": [
+        [
+          {
+            "node": "Code: Expand queue keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Expand queue keys": {
+      "main": [
+        [
+          {
+            "node": "Redis GET: account_lock (Poller)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis GET: account_lock (Poller)": {
+      "main": [
+        [
+          {
+            "node": "Redis GET: rate_limit_window (Poller)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis GET: rate_limit_window (Poller)": {
+      "main": [
+        [
+          {
+            "node": "Redis LLEN: queue (Poller)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis LLEN: queue (Poller)": {
+      "main": [
+        [
+          {
+            "node": "Code: Decide dispatch (cooldown+lock)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Decide dispatch (cooldown+lock)": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis POP: next queue item": {
+      "main": [
+        [
+          {
+            "node": "Code: Build W2 input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build W2 input": {
+      "main": [
+        [
+          {
+            "node": "Call 'wf2- agent v3'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Redis POP: next queue item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a893f13a-003b-46a8-b82d-53536d0049b0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "98c9121775f2c350960fe151740521cb03acfc1cee54bd926992bb3e7c435f9d"
+  },
+  "id": "U20oOBin5cGTTauT",
+  "tags": []
+}

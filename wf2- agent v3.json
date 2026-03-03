@@ -1,0 +1,2488 @@
+{
+  "name": "wf2- agent v3",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -5600,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "9fdd8441-694b-4dc0-8177-ab0e2e62ee85",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "email",
+              "value": "={{ $('Set: Account Context2').first().json.email }}",
+              "type": "string"
+            },
+            {
+              "name": "order_number",
+              "value": "={{ $('Set: Account Context2').first().json.order_number }}",
+              "type": "string"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $('Set: Account Context2').first().json.phone }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ $('Set: Account Context2').first().json.conversation_id }}",
+              "type": "number"
+            },
+            {
+              "name": "chatwoot_account_id",
+              "value": "={{ $('Set: Account Context2').first().json.chatwoot_account_id }}",
+              "type": "number"
+            },
+            {
+              "name": "account_key",
+              "value": "={{ $('Set: Account Context2').first().json.account_key }}",
+              "type": "string"
+            },
+            {
+              "name": "provider",
+              "value": "={{ $('Set: Account Context2').first().json.provider }}",
+              "type": "string"
+            },
+            {
+              "name": "password",
+              "value": "={{ $('Set: Account Context2').first().json.password }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "84fcda03-e2e7-4ad0-b635-b1b57a4677ff",
+      "name": "Set: Verify Lock Context1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -736,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "email",
+              "value": "={{ ($json.email || \"\").toString().trim().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "name": "order_number",
+              "value": "={{ ($json.order_number || \"\").toString().trim() }}",
+              "type": "string"
+            },
+            {
+              "name": "phone",
+              "value": "={{ ($json.phone || \"\").toString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ $json.conversation_id }}",
+              "type": "number"
+            },
+            {
+              "name": "chatwoot_account_id",
+              "value": "={{ $json.chatwoot_account_id }}",
+              "type": "number"
+            },
+            {
+              "name": "account_key",
+              "value": "={{ ($json.email || \"\").toString().trim().toLowerCase() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "989e17e5-7011-45b8-bf90-d6f65c9fd362",
+      "name": "Set: Normalize Inputs2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -4800,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c8b9640a-f11c-40de-a904-8e98dd31cb9d",
+              "leftValue": "={{ $json.email }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "92f6f090-b2b7-41dd-b673-3bb2ad436ec6",
+              "leftValue": "={{ $json.order_number }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b5181bc6-b7e8-4036-bceb-e4cf06375cb6",
+      "name": "IF: Has Email & Order?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -4480,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Normalize Inputs2').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ content: 'للمتابعة، يرجى تزويدنا ببريد الحساب ورقم الطلب.', content_attributes: { sent_by_otp: true } }) }}"
+      },
+      "id": "aa22341e-f5ac-4f4a-a1df-0fd553439aac",
+      "name": "Chatwoot: Ask Email+Order2",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        -4128,
+        112
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "160DftV9xapY4_kNo1rNZQwIfy9NIfZimaCjjxfrkkDU",
+          "mode": "list",
+          "cachedResultName": "Early AI Store Bots",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/160DftV9xapY4_kNo1rNZQwIfy9NIfZimaCjjxfrkkDU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2039183418,
+          "mode": "list",
+          "cachedResultName": "Accounts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/160DftV9xapY4_kNo1rNZQwIfy9NIfZimaCjjxfrkkDU/edit#gid=2039183418"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Email",
+              "lookupValue": "={{ $('Set: Normalize Inputs2').first().json.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fa9e05af-225f-415d-92de-575452426f40",
+      "name": "Get Account Pass2",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.1,
+      "position": [
+        -4128,
+        -192
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "maxTries": 4,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "H1id8F2PdYyf8bvK",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dd3c2d8d-379d-4bd8-8fcc-6e5ea4471d45",
+              "leftValue": "={{ $json.is_known }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f2a0373f-adad-448a-9da3-7b90356a4918",
+      "name": "IF: Known Email?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3520,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Normalize Inputs2').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ content: 'لم يتم العثور على هذا البريد الإلكتروني الخاص بـ Disney+ في سجلاتنا. يرجى التأكد من إدخال البريد الإلكتروني الصحيح كما هو موضح في مثال الصورة داخل صفحة الطلب في متجرنا، ثم قم بنسخ ذلك البريد وإرساله لنا لإتمام المتابعة.', content_attributes: { sent_by_otp: true } }) }}"
+      },
+      "id": "8b62228a-ca79-41cd-859d-84d0ee953ce4",
+      "name": "Chatwoot: Email Not Found2",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        -3232,
+        128
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "name": "order_number",
+              "value": "={{ $json.order_number }}",
+              "type": "string"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $json.phone }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ $json.conversation_id }}",
+              "type": "number"
+            },
+            {
+              "name": "chatwoot_account_id",
+              "value": "={{ $json.chatwoot_account_id }}",
+              "type": "number"
+            },
+            {
+              "name": "account_key",
+              "value": "={{ $json.account_key }}",
+              "type": "string"
+            },
+            {
+              "name": "provider",
+              "value": "={{ ($json.provider || '').toString().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "name": "password",
+              "value": "={{ ($json.password || '').toString().trim() }}",
+              "type": "string"
+            },
+            {
+              "name": "provider_credentials_valid",
+              "value": "={{ (($json.provider || '').toString().toLowerCase() === 'gmail') || ((($json.provider || '').toString().toLowerCase() === 'mailtm') && (($json.password || '').toString().trim() !== '')) }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "01e00fbd-6c48-49cf-aa19-0fd718cdb0e6",
+      "name": "Set: Account Context2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3232,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ 'rate_limit:' + $json.account_key }}",
+        "options": {}
+      },
+      "id": "cfabcc5f-76ab-43c6-ab98-2c1d293c5921",
+      "name": "Redis GET: rate_limit_window2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -2576,
+        -112
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'rate_limit:' + $('Set: Account Context2').first().json.account_key }}",
+        "value": "={{ $('Code: Parse Attempts2').first().json.rate_limit_json }}",
+        "expire": true,
+        "ttl": "={{ 1800 }}"
+      },
+      "id": "f3a9ee72-476c-4b1b-8a1d-cfe412570c23",
+      "name": "Redis SET: rate_limit_window2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -2080,
+        -80
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Set: Account Context2').first().json;\nconst raw = ($json.value || '[]').toString();\nlet arr = [];\ntry {\n  const parsed = JSON.parse(raw);\n  if (Array.isArray(parsed)) arr = parsed.map(v => Number(v)).filter(v => Number.isFinite(v));\n} catch { arr = []; }\nconst now = Math.floor(Date.now() / 1000);\nconst windowMinutes = 30;\nconst maxAttempts = 5;\nconst windowSeconds = Math.max(60, Math.floor(windowMinutes * 60));\nconst cutoff = now - windowSeconds;\nconst recent = arr.filter(ts => ts >= cutoff);\nconst canProceed = recent.length < maxAttempts;\nconst updated = canProceed ? [...recent, now] : [...recent];\nlet cooldownMinutes = 0;\nif (!canProceed && recent.length > 0) {\n  const oldest = Math.min(...recent);\n  const waitSec = Math.max(0, windowSeconds - (now - oldest));\n  cooldownMinutes = Math.ceil(waitSec / 60);\n}\nreturn {\n  json: {\n    ...ctx,\n    attempts: recent.length,\n    max_attempts: maxAttempts,\n    window_minutes: windowMinutes,\n    can_proceed: canProceed,\n    cooldown_minutes: cooldownMinutes,\n    rate_limit_timestamps: updated,\n    rate_limit_json: JSON.stringify(updated),\n  },\n};"
+      },
+      "id": "3d0f0e7e-42af-4b96-b19d-7df53be068a7",
+      "name": "Code: Parse Attempts2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2288,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9bc4bdf4-9601-464c-8892-36416f261ce4",
+              "leftValue": "={{ $('Code: Parse Attempts2').first().json.can_proceed }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f913691c-fec3-4651-9547-9593b9a2a656",
+      "name": "IF: Attempts < 5?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1920,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $('Set: Account Context2').first().json;\nconst rate = $('Code: Parse Attempts2').first()?.json || {};\nconst queuePayload = {\n  email: c.email,\n  order_number: c.order_number,\n  phone: c.phone,\n  conversation_id: c.conversation_id,\n  chatwoot_account_id: c.chatwoot_account_id,\n};\nreturn { json: { ...c, cooldown_minutes: Number(rate.cooldown_minutes || 0), queue_item: JSON.stringify(queuePayload) } };"
+      },
+      "id": "9bef70e4-5db1-47d2-a2d6-835710561758",
+      "name": "Code: Build Queue Item2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1584,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Code: Build Queue Item2').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({\n  content: \"الحساب يخضع لإجراء أمني مؤقت 🔒. يرجى الانتظار قليلاً وعدم محاولة تسجيل الدخول الآن ليتم إتاحته لك بأسرع وقت ممكن، وسنقوم بمراسلتك فور إتاحته.\\n\\n⚠️ *ملاحظة:* اختيارك لـ 'خروج من الانتظار' سيؤدي إلى فقدان دورك في الانتظار، وقد تضطر للانتظار لفترة أطول لاحقاً.\\n\\n👇 الرجاء اختيار:\",\n  content_type: \"input_select\",\n  content_attributes: {\n    sent_by_otp: true,\n    items: [\n      {\n        title: \"🚪 خروج من الانتظار\",\n        value: \"خروج من الانتظار\"\n      }\n    ]\n  }\n}) }}"
+      },
+      "id": "b14f240b-f665-4ebd-9984-1c04d21b45fc",
+      "name": "Chatwoot: Cooldown Wait2",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        192
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ 'account_lock:' + $json.account_key }}",
+        "options": {}
+      },
+      "id": "68650059-a5ee-4be9-bdd9-ab09ec659536",
+      "name": "Redis GET: account_lock2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        -288
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "532054ee-fb40-4ac5-aab8-03d7f236b7dd",
+              "leftValue": "={{ $json.propertyName }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ec6285a3-2098-436a-add7-b24a2fe3ba40",
+      "name": "IF: Is Account Locked?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1216,
+        -288
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ \"queue:\" + $(\"Set: Account Context2\").first().json.account_key }}",
+        "messageData": "={{ JSON.stringify({ email: $('Set: Account Context2').first().json.email, order_number: $('Set: Account Context2').first().json.order_number, phone: $('Set: Account Context2').first().json.phone, conversation_id: $('Set: Account Context2').first().json.conversation_id, chatwoot_account_id: $('Set: Account Context2').first().json.chatwoot_account_id }) }}",
+        "tail": true
+      },
+      "id": "ca012f9f-8937-458a-912b-01b04174c588",
+      "name": "Redis Push Queue (Busy)2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        -480
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'user_state:' + $('Set: Account Context2').first().json.phone }}",
+        "value": "={{ JSON.stringify({ status: 'Queueing', account_key: $('Set: Account Context2').first().json.account_key, fail_count: 0 }) }}"
+      },
+      "id": "09efe0f4-37f5-481b-9991-d73e4bb19d0e",
+      "name": "Redis SET: Queueing State (Busy)2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        -480
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Account Context2').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({\n  content: `يوجد عميل ثاني يجري إجراءات تسجيل الدخول 🔒\n\nيرجى الانتظار قليلًا وعدم محاولة تسجيل الدخول الآن لكي لاتحصل مشكلة،,\nوسنقوم بمراسلتك فور إتاحة الحساب ✅\n\n⏳ أفصى وقت متوقع للانتظار: حوالي ${$json.eta_minutes} دقيقة.\n\n⚠️ *ملاحظة:* اختيارك لـ 'خروج من الانتظار' قد يؤدي إلى فقدان دورك الحالي وقد يتسبب في تأخير إضافي لاحقًا.\n\n`,\n  content_type: \"input_select\",\n  content_attributes: {\n    sent_by_otp: true,\n    items: [\n      { title: \"🚪 خروج من الانتظار\", value: \"خروج من الانتظار\" }\n    ]\n  }\n}) }}"
+      },
+      "id": "1e8b3d46-8bd0-43b5-8b7d-8587a816d2e8",
+      "name": "Chatwoot: Strict Queue Warning2",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -480
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'account_lock:' + $('Set: Account Context2').first().json.account_key }}",
+        "value": "={{ $('Set: Account Context2').first().json.phone }}",
+        "expire": true,
+        "ttl": "={{ 120 }}"
+      },
+      "id": "d33c5106-62dd-4d20-a703-2a0cb26a0aac",
+      "name": "Redis SET: account_lock 120s2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        -144
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7cfd8fe4-6a7a-41a0-b58b-087c0687883c",
+              "leftValue": "={{ $json.propertyName }}",
+              "rightValue": "={{ $('Set: Account Context2').first().json.phone }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "901a9cf2-afaa-4c4b-ba4c-2b45176c54e6",
+      "name": "IF: Lock Acquired?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ \"queue:\" + $(\"Set: Account Context2\").first().json.account_key }}",
+        "messageData": "={{ JSON.stringify({ email: $('Set: Account Context2').first().json.email, order_number: $('Set: Account Context2').first().json.order_number, phone: $('Set: Account Context2').first().json.phone, conversation_id: $('Set: Account Context2').first().json.conversation_id, chatwoot_account_id: $('Set: Account Context2').first().json.chatwoot_account_id }) }}",
+        "tail": true
+      },
+      "id": "5ed5bca5-3498-4ffb-9c14-8c27623f1581",
+      "name": "Redis Push Queue (Race)2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        208,
+        80
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Account Context2').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({\n  content: 'نعتذر، حدث خطأ أثناء معالجة طلبك. يرجى الضغط على \"خروج\" ثم المحاولة مرة أخرى.',\n  content_type: 'input_select',\n  content_attributes: {\n    sent_by_otp: true,\n    items: [\n      { title: 'خروج', value: 'خروج' }\n    ]\n  }\n}) }}"
+      },
+      "id": "8db7ce5d-89c6-408a-8634-13d9ec3ca601",
+      "name": "Chatwoot: Strict Queue Warning (Race)2",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        496,
+        80
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ 'account_lock:' + $json.account_key }}",
+        "options": {}
+      },
+      "id": "9fadfcd4-8ab1-495f-b96e-556999e803d7",
+      "name": "Redis GET: account_lock (Verify)2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        -144
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'user_state:' + $('Set: Account Context2').first().json.phone }}",
+        "value": "={{ JSON.stringify({ status: 'Await_Press', account_key: $('Set: Account Context2').first().json.account_key, fail_count: 0 }) }}"
+      },
+      "id": "e3a22404-01c0-4851-8fbe-b0e49d6c5528",
+      "name": "Redis SET: Active State2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -224
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "eaYEEWGtMmMlhUDr",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/eaYEEWGtMmMlhUDr",
+          "cachedResultName": "wf3 - agent v3"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{ $('Set: Account Context2').first().json.email }}",
+            "order_number": "={{ $('Set: Account Context2').first().json.order_number }}",
+            "phone": "={{ $('Set: Account Context2').first().json.phone }}",
+            "conversation_id": "={{ $('Set: Account Context2').first().json.conversation_id }}",
+            "chatwoot_account_id": "={{ $('Set: Account Context2').first().json.chatwoot_account_id }}",
+            "account_key": "={{ $('Set: Account Context2').first().json.account_key }}",
+            "provider": "={{ $('Set: Account Context2').first().json.provider }}",
+            "password": "={{ $('Set: Account Context2').first().json.password }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "order_number",
+              "displayName": "order_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "chatwoot_account_id",
+              "displayName": "chatwoot_account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "account_key",
+              "displayName": "account_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "provider",
+              "displayName": "provider",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "password",
+              "displayName": "password",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "bc861f27-84fe-45a0-8137-4895ae7aed26",
+      "name": "Execute W3 (Poller)2",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        3328,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cc44acf8-a78f-457f-8eb3-75b73c53b09a",
+              "leftValue": "={{ $json.provider_credentials_valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "de3a3157-42ea-46db-8039-a53e8556267d",
+      "name": "IF: Provider Credentials Valid?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2928,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Set: Normalize Inputs2').first().json;\nconst row = $json || {};\nconst rowEmail = (row.Email || row.email || row['Account Email'] || '').toString().trim().toLowerCase();\nconst rowOrder = (row['Order Number'] || row.OrderNumber || row.order_number || row.order || '').toString().trim();\nconst providerRaw = (row.provider_type || row.ProviderType || row.provider || row.Provider || row.Company || '').toString().trim().toLowerCase();\nconst provider = providerRaw.includes('mail') ? 'mailtm' : (providerRaw || 'gmail');\nconst password = (row.account_password || row.password || row.Pass || row.pass || '').toString().trim();\nconst is_known = rowEmail !== '' && rowEmail === input.email && (rowOrder === '' || rowOrder === input.order_number);\nreturn { json: { ...input, sheet_row: row, row_email: rowEmail, row_order: rowOrder, provider, password, is_known } };"
+      },
+      "id": "fe8f999b-bb85-4342-aa02-bfcf9a844b83",
+      "name": "Code: Normalize Sheet Row2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3840,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "email"
+            },
+            {
+              "name": "order_number"
+            },
+            {
+              "name": "phone"
+            },
+            {
+              "name": "conversation_id"
+            },
+            {
+              "name": "chatwoot_account_id"
+            },
+            {
+              "name": "ExcutedBy"
+            }
+          ]
+        }
+      },
+      "id": "27f440fb-f8df-40f6-898c-cc821c19692c",
+      "name": "Trigger (From W1)",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -5104,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Account Context2').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ content: 'تم تمرير الطلب بالنجاح سوف يتم ارسال الكود لك عندما يصلني.', content_attributes: { sent_by_otp: true } }) }}"
+      },
+      "id": "0c1c65c0-1614-405d-a29a-b7fb8f2fa2bb",
+      "name": "Chatwoot: Strict Queue Warning (Race)1",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        352
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "llen",
+        "list": "={{ \"queue:\" + $('Set: Account Context2').first().json.account_key }}"
+      },
+      "id": "f4550581-4c9e-4163-acbe-03b0cc589bf5",
+      "name": "Redis SET: Queueing State (Busy)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -480
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const SERVICE_MIN_PER_PERSON = 2;\n\n// List Length node output is usually like: { \"queue:cuz...\": 1 }\nconst len = Number(Object.values($json)[0] ?? 0) || 0;\n\n// Base ahead = waiting people before you in the list\nconst baseAhead = Math.max(0, len - 1);\n\n// Check if account is currently locked (someone is being processed)\nlet hasLock = false;\ntry {\n  const lockJson = $('Redis GET: account_lock2').first().json; // your existing node name\n  const lockVal = Object.values(lockJson)[0];\n  hasLock = lockVal !== undefined && lockVal !== null && String(lockVal).trim() !== '';\n} catch (e) {\n  hasLock = false; // node not executed in this path\n}\n\n// If locked, add 1 person (the one currently being served)\nconst ahead = baseAhead + (hasLock ? 1 : 0);\nconst etaMinutes = ahead * SERVICE_MIN_PER_PERSON;\n\nreturn {\n  json: {\n    queue_len: len,\n    ahead_count: ahead,\n    eta_minutes: etaMinutes,\n    service_minutes_per_person: SERVICE_MIN_PER_PERSON,\n    has_lock: hasLock,\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        -480
+      ],
+      "id": "d5593ba6-1d7b-4e13-9c7f-b06e8fc01c40",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Account Context2').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({\n  content: `🙏 نرجو عدم محاولة تسجيل الدخول الآن.\n\nسيتم تنبيهك فور إعادة إتاحة الحساب مجددًا ✅\n\nبعدها يمكنك تسجيل الدخول بسهولة، أو طلب رمز التحقق  مرة أخرى بدون أي مشاكل 🔐\n`,\n  content_type: \"input_select\",\n  content_attributes: {\n    sent_by_otp: true,\n    items: [\n      { title: \"🚪 خروج من الانتظار\", value: \"خروج من الانتظار\" }\n    ]\n  }\n}) }}"
+      },
+      "id": "be48eacc-756c-4469-909a-65a45fd1873d",
+      "name": "Chatwoot: Strict Queue Warning",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -496
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -16,
+        -480
+      ],
+      "id": "4e20d1da-93c9-4c94-a9ba-c763b88b5975",
+      "name": "Wait",
+      "webhookId": "90f19976-50d9-4258-972e-6e992fff66d2"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'user_state:' + $('Set: Account Context2').first().json.phone }}",
+        "value": "={{ JSON.stringify({ status: 'Queueing', account_key: $('Set: Account Context2').first().json.account_key, fail_count: 0 }) }}"
+      },
+      "id": "88675c54-94f5-42fc-898e-a49e7051645f",
+      "name": "Redis SET: Queueing State (Limit)2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1136,
+        192
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ \"queue:\" + $json.account_key }}",
+        "messageData": "={{ $json.queue_item }}",
+        "tail": true
+      },
+      "id": "d57fbdae-35d1-49d4-951f-a3021cbc5520",
+      "name": "Redis Push Queue (Limit)2",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1360,
+        192
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://drive.google.com/uc?export=download&id=195XxHzpyBnkZVIofdV6TJNx08whfZ6D_",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1664,
+        48
+      ],
+      "id": "064aef07-758b-4c67-a25e-9ff9a9e8e777",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/{{ $('Set: Extract Incoming').item.json.chatwoot_account_id }}/conversations/{{ $('Set: Extract Incoming').item.json.conversation_id }}/messages ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments[]",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "content_attributes",
+              "value": "{\"sent_by_otp\": true}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send Image to Chatwoot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1872,
+        48
+      ],
+      "id": "0da89e71-4b3c-4e69-acb7-433c1eb4ba44",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://drive.google.com/uc?export=download&id=1nodmLtPbmWUfsj7PidqrHfwpCE8lUC3m",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2928,
+        144
+      ],
+      "id": "144bcfbc-4aec-457c-89df-79bbd922d4e1",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "=2026",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({\n  content: `هل قمت باتباع الخطوات؟\n\n⏳ لديك فقط 3 دقائق لإتمامها، لذا نرجو الإسراع في تسجيل الدخول.`,\n  content_type: \"input_select\",\n  content_attributes: {\n    sent_by_otp: true,\n    items: [\n      { title: \"نعم✅\", value: \"نعم✅\" },\n      { title: \"جاني خطأ - حد اقصى\", value: \"جاني خطأ - حد اقصى\" },\n      { title: \"خروج من العملية\", value: \"خروج من العملية\" }\n    ]\n  }\n}) }}"
+      },
+      "id": "c8b97fe2-3132-4c49-9664-af355e2c3297",
+      "name": "testing",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        -3200,
+        464
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/152788/conversations/{{ $('Set: Normalize Inputs2').first().json.conversation_id }}/messages ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments[]",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "content_attributes",
+              "value": "{\"sent_by_otp\": true}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "send image of the disney+ email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2672,
+        144
+      ],
+      "id": "d60739c3-6d69-448a-8ab0-c20cabb8a186",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Account Context2').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={\"content\":\"تمت معالجة طلبك بنجاح ✅\\n\\nيرجى اتباع التعليمات الموضحة أدناه لإكمال العملية بشكل صحيح، وذلك لجلب رمز التحقق (الكود) ثم إدخاله.\\n\\nتنبيه مهم: مدة هذه الجلسة 3 دقائق فقط لاستلام الرمز وإدخاله ⏳، لذا يرجى اتباع الخطوات بسرعة وبالترتيب.\\n\\nسنقوم بعرض خطوات واضحة وثابتة في الأسفل، يرجى اتباعها كما هي 👇\",\"content_attributes\":{\"sent_by_otp\":true}}"
+      },
+      "id": "40a02f2d-ef36-4b42-885a-a1d4d8a436e3",
+      "name": "تم معالجة الطلب",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        416,
+        -224
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://drive.google.com/uc?export=download&id=118eEcaKSC6IB5betooiJ-IjNb6UmQNoY",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        896,
+        -224
+      ],
+      "id": "b3d0cd00-1914-4032-8110-ed77d5735193",
+      "name": "showing the phone number"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/152788/conversations/2026/messages ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments[]",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "content_attributes",
+              "value": "{\"sent_by_otp\": true}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "send image of the disney+ email2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2672,
+        496
+      ],
+      "id": "30359dd2-cbe6-4a0a-91c8-d2daf0a80d16",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://drive.google.com/uc?export=download&id=1qpgN2vSDElKk363jYFdVWViuKo1uGtxc",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2960,
+        480
+      ],
+      "id": "9cbb9867-b9e2-4d0c-b6f6-066ae0ced83c",
+      "name": "showing the phone number1"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1488,
+        -224
+      ],
+      "id": "aaf8c790-1b8a-43f0-83ab-92b346f4c9a9",
+      "name": "Wait2",
+      "webhookId": "dc12af26-a8f6-41cc-a7fc-a5c7f58b2eef"
+    },
+    {
+      "parameters": {
+        "url": "https://drive.google.com/uc?export=download&id=1qpgN2vSDElKk363jYFdVWViuKo1uGtxc",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1840,
+        -224
+      ],
+      "id": "4f0de650-23ee-471b-9bbf-e880039878d5",
+      "name": "diseny screen 1"
+    },
+    {
+      "parameters": {
+        "url": "https://drive.google.com/uc?export=download&id=18QqYOXfTF_nYqAaPWldM-ZzypZAzB7Hw",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2416,
+        -224
+      ],
+      "id": "bb687115-6464-4c11-9d1c-1a2d988f71f6",
+      "name": "diseny screen2"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Account Context2').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({\n  content: `هل قمت باتباع الخطوات؟\n\n⏳ لديك فقط 3 دقائق لإتمامها، لذا نرجو الإسراع في تسجيل الدخول.`,\n  content_type: \"input_select\",\n  content_attributes: {\n    sent_by_otp: true,\n    items: [\n      { title: \"نعم✅\", value: \"نعم✅\" },\n      { title: \"جاني خطأ - حد اقصى\", value: \"جاني خطأ - حد اقصى\" },\n      { title: \"خروج من العملية\", value: \"خروج من العملية\" }\n    ]\n  }\n}) }}"
+      },
+      "id": "7956665d-c549-43f6-bcd7-fb15fe404f4d",
+      "name": "finsh message",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        2928,
+        -224
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/152788/conversations/2026/messages ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments[]",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "content",
+              "value": "ممتاز، سيصلك رمز التحقق قريبًا ✅\n\nيرجى الانتظار قليلًا، وإذا لم يصلك خلال 20 ثانية، اضغط على زر إعادة الإرسال عبر البريد الإلكتروني كما هو موضح في الصورة 👇"
+            },
+            {
+              "name": "content_type",
+              "value": "input_select"
+            },
+            {
+              "name": "content_attributes",
+              "value": "{\"sent_by_otp\": true, \"items\": [{\"title\":\"جاني خطأ - حد اقصى\",\"value\":\"جاني خطأ - حد اقصى\"}, {\"title\":\"خروج من العملية\",\"value\":\"خروج من العملية\"}]}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send Image with Options to Chatwoot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2704,
+        736
+      ],
+      "id": "9659322a-fdc8-4c51-aa30-3cea15ca0546",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/{{ $('Set: Extract Incoming').first().json.chatwoot_account_id }}/conversations/{{ $('Set: Extract Incoming').first().json.conversation_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments[]",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "content",
+              "value": "إليك توضيح لكيفية إعادة إرسال الرمز 👇"
+            },
+            {
+              "name": "content_attributes",
+              "value": "{\"sent_by_otp\": true}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "1. Send Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2832,
+        960
+      ],
+      "id": "1c5c0cf9-8ab6-4589-aa40-ea039f7713a6",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/{{ $('Set: Extract Incoming').first().json.chatwoot_account_id }}/conversations/{{ $('Set: Extract Incoming').first().json.conversation_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"ممتاز، سيصلك رمز التحقق قريبًا ✅\\n\\nيرجى الانتظار قليلًا، وإذا لم يصلك خلال 20 ثانية، اضغط على زر إعادة الإرسال عبر البريد الإلكتروني كما هو موضح في الصورة أعلاه.\",\n  \"message_type\": \"outgoing\",\n  \"content_type\": \"input_select\",\n  \"content_attributes\": {\n    \"sent_by_otp\": true,\n    \"items\": [\n      {\n        \"title\": \"جاني خطأ - حد اقصى\",\n        \"value\": \"جاني خطأ - حد اقصى\"\n      },\n      {\n        \"title\": \"خروج من العملية\",\n        \"value\": \"خروج من العملية\"\n      }\n    ]\n  }\n}",
+        "options": {}
+      },
+      "name": "2. Send Options",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2608,
+        960
+      ],
+      "id": "9e31bf17-1c59-44ec-a620-1dd3b3ed69f1",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Account Context2').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={\"content\":\"تمت معالجة طلبك بنجاح ✅\\n\\nيرجى اتباع التعليمات الموضحة أدناه لإكمال العملية بشكل صحيح، وذلك لجلب رمز التحقق (الكود) ثم إدخاله.\\n\\nتنبيه مهم: مدة هذه الجلسة 3 دقائق فقط لاستلام الرمز وإدخاله ⏳، لذا يرجى اتباع الخطوات بسرعة وبالترتيب.\\n\\nسنقوم بعرض خطوات واضحة وثابتة في الأسفل، يرجى اتباعها كما هي 👇\",\"content_attributes\":{\"sent_by_otp\":true}}"
+      },
+      "id": "84e57e38-4022-43b0-b6c6-2da1492060ad",
+      "name": "تم معالجة الطلب1",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        96
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/152788/conversations/{{ $('Set: Normalize Inputs2').first().json.conversation_id }}/messages ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments[]",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "content",
+              "value": "'1- الرجاء الرجوع إلى صفحة الطلب في المتجر، ثم نسخ رقم الهاتف الموجود في صفحة الطلبية على المتجر كما هو موضح في الصورة اعلاه👆"
+            },
+            {
+              "name": "content_attributes",
+              "value": "{\"sent_by_otp\": true}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "1. Send Image1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1120,
+        -208
+      ],
+      "id": "6c7d5ff8-62a1-4df0-999e-9d24de772beb",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/152788/conversations/{{ $('Set: Normalize Inputs2').first().json.conversation_id }}/messages ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments[]",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "content",
+              "value": "2- ثم انتقل إلى تطبيق Disney+، واختر دولة مصر (+20) لرقم الهاتف، ثم قم بلصق الرقم، واضغط على سهم الدخول، وستظهر لك صفحة إدخال الرمز الذي سنرسله لك بعد قليل  👆"
+            },
+            {
+              "name": "content_attributes",
+              "value": "{\"sent_by_otp\": true}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "1. Send Image2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2016,
+        -224
+      ],
+      "id": "8a5d02a8-f3ea-4f48-a17f-fb4cbbeb4e41",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/152788/conversations/{{ $('Set: Normalize Inputs2').first().json.conversation_id }}/messages ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments[]",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "content",
+              "value": "هذه هي الصفحة التي ستقوم بإدخال الرمز الذي سنرسله لك بعد قليل 👆"
+            },
+            {
+              "name": "content_attributes",
+              "value": "{\"sent_by_otp\": true}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "1. Send Image3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2592,
+        -224
+      ],
+      "id": "9b8a3610-8026-4fb4-b25a-1933b2aed6aa",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 7
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2752,
+        -224
+      ],
+      "id": "6b457372-f833-4803-bae6-1e1725aa2d33",
+      "name": "Wait3",
+      "webhookId": "dc12af26-a8f6-41cc-a7fc-a5c7f58b2eef"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3120,
+        -224
+      ],
+      "id": "94a9993a-16e9-4888-947a-1408899f230b",
+      "name": "Wait4",
+      "webhookId": "dc12af26-a8f6-41cc-a7fc-a5c7f58b2eef"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2192,
+        -208
+      ],
+      "id": "d80baf04-de12-4020-991d-8ed687df6930",
+      "name": "Wait5",
+      "webhookId": "dc12af26-a8f6-41cc-a7fc-a5c7f58b2eef"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -5568,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "e3c65a98-f48b-4651-a543-8b137645adbd",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4438a79b-e5ae-4096-8003-9376a885aac5",
+              "name": "status",
+              "value": "SUCCESS: Text message successfully delivered to the user. 🚨 CRITICAL INSTRUCTION: You have reached your messaging limit for this turn. You are STRICTLY FORBIDDEN from using the 'Send 'Messaging' tool or calling this tool again right now. You may proceed with other non-messaging tools if required by your instructions",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3552,
+        -224
+      ],
+      "id": "d3ff8bde-dc22-4621-942e-4209e4495dce",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "## Analytics Tracking\nLogs OTP request events as non-blocking side effects.",
+        "height": 240,
+        "width": 560
+      },
+      "id": "f3e3fba0-4411-4cdf-bb74-fe6babd2e547",
+      "name": "Sticky: Analytics Instrumentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1160,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "otp_request",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['otp_request', String($json.conversation_id || ''), String($execution.id || '')].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $json.phone || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "inbound",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "disney",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "otp_request",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "requested",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'wf2', source_event_id: String($execution.id || ''), email: $json.email || '', order_number: $json.order_number || '' }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dbfc62d2-15ac-446e-95d7-efeb7327962d",
+      "name": "Analytics Event: OTP Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -840,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ANALYTICS_INGEST_URL || 'http://localhost:8000/events' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "f6d3ff77-32bd-4f12-8f5b-4335739659b5",
+      "name": "Analytics: Send Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -520,
+        -220
+      ],
+      "continueOnFail": true
+    }
+  ],
+  "pinData": {
+    "Trigger (From W1)": [
+      {
+        "json": {
+          "email": "early177@powerscrews.com",
+          "order_number": "4545245",
+          "phone": "+447877458189",
+          "conversation_id": 2149,
+          "chatwoot_account_id": 152788,
+          "ExcutedBy": "ai"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Set: Verify Lock Context1": {
+      "main": [
+        [
+          {
+            "node": "Redis GET: account_lock (Verify)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set: Normalize Inputs2": {
+      "main": [
+        [
+          {
+            "node": "IF: Has Email & Order?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Has Email & Order?2": {
+      "main": [
+        [
+          {
+            "node": "Get Account Pass2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Chatwoot: Ask Email+Order2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Account Pass2": {
+      "main": [
+        [
+          {
+            "node": "Code: Normalize Sheet Row2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Known Email?2": {
+      "main": [
+        [
+          {
+            "node": "Set: Account Context2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Chatwoot: Email Not Found2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot: Email Not Found2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set: Account Context2": {
+      "main": [
+        [
+          {
+            "node": "IF: Provider Credentials Valid?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis GET: rate_limit_window2": {
+      "main": [
+        [
+          {
+            "node": "Code: Parse Attempts2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis SET: rate_limit_window2": {
+      "main": [
+        [
+          {
+            "node": "IF: Attempts < 5?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Parse Attempts2": {
+      "main": [
+        [
+          {
+            "node": "Redis SET: rate_limit_window2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Attempts < 5?2": {
+      "main": [
+        [
+          {
+            "node": "Redis GET: account_lock2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build Queue Item2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build Queue Item2": {
+      "main": [
+        [
+          {
+            "node": "Redis Push Queue (Limit)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis GET: account_lock2": {
+      "main": [
+        [
+          {
+            "node": "IF: Is Account Locked?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Is Account Locked?2": {
+      "main": [
+        [
+          {
+            "node": "Redis Push Queue (Busy)2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis SET: account_lock 120s2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Push Queue (Busy)2": {
+      "main": [
+        [
+          {
+            "node": "Redis SET: Queueing State (Busy)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis SET: Queueing State (Busy)2": {
+      "main": [
+        [
+          {
+            "node": "Redis SET: Queueing State (Busy)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot: Strict Queue Warning2": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis SET: account_lock 120s2": {
+      "main": [
+        [
+          {
+            "node": "Set: Verify Lock Context1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Lock Acquired?2": {
+      "main": [
+        [
+          {
+            "node": "Redis SET: Active State2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis Push Queue (Race)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Push Queue (Race)2": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Strict Queue Warning (Race)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis GET: account_lock (Verify)2": {
+      "main": [
+        [
+          {
+            "node": "IF: Lock Acquired?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis SET: Active State2": {
+      "main": [
+        [
+          {
+            "node": "تم معالجة الطلب",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Provider Credentials Valid?2": {
+      "main": [
+        [
+          {
+            "node": "Redis GET: rate_limit_window2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Normalize Sheet Row2": {
+      "main": [
+        [
+          {
+            "node": "IF: Known Email?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger (From W1)": {
+      "main": [
+        [
+          {
+            "node": "Set: Normalize Inputs2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics Event: OTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis SET: Queueing State (Busy)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Strict Queue Warning2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Strict Queue Warning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis SET: Queueing State (Limit)2": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Cooldown Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Push Queue (Limit)2": {
+      "main": [
+        [
+          {
+            "node": "Redis SET: Queueing State (Limit)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Send Image to Chatwoot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "send image of the disney+ email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "testing": {
+      "main": [
+        [
+          {
+            "node": "showing the phone number1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "تم معالجة الطلب": {
+      "main": [
+        [
+          {
+            "node": "showing the phone number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "showing the phone number": {
+      "main": [
+        [
+          {
+            "node": "1. Send Image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "showing the phone number1": {
+      "main": [
+        [
+          {
+            "node": "send image of the disney+ email2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Image with Options to Chatwoot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "diseny screen 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "diseny screen 1": {
+      "main": [
+        [
+          {
+            "node": "1. Send Image2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "diseny screen2": {
+      "main": [
+        [
+          {
+            "node": "1. Send Image3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "finsh message": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Send Image": {
+      "main": [
+        [
+          {
+            "node": "2. Send Options",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Send Image1": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Send Image2": {
+      "main": [
+        [
+          {
+            "node": "Wait5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Send Image3": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "finsh message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "Execute W3 (Poller)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait5": {
+      "main": [
+        [
+          {
+            "node": "diseny screen2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute W3 (Poller)2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: OTP Request": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "616a7fec-09eb-4da9-a413-87eaa3df942a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "98c9121775f2c350960fe151740521cb03acfc1cee54bd926992bb3e7c435f9d"
+  },
+  "id": "2tBDvy2AVgJsrs2l",
+  "tags": []
+}

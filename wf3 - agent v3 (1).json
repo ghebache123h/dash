@@ -1,0 +1,1998 @@
+{
+  "name": "wf3 - agent v3",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "email"
+            },
+            {
+              "name": "order_number"
+            },
+            {
+              "name": "phone"
+            },
+            {
+              "name": "conversation_id"
+            },
+            {
+              "name": "chatwoot_account_id"
+            },
+            {
+              "name": "account_key"
+            },
+            {
+              "name": "provider"
+            },
+            {
+              "name": "password"
+            }
+          ]
+        }
+      },
+      "id": "57601e0d-cd15-49d1-830d-82ec2d8a50d7",
+      "name": "Trigger (From W2)",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -2752,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'user_state:' + $('Code: Evaluate Loop Condition').first().json.phone }}"
+      },
+      "id": "d45b6e48-67c7-402e-baa8-42344c86047f",
+      "name": "Redis DEL: user_state (Success)1",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        1456
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "968f2bf9-e14b-409f-87be-ce0583f9484c",
+              "leftValue": "={{ $json.is_valid_next }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a6feae8a-fd61-4f7b-a18c-3bb407f278bf",
+      "name": "IF: Next User Valid? (Timeout)1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1008,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "03f965b1-5418-4a1e-9f39-646b40420f37",
+              "leftValue": "={{ $json.is_valid_next }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e5329b9c-3ea2-49fd-9b77-9c6538eab4fd",
+      "name": "IF: Next User Valid? (Success)1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1056,
+        1440
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ttl = 120;\nreturn { json: { ...$json, expiry_time: Date.now() + (Math.max(30, ttl) * 1000) } };"
+      },
+      "id": "781604d3-23dc-4812-8022-0e46b5b8c254",
+      "name": "Code: expiry_time = Now + 120s",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2368,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ 'user_state:' + $('Code: expiry_time = Now + 120s').first().json.phone }}",
+        "options": {}
+      },
+      "id": "5d9c750e-0885-41a0-b56f-8dda90a97596",
+      "name": "Redis GET: user_state",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -2048,
+        720
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. جلب البيانات من العقدة السابقة (السياق الأساسي مثل email و expiry_time)\nconst c = $('Code: expiry_time = Now + 120s').first().json;\n\n// 2. التقاط البيانات القادمة من Redis\nconst inputJson = $input.first().json;\nconst raw = inputJson.propertyName ?? inputJson.value ?? inputJson;\n\nlet state = {};\n\n// 3. تحليل بيانات Redis بأمان\nif (typeof raw === 'string' && raw.trim() !== '') {\n  try { \n    state = JSON.parse(raw); \n  } catch { \n    state = {}; \n  }\n} else if (raw && typeof raw === 'object' && !Array.isArray(raw)) {\n  state = raw;\n}\n\n// 4. استخراج القيم من Redis\nconst status = state.status ? String(state.status) : 'None';\nconst account_key = state.account_key ? String(state.account_key) : (c.account_key ? String(c.account_key) : '');\nconst fail_count = state.fail_count !== undefined ? Number(state.fail_count) : 0;\n\n// ==========================================\n// 5. التعديل الجديد: تحديد الـ Provider ديناميكياً\nconst currentEmail = String(state.email || c.email || '').toLowerCase();\nconst dynamicProvider = currentEmail.endsWith('@gmail.com') ? 'gmail' : 'mailtm';\n// ==========================================\n\n// 6. منطق حلقة التكرار (Loop Logic)\nconst timed_out = Date.now() > Number(c.expiry_time);\n\n// ---> [التعديل الجذري]: فحص دقيق يضمن اكتشاف غياب البيانات حتى لو احتوى الكائن على بيانات أخرى (Metadata)\nconst is_empty = \n    inputJson.value === null || \n    raw === 'null' || \n    raw === null || \n    Object.keys(state).length === 0 || \n    (state.status === undefined && state.email === undefined); // إذا اختفت خصائصك الأساسية، فالبيانات تعتبر فارغة\n\n// النجاح يتحقق إذا كان الـ status هو 'user_succeed' أو إذا كانت البيانات فارغة/تم استهلاكها\nconst user_succeed = status === 'user_succeed' || is_empty;\n\nconst continue_loop = !(timed_out || user_succeed);\n\nlet end_reason = 'running';\n\n// إعطاء الأولوية للنجاح قبل التحقق من انتهاء الوقت\nif (user_succeed) {\n    end_reason = 'success';\n} else if (timed_out) {\n    end_reason = 'timeout';\n}\n\n// 7. دمج المخرجات وإرجاعها\nreturn { \n  json: { \n    ...c, \n    status: status, \n    account_key: account_key, \n    fail_count: Number.isFinite(fail_count) ? fail_count : 0, \n    provider: dynamicProvider, \n    continue_loop: continue_loop, \n    end_reason: end_reason \n  } \n};"
+      },
+      "id": "f24f165a-44c6-4edd-9c67-381fb9759823",
+      "name": "Code: Evaluate Loop Condition",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1728,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9dabfe84-4837-43c3-9c56-60aad2dbd947",
+              "leftValue": "={{ $json.continue_loop }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5a5a0365-8b95-4bfd-b584-d8aa3b60e580",
+      "name": "IF: Continue Loop?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1408,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "74dc8631-dfdf-45d2-9e6c-ef33e63a165d",
+              "leftValue": "={{ ($json.provider || '').toString().toLowerCase() }}",
+              "rightValue": "mailtm",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fbe1e85d-f10a-45a7-a5be-d02259e71399",
+      "name": "IF: Provider is MailTm?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1088,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mail.tm/token",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "address",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "password",
+              "value": "={{ $json.password }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2b4ed31a-022d-4dd8-9875-dc037c8f4643",
+      "name": "Login Mail.tm",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -768,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e5bd1cfc-1ec7-4b44-8d98-0feb227bb272",
+              "leftValue": "={{ $json.token }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e3253686-6242-41cc-990c-39ea07511315",
+      "name": "IF: Mail.tm Token?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -448,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.mail.tm/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4aef7234-4bd5-4fd7-97bf-2c5faee80635",
+      "name": "Fetch Inbox (Mail.tm)2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -144,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst re = /\\b\\d{4}\\b/;\nconst now = new Date();\nconst TWO_MINUTES_MS = 1 * 60 * 1000; // 2 minutes in milliseconds\n\nfor (const it of items) {\n  const e = it.json;\n  \n  // 1. Get the exact time the email was received\n  const emailTime = new Date(e.createdAt);\n  \n  // 2. Calculate how old the email is in milliseconds\n  const ageMs = now - emailTime;\n\n  // 3. ONLY process the email if it arrived less than 2 minutes ago\n  if (ageMs <= TWO_MINUTES_MS) {\n    const txt = `${e.subject || ''} ${e.intro || ''}`;\n    const isDisney = txt.toLowerCase().includes('disney') || \n                     (e.from && e.from.name && String(e.from.name).toLowerCase().includes('disney'));\n                     \n    if (isDisney) {\n      const m = txt.match(re);\n      if (m) {\n        // Found a fresh code! Returning it.\n        return { \n          json: { \n            found: true, \n            code: m[0], \n            source: 'mailtm', \n            age_seconds: Math.floor(ageMs / 1000) // Helpful for debugging\n          } \n        };\n      }\n    }\n  }\n}\n\n// If the loop finishes and no emails from the last 2 minutes matched, return false\nreturn { \n  json: { \n    found: false, \n    code: null, \n    source: 'mailtm',\n    reason: 'no_recent_email'\n  } \n};"
+      },
+      "id": "2eb47468-d3c1-4678-9ccb-6dd627e52ecd",
+      "name": "Extract Code (Mail.tm)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "found",
+              "value": "=false",
+              "type": "boolean"
+            },
+            {
+              "name": "code",
+              "value": "=null",
+              "type": "string"
+            },
+            {
+              "name": "source",
+              "value": "=mailtm",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8e3f17bd-30cd-4331-8d2a-05230d71f9e4",
+      "name": "Return: Error (Mail.tm)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -144,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 10,
+        "simple": false,
+        "filters": {
+          "q": "=to:{{ $('Code: expiry_time = Now + 120s').first().json.email.split('@')[0].replace(/\\./g, '') + '@' + $('Code: expiry_time = Now + 120s').first().json.email.split('@')[1] }} newer_than:10m ",
+          "sender": "code@notification.apps.disneyplus.com"
+        },
+        "options": {}
+      },
+      "id": "7140a0f1-dd9f-4b65-a244-a30b97048daa",
+      "name": "Fetch Inbox (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -768,
+        832
+      ],
+      "webhookId": "fec1c672-069a-4c6f-a4b0-3349d875e106",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DXdRtMoHsWFXsniK",
+          "name": "Early Store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msgs=$input.all().map(i=>i.json);const now=Date.now();const re=/\\b\\d{4}\\b/g;for(const m of msgs){const d=new Date(m.date).getTime();if((now-d)/60000>10)continue;const t=`${m.subject||''} ${m.text||m.textPlain||''} ${m.snippet||''}`.toLowerCase();if(t.includes('disney')){const f=t.match(re);if(f&&f.length)return {json:{found:true,code:f[0],source:'gmail'}};}}return {json:{found:false,code:null,source:'gmail'}};"
+      },
+      "id": "570336aa-2236-4846-a80e-1fee4bc13e51",
+      "name": "Extract Code (Gmail)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b=$('Code: expiry_time = Now + 120s').first().json;return {json:{...b,found:!!$json.found,code:$json.code||null,source:$json.source||''}};"
+      },
+      "id": "c3cf5573-e713-4b17-a292-c09b26bec085",
+      "name": "Code: Normalize OTP Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ \"last_otp:\" + $json.phone }}",
+        "options": {}
+      },
+      "id": "5035b406-1f75-4156-a8bc-8049669661d6",
+      "name": "Redis GET: last_otp",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        832,
+        624
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cf180835-6b4d-4de7-beaf-e16ae7f04ee4",
+              "leftValue": "={{ $('Code: Normalize OTP Result').first().json.found }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "af4ac030-1af4-4b6f-af96-f5f6058eaf41",
+              "leftValue": "={{ $('Code: Normalize OTP Result').first().json.code }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "e5140e24-ef9f-4be8-8246-e778189ea52e",
+              "leftValue": "={{ $('Code: Normalize OTP Result').first().json.code }}",
+              "rightValue": "={{ $json.propertyName }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "148e8e92-1ba9-47a2-acb7-6381fc01bd94",
+      "name": "IF: New Valid OTP?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1216,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'last_otp:' + $('Code: Normalize OTP Result').first().json.phone }}",
+        "value": "={{ $('Code: Normalize OTP Result').first().json.code }}",
+        "expire": true,
+        "ttl": 180
+      },
+      "id": "a1baa244-7d99-4c2c-a948-92027e46b423",
+      "name": "Redis SET: last_otp",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        576
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'user_state:' + $('Code: Evaluate Loop Condition').first().json.phone }}",
+        "value": "={{ JSON.stringify({ status: 'Wait_Feedback', account_key: $('Code: Evaluate Loop Condition').first().json.account_key, fail_count: Number($('Code: Evaluate Loop Condition').first().json.fail_count || 0) }) }}"
+      },
+      "id": "2c8788c0-f87a-4943-94aa-2ca69e1ac784",
+      "name": "Redis SET: State Wait_Feedback",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        576
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Code: Normalize OTP Result').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ \n  content: `تم استلام رمز الدخول: ${$('Code: Normalize OTP Result').first().json.code} 🔐. هل اشتغل؟\\n\\n⚠️ تذكير عزيزي: اشتراك ديزني بلس يشتغل على جهاز واحد فقط (جوال، آيباد، لابتوب، كمبيوتر). لا يمكن إضافة جهاز ثاني أو تبديله بعد الدخول.`, \n  content_type: 'input_select', \n  content_attributes: { \n    sent_by_otp: true, \n    items: [ \n      { title: '✅اشتغل', value: '✅اشتغل' }, \n      { title: '❌ماشتغل', value: '❌ماشتغل' }, \n      { title: 'جاني خطأ - حد اقصى', value: 'جاني خطأ - حد اقصى' }, \n      { title: 'خروج من العملية', value: 'خروج من العملية' } \n    ] \n  } \n}) }}"
+      },
+      "id": "82aa5691-b26a-488a-988a-545a8510d741",
+      "name": "Chatwoot: NEW OTP + Buttons",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        2128,
+        576
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bd215029-823a-41f2-b0ad-daa04ceaf0ca",
+              "leftValue": "={{ $json.end_reason }}",
+              "rightValue": "timeout",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "94c263b1-48a4-481d-8104-d575043e2c81",
+      "name": "IF: Time Expired?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1216,
+        1296
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Code: Evaluate Loop Condition').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ content: 'عذراً، انتهى وقت الجلسة. إذا لم تستلم الكود أو لم يضبط معك، يرجى المحاولة مرة أخرى.', content_attributes: { sent_by_otp: true } }) }}"
+      },
+      "id": "4136e079-4339-4cc3-911e-494f1e7cb935",
+      "name": "Chatwoot: Session Timeout",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        1136
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'user_state:' + $('Code: Evaluate Loop Condition').first().json.phone }}"
+      },
+      "id": "09c30da4-f60e-4835-8e4c-2e1b0126291f",
+      "name": "Redis DEL: user_state (Timeout)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        1136
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'account_lock:' + $('Code: Evaluate Loop Condition').first().json.account_key }}"
+      },
+      "id": "8c61227d-4adf-410b-8f0c-0f9293cd66c9",
+      "name": "Redis DEL: account_lock (Timeout)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        1136
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pop",
+        "list": "={{ \"queue:\" + $(\"Code: Evaluate Loop Condition\").first().json.account_key }}",
+        "propertyName": "next_queue_item",
+        "options": {}
+      },
+      "id": "037ff218-8982-4204-a8b3-d4da0324a07f",
+      "name": "Redis POP: Next Queue (Timeout)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        144,
+        1136
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "00c513f4-087e-4a91-bdc7-038c204126a6",
+              "leftValue": "={{ ($json.next_queue_item || '').toString() }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f7de8e1b-6215-409f-95d8-dc9461ace985",
+      "name": "IF: Has Next (Timeout)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. جلب العنصر من الطابور بأمان\nconst item = $input.first().json.next_queue_item;\n\n// 2. التحقق مما إذا كان فارغاً تماماً\nif (!item) {\n  return { \n    json: { \n      is_valid_next: false, \n      email: '', \n      order_number: '', \n      phone: '', \n      conversation_id: null, \n      chatwoot_account_id: null \n    } \n  };\n}\n\nlet p = {};\n\n// 3. التحليل الذكي: هل هو نص يحتاج إلى Parse أم كائن جاهز؟\nif (typeof item === 'string' && item.trim() !== '') {\n  try { \n    p = JSON.parse(item); \n  } catch { \n    p = {}; \n  }\n} else if (typeof item === 'object') {\n  p = item; // إذا كان كائناً، خذه كما هو بدون أي تحويل\n}\n\n// 4. استخراج البيانات مع الحماية من القيم الفارغة\nconst email = String(p.email || '').trim().toLowerCase();\nconst order_number = String(p.order_number || '').trim();\nconst phone = String(p.phone || '').trim();\nconst conversation_id = p.conversation_id ?? null;\nconst chatwoot_account_id = p.chatwoot_account_id ?? null;\n\n// 5. التأكد من وجود البيانات الأساسية لاعتبار العنصر صالحاً\nconst is_valid_next = Boolean(email && order_number);\n\n// 6. الإرجاع النهائي\nreturn { \n  json: { \n    ...p, \n    email, \n    order_number, \n    phone, \n    conversation_id, \n    chatwoot_account_id, \n    is_valid_next \n  } \n};"
+      },
+      "id": "363c1fa6-2b70-4f10-8b41-a5a4f8d4854e",
+      "name": "Code: Parse Next User (Timeout)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'account_lock:' + $('Code: Evaluate Loop Condition').first().json.account_key }}"
+      },
+      "id": "69a7ea7d-8b5a-4257-b54b-83f368b00466",
+      "name": "Redis DEL: account_lock (Success)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        1456
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pop",
+        "list": "={{ \"queue:\" + $(\"Code: Evaluate Loop Condition\").first().json.account_key }}",
+        "propertyName": "next_queue_item",
+        "options": {}
+      },
+      "id": "5688b3e1-04c2-4f84-88f3-0682bed3f8e4",
+      "name": "Redis POP: Next Queue (Success)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        1456
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3c539fca-d8b4-44a9-bcac-c8afe598a69f",
+              "leftValue": "={{ ($json.next_queue_item || '').toString() }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "10c2f083-7029-4c74-9532-465c157ab549",
+      "name": "IF: Has Next (Success)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        1456
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Safely grab the item from the input\nconst item = $input.first().json.next_queue_item;\n\n// 2. Check if it's completely empty/missing\nif (!item) {\n  return { \n    json: { \n      is_valid_next: false, \n      email: '', \n      order_number: '', \n      phone: '', \n      conversation_id: null, \n      chatwoot_account_id: null \n    } \n  };\n}\n\nlet p = {};\n\n// 3. Smart Parsing: If it's a string, parse it. If it's an object, use it directly.\nif (typeof item === 'string' && item.trim() !== '') {\n  try { \n    p = JSON.parse(item); \n  } catch { \n    p = {}; \n  }\n} else if (typeof item === 'object') {\n  p = item; \n}\n\n// 4. Extract variables safely\nconst email = String(p.email || '').trim().toLowerCase();\nconst order_number = String(p.order_number || '').trim();\nconst phone = String(p.phone || '').trim();\nconst conversation_id = p.conversation_id ?? null;\nconst chatwoot_account_id = p.chatwoot_account_id ?? null;\n\n// 5. Validate\nconst is_valid_next = Boolean(email && order_number);\n\n// 6. Return the perfectly structured output\nreturn { \n  json: { \n    ...p, \n    email, \n    order_number, \n    phone, \n    conversation_id, \n    chatwoot_account_id, \n    is_valid_next \n  } \n};"
+      },
+      "id": "46343292-07fc-4313-9f9f-2f8e6ea3aeb0",
+      "name": "Code: Parse Next User (Success)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        1440
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "2tBDvy2AVgJsrs2l",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/2tBDvy2AVgJsrs2l",
+          "cachedResultName": "wf2- agent v3"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{ $json.email }}",
+            "order_number": "={{ $json.order_number }}",
+            "phone": "={{ $json.phone }}",
+            "conversation_id": "={{ $json.conversation_id }}",
+            "chatwoot_account_id": "={{ $json.chatwoot_account_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "order_number",
+              "displayName": "order_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "chatwoot_account_id",
+              "displayName": "chatwoot_account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "ExcutedBy",
+              "displayName": "ExcutedBy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "baae617e-d96e-4d4c-ac54-b3deaea90ea9",
+      "name": "Execute W2 (From Queue Timeout)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1360,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "2tBDvy2AVgJsrs2l",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/2tBDvy2AVgJsrs2l",
+          "cachedResultName": "wf2- agent v3"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{ $json.email }}",
+            "order_number": "={{ $json.order_number }}",
+            "phone": "={{ $json.phone }}",
+            "conversation_id": "={{ $json.conversation_id }}",
+            "chatwoot_account_id": "={{ $json.chatwoot_account_id }}",
+            "ExcutedBy": "otp"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "order_number",
+              "displayName": "order_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "chatwoot_account_id",
+              "displayName": "chatwoot_account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "ExcutedBy",
+              "displayName": "ExcutedBy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "cfb328b4-18b9-41f6-a723-85e7a0e69ff7",
+      "name": "Execute W2 (From Queue Success)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1376,
+        1424
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        2480,
+        1472
+      ],
+      "id": "cf1c0059-8db6-4bb8-a13e-1c8afff1926f"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Code: Evaluate Loop Condition').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ content: 'تم بدء جلسة لمدة دقيقتين. عند وصول الرمز أدخله مباشرة قبل انتهاء المهلة.', content_attributes: { sent_by_otp: true } }) }}"
+      },
+      "id": "da053f04-68b4-425f-8129-2df7f5236301",
+      "name": "Chatwoot: Session Timeout4",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        1728
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.mail.tm/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE3NzE4NTYwMjksInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJhZGRyZXNzIjoiZWFybHkxMkBhaXJzd29ybGQubmV0IiwiaWQiOiI2OTViZTI5NmE1MGJkZTY0NjUwMTcwOGQiLCJtZXJjdXJlIjp7InN1YnNjcmliZSI6WyIvYWNjb3VudHMvNjk1YmUyOTZhNTBiZGU2NDY1MDE3MDhkIl19fQ.06o-9PxzOuQhp9indonKahQHQZ5wlHJo8P2GrkTfbEfT0Mly8Aodv9vbPjVv-zEs_14TiclKf7PiOrM9_xNkYg\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9e659203-b545-4bfa-8564-7cc612d8e62e",
+      "name": "Fetch Inbox (Mail.tm)3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -160,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## تم نجاح العميل من استخدام الكود بالنجاح \nثم التحقق من ايشخص اخر في الطبور \n",
+        "height": 240,
+        "width": 2704,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -912,
+        1360
+      ],
+      "typeVersion": 1,
+      "id": "4f5e5d81-ff20-4e99-b011-5c12b5c124b1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## تم فشل العميل من استخدام الكود \nثم التحقق من ايشخص اخر في الطبور \n",
+        "height": 272,
+        "width": 2672,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -912,
+        1056
+      ],
+      "typeVersion": 1,
+      "id": "5d148563-7b26-4967-a24c-9fea7011845d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## تم نجاح العميل من استخدام الكود بالنجاح \nثم التحقق من ايشخص اخر في الطبور \n",
+        "height": 624,
+        "width": 2560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1152,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "f213fbe5-05c3-4fe9-b5f8-84aff309ae32",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {},
+      "id": "77306bac-a2d7-4a35-a7e3-c0d7c57cbc6a",
+      "name": "Wait Node (5s)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2432,
+        720
+      ],
+      "webhookId": "b3bd0c6e-9cbf-41fa-b165-c6f6a5eec6db"
+    }
+  ],
+  "pinData": {
+    "Trigger (From W2)": [
+      {
+        "json": {
+          "email": "early32@mechanicspedia.com",
+          "order_number": "4545245",
+          "phone": "+213559705866",
+          "conversation_id": 1744,
+          "chatwoot_account_id": 152788,
+          "account_key": "early32@mechanicspedia.com",
+          "provider": "mailtm",
+          "password": "Zzxx1122"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Fetch Inbox (Mail.tm)2": [
+      {
+        "json": {
+          "id": "699de60dcaeb55b63f201f6b",
+          "msgid": "<0102019c90caa014-007bd3cc-8a98-417f-8de9-abd7454c0011-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 9023 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4992,
+          "downloadUrl": "/messages/699de60dcaeb55b63f201f6b/download",
+          "sourceUrl": "/sources/699de60dcaeb55b63f201f6b",
+          "createdAt": "2026-02-24T17:55:24+00:00",
+          "updatedAt": "2026-02-24T17:55:25+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "698fb0439fb2abfc3914f1d7",
+          "msgid": "<0102019c594883b4-94f556d6-3695-4c24-b30b-b773969fe40d-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 2276 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4996,
+          "downloadUrl": "/messages/698fb0439fb2abfc3914f1d7/download",
+          "sourceUrl": "/sources/698fb0439fb2abfc3914f1d7",
+          "createdAt": "2026-02-13T23:14:10+00:00",
+          "updatedAt": "2026-02-13T23:14:11+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "698d04b36a5552a6662bb680",
+          "msgid": "<0102019c4eda5bf3-3bec3b21-b351-4ba4-8033-66dc66b0f189-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 1051 Your passcode expires in…",
+          "seen": true,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4992,
+          "downloadUrl": "/messages/698d04b36a5552a6662bb680/download",
+          "sourceUrl": "/sources/698d04b36a5552a6662bb680",
+          "createdAt": "2026-02-11T22:37:39+00:00",
+          "updatedAt": "2026-02-11T22:40:24+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "698627e961f4cd27a9fa75a7",
+          "msgid": "<0102019c340be475-995cf21c-0153-4f5c-b9b3-fcdc40431497-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 6072 Your passcode expires in…",
+          "seen": true,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4995,
+          "downloadUrl": "/messages/698627e961f4cd27a9fa75a7/download",
+          "sourceUrl": "/sources/698627e961f4cd27a9fa75a7",
+          "createdAt": "2026-02-06T17:42:00+00:00",
+          "updatedAt": "2026-02-06T18:51:28+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "698267a040cb48b34c854b87",
+          "msgid": "<0102019c2564ca14-0df22ae5-023f-4fb1-ae1d-2ac9c2a4a6bf-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 2321 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4987,
+          "downloadUrl": "/messages/698267a040cb48b34c854b87/download",
+          "sourceUrl": "/sources/698267a040cb48b34c854b87",
+          "createdAt": "2026-02-03T21:24:48+00:00",
+          "updatedAt": "2026-02-03T21:24:48+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "6981ed8a7e10230c3c8b5e69",
+          "msgid": "<0102019c2387e158-95823cc6-7773-49e7-9be7-97747f6f8c68-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 7250 Your passcode expires in…",
+          "seen": true,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4962,
+          "downloadUrl": "/messages/6981ed8a7e10230c3c8b5e69/download",
+          "sourceUrl": "/sources/6981ed8a7e10230c3c8b5e69",
+          "createdAt": "2026-02-03T12:43:53+00:00",
+          "updatedAt": "2026-02-13T18:47:28+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "6981ed0b1624fcdcde70c8e5",
+          "msgid": "<0102019c2385f231-543688bc-4bbb-4527-97b5-eac8402d975d-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 7250 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4995,
+          "downloadUrl": "/messages/6981ed0b1624fcdcde70c8e5/download",
+          "sourceUrl": "/sources/6981ed0b1624fcdcde70c8e5",
+          "createdAt": "2026-02-03T12:41:46+00:00",
+          "updatedAt": "2026-02-03T12:41:47+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "6981d6b6eb4c9321b045c210",
+          "msgid": "<0102019c232eb433-6c1d2c5f-7923-4f90-aa86-ea6a66f0a4f1-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 5453 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4991,
+          "downloadUrl": "/messages/6981d6b6eb4c9321b045c210/download",
+          "sourceUrl": "/sources/6981d6b6eb4c9321b045c210",
+          "createdAt": "2026-02-03T11:06:29+00:00",
+          "updatedAt": "2026-02-03T11:06:30+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "69817f35ccf4b09c15026fdc",
+          "msgid": "<0102019c21d8e572-3f2ae427-bfb6-4eae-a116-9823ae4c2ed5-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 9241 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4991,
+          "downloadUrl": "/messages/69817f35ccf4b09c15026fdc/download",
+          "sourceUrl": "/sources/69817f35ccf4b09c15026fdc",
+          "createdAt": "2026-02-03T04:53:08+00:00",
+          "updatedAt": "2026-02-03T04:53:09+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "6980feff94d98850e5b10d28",
+          "msgid": "<0102019c1fe4128f-d24db6d7-968b-4b55-bf62-4e52b8bfdbc6-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 1483 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4995,
+          "downloadUrl": "/messages/6980feff94d98850e5b10d28/download",
+          "sourceUrl": "/sources/6980feff94d98850e5b10d28",
+          "createdAt": "2026-02-02T19:46:06+00:00",
+          "updatedAt": "2026-02-02T19:46:07+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "6980e8b510c5514f2f22971e",
+          "msgid": "<0102019c1f8d02f3-9a4895af-65b6-48f5-b001-021bff8fa999-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 3871 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4995,
+          "downloadUrl": "/messages/6980e8b510c5514f2f22971e/download",
+          "sourceUrl": "/sources/6980e8b510c5514f2f22971e",
+          "createdAt": "2026-02-02T18:11:00+00:00",
+          "updatedAt": "2026-02-02T18:11:01+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "6980d972a950072765d05deb",
+          "msgid": "<0102019c1f516688-2b2eb2ab-b5a9-481b-b4f9-023b35cdaf70-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 2802 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4995,
+          "downloadUrl": "/messages/6980d972a950072765d05deb/download",
+          "sourceUrl": "/sources/6980d972a950072765d05deb",
+          "createdAt": "2026-02-02T17:05:54+00:00",
+          "updatedAt": "2026-02-02T17:05:54+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "697e032b550d47495f4be8a8",
+          "msgid": "<0102019c143c5ed4-e73cea78-8cce-48c2-aa79-f6b8678a82fe-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 5388 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4992,
+          "downloadUrl": "/messages/697e032b550d47495f4be8a8/download",
+          "sourceUrl": "/sources/697e032b550d47495f4be8a8",
+          "createdAt": "2026-01-31T13:27:06+00:00",
+          "updatedAt": "2026-01-31T13:27:07+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "id": "697e024051ddf213384d795a",
+          "msgid": "<0102019c1438c789-ee268aaf-7a12-4a56-b063-80da427abffd-000000@eu-west-1.amazonses.com>",
+          "from": {
+            "address": "code@notification.apps.disneyplus.com",
+            "name": "Disney+"
+          },
+          "to": [
+            {
+              "address": "early32@mechanicspedia.com",
+              "name": ""
+            }
+          ],
+          "subject": "Code to verify your Email",
+          "intro": "Welcome to Disney+. Enter your one-time passcode to confirm your email. Your One-Time Passcode: 8128 Your passcode expires in…",
+          "seen": false,
+          "isDeleted": false,
+          "hasAttachments": false,
+          "size": 4992,
+          "downloadUrl": "/messages/697e024051ddf213384d795a/download",
+          "sourceUrl": "/sources/697e024051ddf213384d795a",
+          "createdAt": "2026-01-31T13:23:11+00:00",
+          "updatedAt": "2026-01-31T13:23:12+00:00",
+          "accountId": "/accounts/6887f4c24043fcf2a00a8aef"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Trigger (From W2)": {
+      "main": [
+        [
+          {
+            "node": "Code: expiry_time = Now + 120s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis DEL: user_state (Success)1": {
+      "main": [
+        [
+          {
+            "node": "Redis DEL: account_lock (Success)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Next User Valid? (Timeout)1": {
+      "main": [
+        [
+          {
+            "node": "Execute W2 (From Queue Timeout)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "IF: Next User Valid? (Success)1": {
+      "main": [
+        [
+          {
+            "node": "Execute W2 (From Queue Success)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Code: expiry_time = Now + 120s": {
+      "main": [
+        [
+          {
+            "node": "Redis GET: user_state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis GET: user_state": {
+      "main": [
+        [
+          {
+            "node": "Code: Evaluate Loop Condition",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Evaluate Loop Condition": {
+      "main": [
+        [
+          {
+            "node": "IF: Continue Loop?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Continue Loop?": {
+      "main": [
+        [
+          {
+            "node": "IF: Provider is MailTm?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF: Time Expired?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Provider is MailTm?": {
+      "main": [
+        [
+          {
+            "node": "Login Mail.tm",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Inbox (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login Mail.tm": {
+      "main": [
+        [
+          {
+            "node": "IF: Mail.tm Token?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Mail.tm Token?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Inbox (Mail.tm)2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return: Error (Mail.tm)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Inbox (Mail.tm)2": {
+      "main": [
+        [
+          {
+            "node": "Extract Code (Mail.tm)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Code (Mail.tm)": {
+      "main": [
+        [
+          {
+            "node": "Code: Normalize OTP Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return: Error (Mail.tm)": {
+      "main": [
+        [
+          {
+            "node": "Code: Normalize OTP Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Inbox (Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Extract Code (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Code (Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Code: Normalize OTP Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Normalize OTP Result": {
+      "main": [
+        [
+          {
+            "node": "Redis GET: last_otp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis GET: last_otp": {
+      "main": [
+        [
+          {
+            "node": "IF: New Valid OTP?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: New Valid OTP?": {
+      "main": [
+        [
+          {
+            "node": "Redis SET: last_otp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Node (5s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis SET: last_otp": {
+      "main": [
+        [
+          {
+            "node": "Redis SET: State Wait_Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis SET: State Wait_Feedback": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: NEW OTP + Buttons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot: NEW OTP + Buttons": {
+      "main": [
+        [
+          {
+            "node": "Wait Node (5s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Time Expired?": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Session Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis DEL: user_state (Success)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot: Session Timeout": {
+      "main": [
+        [
+          {
+            "node": "Redis DEL: user_state (Timeout)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis DEL: user_state (Timeout)": {
+      "main": [
+        [
+          {
+            "node": "Redis DEL: account_lock (Timeout)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis DEL: account_lock (Timeout)": {
+      "main": [
+        [
+          {
+            "node": "Redis POP: Next Queue (Timeout)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis POP: Next Queue (Timeout)": {
+      "main": [
+        [
+          {
+            "node": "IF: Has Next (Timeout)?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Has Next (Timeout)?": {
+      "main": [
+        [
+          {
+            "node": "Code: Parse Next User (Timeout)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Code: Parse Next User (Timeout)": {
+      "main": [
+        [
+          {
+            "node": "IF: Next User Valid? (Timeout)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis DEL: account_lock (Success)": {
+      "main": [
+        [
+          {
+            "node": "Redis POP: Next Queue (Success)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis POP: Next Queue (Success)": {
+      "main": [
+        [
+          {
+            "node": "IF: Has Next (Success)?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Has Next (Success)?": {
+      "main": [
+        [
+          {
+            "node": "Code: Parse Next User (Success)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Code: Parse Next User (Success)": {
+      "main": [
+        [
+          {
+            "node": "IF: Next User Valid? (Success)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "Redis GET: user_state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Node (5s)": {
+      "main": [
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "124710dd-dd94-44b7-9355-50c381dfa07d",
+  "meta": {
+    "instanceId": "98c9121775f2c350960fe151740521cb03acfc1cee54bd926992bb3e7c435f9d"
+  },
+  "id": "eaYEEWGtMmMlhUDr",
+  "tags": []
+}

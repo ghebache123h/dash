@@ -1,0 +1,4041 @@
+{
+  "name": "W1: AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mail.tm/token",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "address",
+              "value": "=early12@airsworld.net"
+            },
+            {
+              "name": "password",
+              "value": "=Zzxx1122"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "85510798-1d32-445f-8a58-93bbb9d148a9",
+      "name": "Login Mail.tm1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -3888,
+        5072
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.mail.tm/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "54326717-2027-4d1b-82fb-49b96c9cf68b",
+      "name": "Fetch Inbox (Mail.tm)1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -3568,
+        5088
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## W1 Ingress & Safety / الاستقبال والحماية\n- Webhook parsing\n- Label override drop\n- Human handoff auto-mute (5h)\n- Video rejection",
+        "height": 640,
+        "width": 1280
+      },
+      "id": "b432ae3a-5684-487d-be35-24044e727727",
+      "name": "Sticky: W1 Ingress",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2240,
+        3088
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "enterprise-chatwootv2",
+        "options": {}
+      },
+      "id": "3398cf30-6c6e-4b47-bc09-314b7f6af3b2",
+      "name": "Webhook (Chatwoot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        7296
+      ],
+      "webhookId": "04ae77f5-088f-40c9-9f6e-070b196f3065"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "message_text",
+              "value": "={{ $json.body.content || '' }}",
+              "type": "string",
+              "id": "c5dc0dc6-c92e-4ba5-b0c3-20a2655aad98"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ $json.body.conversation.id }}",
+              "type": "number",
+              "id": "e790bc68-4f62-4ce6-8897-b5f0f4e6e2a4"
+            },
+            {
+              "name": "chatwoot_account_id",
+              "value": "={{ $json.body.account.id || 1 }}",
+              "type": "number",
+              "id": "0a8f7ed0-742d-47c3-b09f-24ee1eeaa5df"
+            },
+            {
+              "name": "phone",
+              "value": "={{ '+' + (($json.body.conversation.contact_inbox.source_id || '').toString().replace(/^\\+/, '')) }}",
+              "type": "string",
+              "id": "30759bb1-8aac-47c6-9269-5d276910d3a0"
+            },
+            {
+              "name": "message_type",
+              "value": "={{ $json.body.message_type || '' }}",
+              "type": "string",
+              "id": "919d9015-045b-4783-b4fe-d7cf8a3c5661"
+            },
+            {
+              "name": "payload_value",
+              "value": "={{ $json.body.content_attributes?.submitted_values?.payload || $json.body.content_attributes?.in_reply_to_external_id || $json.body.content || '' }}",
+              "type": "string",
+              "id": "a6fccaca-fd53-41f3-bee8-e519c6cadd05"
+            },
+            {
+              "name": "image_url",
+              "value": "={{ (($json.body.attachments?.[0]?.file_type || '').toString().toLowerCase().includes('image')) ? ($json.body.attachments?.[0]?.data_url || '') : '' }}",
+              "type": "string",
+              "id": "eb5407aa-220a-44c4-a92c-56242b5c530b"
+            },
+            {
+              "name": "has_image",
+              "value": "={{ (($json.body.attachments?.[0]?.file_type || '').toString().toLowerCase().includes('image')) && !!($json.body.attachments?.[0]?.data_url) }}",
+              "type": "boolean",
+              "id": "586c4b95-0537-4a21-88e2-307118c3c5e0"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ ($json.body.id || '').toString() }}",
+              "type": "string",
+              "id": "d9ecdf53-5d9b-4ec0-857e-bf93d2c9baca"
+            },
+            {
+              "name": "content_type",
+              "value": "={{ ($json.body.content_type || '').toString().toLowerCase() }}",
+              "type": "string",
+              "id": "c6e827b6-765c-49fb-b056-dde51a5f8944"
+            },
+            {
+              "name": "media_url",
+              "value": "={{ $json.body.attachments?.[0]?.data_url || '' }}",
+              "type": "string",
+              "id": "7466c200-53b4-435a-a007-084a9a43e64b"
+            },
+            {
+              "name": "media_type",
+              "value": "={{ ($json.body.attachments?.[0]?.file_type || '').toString().toLowerCase() }}",
+              "type": "string",
+              "id": "97eb0570-cd14-4c16-9209-9f4617b6ea59"
+            },
+            {
+              "name": "has_attachment",
+              "value": "={{ Array.isArray($json.body.attachments) && $json.body.attachments.length > 0 }}",
+              "type": "boolean",
+              "id": "16881abf-3ef0-4962-8012-49c6d400d199"
+            },
+            {
+              "name": "is_video_attachment",
+              "value": "={{ ($json.body.attachments?.[0]?.file_type || '').toString().toLowerCase().includes('video') }}",
+              "type": "boolean",
+              "id": "a64c42fb-1e81-460c-b736-8be27a17be33"
+            },
+            {
+              "name": "is_audio_attachment",
+              "value": "={{ ($json.body.attachments?.[0]?.file_type || '').toString().toLowerCase().includes('audio') }}",
+              "type": "boolean",
+              "id": "bac15499-af94-476a-ae4a-cd86a5c4a69e"
+            },
+            {
+              "name": "is_human_outgoing",
+              "value": "={{ ($json.body.message_type === 'outgoing' || $json.body.message_type === 1) && $json.body.content_attributes?.sent_by_ai !== true && $json.body.content_attributes?.sent_by_otp !== true }}",
+              "type": "boolean",
+              "id": "1daadb83-77df-430a-9a8d-640dcc622f60"
+            },
+            {
+              "name": "has_escalation_label",
+              "value": "={{ (($json.body.conversation?.labels || $json.body.labels || []).map(l => (typeof l === 'string' ? l : (l?.title || l?.name || '')).toLowerCase()).some(l => l.includes('customer support only') || l.includes('support only') || l.includes('escalat'))) }}",
+              "type": "boolean",
+              "id": "42716db5-891e-409b-90a4-c1cfe3213c5c"
+            },
+            {
+              "name": "payload_normalized",
+              "value": "={{ (($json.body.content_attributes?.submitted_values?.payload || $json.body.content_attributes?.in_reply_to_external_id || $json.body.content || '').toString().trim().toLowerCase()) }}",
+              "type": "string",
+              "id": "2f199fe7-5d4e-456a-a693-6f145f67039e"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4ecf1b8-3f97-471a-b044-c818fa089034",
+      "name": "Set: Extract Incoming",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1120,
+        7280
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ 'user_state:' + $('Set: Extract Incoming').first().json.phone }}",
+        "options": {}
+      },
+      "id": "8510bec2-0858-4b2a-9a0d-7ad6e06e7b6c",
+      "name": "Redis GET: user_state",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        704,
+        7328
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. جلب البيانات من عقدة Set السابقة\nconst c = $('Set: Extract Incoming').first().json;\n\n// 2. جلب مخرجات عقدة Redis\n// ملاحظة: استبدل 'propertyName' بالاسم الفعلي للحقل الذي تخرج فيه بيانات Redis (مثل value أو data).\n// إذا كانت البيانات تخرج مباشرة في الجذر الأساسي، سيلتقطها الكود تلقائياً ككائن بفضل الـ Fallback.\nconst raw = $input.first().json.propertyName ?? $input.first().json.value ?? $input.first().json;\n\nlet parsed = {};\n\n// 3. التحقق الذكي: إذا كان نصاً قم بتحليله، وإذا كان كائناً خذه كما هو\nif (typeof raw === 'string' && raw.trim() !== '') {\n  try { \n    parsed = JSON.parse(raw); \n  } catch { \n    parsed = {}; \n  }\n} else if (raw && typeof raw === 'object' && !Array.isArray(raw)) {\n  parsed = raw;\n}\n\n// 4. استخراج القيم مع وضع قيم افتراضية آمنة في حال عدم وجودها\nconst status = parsed.status ? String(parsed.status) : 'None';\nconst account_key = parsed.account_key ? String(parsed.account_key) : '';\nconst fail_count = parsed.fail_count !== undefined ? Number(parsed.fail_count) : 0;\n\n// 5. دمج المخرجات وإعادتها للعقدة التالية\nreturn { \n  json: { \n    ...c, \n    status, \n    account_key, \n    fail_count: Number.isFinite(fail_count) ? fail_count : 0 \n  } \n};"
+      },
+      "id": "72db2d1d-78ac-4d6b-8f5e-d87eaecfe073",
+      "name": "Code: Normalize State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        7328
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.status }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "None"
+            },
+            {
+              "value2": "Wait_Feedback",
+              "output": 1
+            },
+            {
+              "value2": "Await_Press",
+              "output": 2
+            },
+            {
+              "value2": "Queueing",
+              "output": 3
+            }
+          ]
+        },
+        "fallbackOutput": 0
+      },
+      "id": "ced55e86-9154-48c5-b663-4d5aed2491ea",
+      "name": "Switch: User State",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        7280
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://app.chatwoot.com/api/v1/accounts/' + $('Set: Extract Incoming').first().json.chatwoot_account_id + '/conversations/' + $('Set: Extract Incoming').first().json.conversation_id + '/messages' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "name": "before",
+                    "value": "={{ $response.body.payload[0].id }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ $response.body.payload.length < 20 }}"
+            }
+          }
+        }
+      },
+      "id": "cacdf47a-607e-45b7-ada2-12ddfdfa2ef9",
+      "name": "HTTP: Fetch Chat History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2704,
+        6496
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "chat_input",
+              "value": "={{ 'Conversation History:\\n' + ($json.formatted_history || '') + '\\nLatest Customer Message:\\n' + $('Set: Extract Incoming').first().json.message_text }}",
+              "type": "string"
+            },
+            {
+              "name": "formatted_history",
+              "value": "={{ $json.formatted_history || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $('Set: Extract Incoming').first().json.phone }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ $('Set: Extract Incoming').first().json.conversation_id }}",
+              "type": "number"
+            },
+            {
+              "name": "chatwoot_account_id",
+              "value": "={{ $('Set: Extract Incoming').first().json.chatwoot_account_id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "90cfe31d-68fc-4415-9bb3-b6c056036138",
+      "name": "Set: AI Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3072,
+        6496
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Set: AI Context').first().json.chat_input }}\n\n\n{{ $('Code: Format Chat History').item.json.compact_history }}\n\nLatest customer message:\n{{ $('Code: Format Chat History').item.json.latest_customer_message }}",
+        "options": {
+          "systemMessage": "=# ROLE & PERSONA\nYou are the AI customer support agent for **Early Store (متجر ايرلي)** (Website: https://early-store1.com).\n- **Tone**: Professional, natural conversational Arabic (العربية البيضاء) do not forcing to be humane using terms like eg 'يالعالي' 'يابطل' etc... . Be polite, clear, and ALWAYS ask for clarification if the user's intent is ambiguous. Do not guess or assume their needs.\n- **Dialect Rule**: You may occasionally use light, natural Saudi expressions, but do NOT force a heavy dialect or overuse these terms. Keep the language universally understood in arbic.\n- **Format**: Short, conversational WhatsApp replies. Emojis minimal (0–2 max) and strictly for clarity (e.g., ✅, ❌, ⏳).\n- **Chat History**: If an old ticket/escalation exists in the history and the user returns, treat it as a **new conversation** but keep the past context in mind. Do not get stuck in the old escalation loop.\n\n# 1. CORE INTERACTION & \"HARD ESCALATION\" RULES\n- **Deep Understanding First**: NEVER escalate blindly. If a user has an issue, dig deep. Ask clarifying questions to understand the exact problem, product, and order number *before* deciding to escalate.\n- **Refunds & Complaints**: If a user asks for a refund or complains about a code, DO NOT escalate immediately. Politely suggest trying to get a new code or troubleshooting first. Only escalate if they strictly refuse and insist on a refund.\n- **Immediate Escalation Triggers** (After gathering details): New subscriptions (Sales), Pricing questions, or inquiries about products outside your supported list.\n\n# 2. DISNEY+ BUSINESS LOGIC (Strict)\n- **Login Flow**: This is a *login* process. Customers use the **phone number (from their receipt in our website store)**, followed by the OTP code.\n- **First Contact**: Before asking for data, you MUST send this video: `https://youtube.com/shorts/Z5gtTL-9UYg?si=q85UK0bIzS-VfHgK`. Instruct them to watch it to find their details.\n- **Strict Device & Switch Policy**: \n  - *Supported*: Mobile (جوال), iPad/Tablet (آيباد), Laptop (لابتوب), PC (كمبيوتر).\n  - *Banned*: TV (شاشة/تلفاز), Smart TV, Apple TV, Chromecast, Fire Stick. Decline banned devices due to the \"One Device Policy\".\n  - *No Switching*: If a user successfully logged in but later asks to switch to another device, decline immediately. The One Device Policy strictly prohibits switching devices after login.\n- **Anti-Fraud (Next-Day Claims)**: If a user claims a code \"didn't work\", but they are reporting this on a *different day* than when the code was generated, treat them as a blocked/violating user. Do NOT give a new code. Apologize and state the code was valid for that session only.\n- **Attempt Limits**: Max 3 failed attempts per case. After the 3rd fail, NO 4th attempt; offer escalation.\n\n# 3. FASEL PLUS (فاصل بلس) LOGIC\nFollow this exact routing for Fasel Plus issues:\n1. **Wrong Email/Password (الإيميل والرمز غلط)**: Ask for the Order Number. Once provided, escalate to human support.\n2. **Banned Account (الحساب محظور)**: Ask if the message says \"محظور لمخالفة الشروط\". If yes, ask for the Order Number. Escalate and inform the user: `سيتم فحص طلبك لمعرفة إذا كان يشمله الضمان للتعويض.`\n3. **Max Views Reached (الحد الأقصى للمشاهدات)**: The store is NOT responsible. Tell the user to check their devices, log out of old ones, or wait. **DO NOT ESCALATE.**\n\n# 4. PLEX & EMBY (بليكس وإيمبي) LOGIC\n- If the user asks about Plex or Emby, inform them they need specialized support.\n- Provide this exact WhatsApp number: `+966 53 575 5325`.\n- 🚨 **CRITICAL**: NEVER send this phone number to users asking about Disney+, Fasel Plus, or any other product. It is strictly for Plex/Emby.\n\n# 5. DATA VALIDATION & PRE-OTP READINESS\n- Before calling `trigger_otp`, validate: **Email** (must contain `@`) and **Order Number** (must be 6+ numeric digits) the email of disney account whitch can find in the order page on our store and not the email of the user that has used to login our store, clearify that for them if they are unclear.\n- Before triggering the OTP tool, send this exact preparation message and WAIT for the user to reply:\n`تنبيه مهم: \nبعد تأكيدك، قد تتحول المحادثة لخطوات ثابتة لاستلام الكود لضمان السرعة. قد يبدأ فوراً أو يُطلب منك الانتظار لدورك. جاهز يا غالي؟`\n\n# 6. STRICT TOOL POLICIES (CRITICAL)\nTools available: `trigger_otp`, `esclation v3`, `Send Text Message`.\n\n- 🚨 **SILENT EXECUTION**: When you successfully call `trigger_otp` or `esclation v3`, YOU MUST NOT GENERATE ANY TEXT RESPONSE. Return ONLY the tool call. The tools trigger secondary automated workflows. Any text output after these tools is a critical failure.\n- 🚨 **WAIT-FOR-USER**: If you send a readiness question, STOP. You MUST wait for the user's next message. Never ask for readiness and escalate in the same turn.\n- 🚨 **ONE CALL PER TURN**: Do not call the same tool more than once per turn. Never hallucinate tool results.",
+          "maxIterations": 1,
+          "returnIntermediateSteps": true
+        }
+      },
+      "id": "69880023-90ec-4f3c-aca1-931f5133c818",
+      "name": "AI Agent (Master Prompt)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        3248,
+        6496
+      ]
+    },
+    {
+      "parameters": {
+        "description": "USE THIS TOOL TO FETCH AN OTP CODE. \nRequires exactly two inputs: [Email] (must contain @) and [Order Number] (must be 6+ digits). \nCall this ONLY when you have both valid pieces of data and the user is requesting a login code for Disney+ or similar supported services. \n⚠️ CRITICAL RULE: After calling this tool, YOU MUST GO SILENT. Do NOT generate any text, follow-up, or confirmation messages to the user. The tool itself will handle the final response.\n",
+        "workflowId": {
+          "__rl": true,
+          "value": "2tBDvy2AVgJsrs2l",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/2tBDvy2AVgJsrs2l",
+          "cachedResultName": "wf2- agent v3"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email', `account email`, 'string') }}",
+            "order_number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('order_number', `order number`, 'string') }}",
+            "phone": "={{ $json.phone }}",
+            "conversation_id": "={{ $json.conversation_id }}",
+            "chatwoot_account_id": "={{ $json.chatwoot_account_id }}",
+            "ExcutedBy": "ai"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "order_number",
+              "displayName": "order_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "chatwoot_account_id",
+              "displayName": "chatwoot_account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "ExcutedBy",
+              "displayName": "ExcutedBy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "6c546fac-ab7e-49f3-a5fb-12ce12a560b2",
+      "name": "Tool: trigger_otp",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        3376,
+        6848
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'user_state:' + $('Set: Extract Incoming').first().json.phone }}"
+      },
+      "id": "74f25981-39cd-476e-834d-2676f3011eec",
+      "name": "Redis DEL: user_state (Success)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2704,
+        7184
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'user_state:' + $('Set: Extract Incoming').first().json.phone }}",
+        "value": "={{ JSON.stringify({ status: 'Wait_Feedback', account_key: $('Code: Normalize State').first().json.account_key, fail_count: Number($('Code: Normalize State').first().json.fail_count || 0) + 1 }) }}"
+      },
+      "id": "c5b85f2f-f3b4-44b9-9237-608dad13927a",
+      "name": "Redis SET: user_state (Fail +1)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2688,
+        7504
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Extract Incoming').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ \n  content: 'نعتذر عن ذلك 🙏\\nيرجى الضغط على زر الإيميل مرة أخرى (الموضح في الصورة التي سأرسلها لك).\\nبعد الضغط، انتظر قليلًا حتى يصل الرمز، ثم سأرسله لك 🔐.\\nإذا لم يعمل مرة أخرى، يرجى إبلاغي بذلك.', \n  content_type: 'input_select', \n  content_attributes: { \n    sent_by_otp: true, \n    items: [ \n      { title: 'جاني خطأ - حد اقصى', value: 'جاني خطأ - حد اقصى' }, \n      { title: 'خروج من العملية', value: 'خروج من العملية' } \n    ] \n  } \n}) }}"
+      },
+      "id": "4b186e2f-e12d-4a26-b8fc-bf8abfaa1d1a",
+      "name": "Chatwoot: Press Resend",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        2960,
+        7504
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'user_state:' + $('Set: Extract Incoming').first().json.phone }}"
+      },
+      "id": "a4f9a233-074d-4807-9b30-a54af1a0c29f",
+      "name": "Redis DEL: user_state (Exit)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2704,
+        7936
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'account_lock:' + $('Code: Normalize State').first().json.account_key }}"
+      },
+      "id": "711a067e-1d9f-40f7-8ea9-1e6ecaf86b4c",
+      "name": "Redis DEL: account_lock (Success)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2944,
+        7184
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'account_lock:' + $('Code: Normalize State').first().json.account_key }}"
+      },
+      "id": "4d124ec7-6824-4758-ba16-9a8fb8238542",
+      "name": "Redis DEL: account_lock (Exit)",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2912,
+        7936
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// 1. تحديد المنطقة الزمنية\n// ==========================================\nconst phone = $input.first().json.phone || \"\"; \nlet userTimeZone = 'UTC'; \nif (phone) {\n  const cleanPhone = phone.replace(/[^\\d+]/g, '');\n  const tzMap = {\n    '+966': 'Asia/Riyadh', '+971': 'Asia/Dubai', '+965': 'Asia/Kuwait',\n    '+974': 'Asia/Qatar', '+973': 'Asia/Bahrain', '+968': 'Asia/Muscat',\n    '+962': 'Asia/Amman', '+961': 'Asia/Beirut', '+963': 'Asia/Damascus',\n    '+964': 'Asia/Baghdad', '+967': 'Asia/Aden', '+20': 'Africa/Cairo', \n    '+212': 'Africa/Casablanca', '+213': 'Africa/Algiers'\n  };\n  for (let i = 4; i >= 3; i--) {\n    const prefix = cleanPhone.substring(0, i);\n    if (tzMap[prefix]) { userTimeZone = tzMap[prefix]; break; }\n  }\n}\n\n// أداة تنسيق التاريخ فقط (DD/MM/YYYY)\nconst dateFormatter = new Intl.DateTimeFormat('en-GB', { \n    timeZone: userTimeZone, \n    day: '2-digit', month: '2-digit', year: 'numeric'\n});\n\n// ==========================================\n// 2. تجميع الرسائل وترتيبها\n// ==========================================\nlet allMessages = [];\nfor (const item of items) {\n    let pageMessages = item.json.payload || item.json.messages || (Array.isArray(item.json) ? item.json : []);\n    allMessages = allMessages.concat(pageMessages);\n}\nallMessages.sort((a, b) => a.created_at - b.created_at);\n\n// ==========================================\n// 3. تحليل المحادثة ومعالجة البيانات\n// ==========================================\nlet processedMessages = [];\nlet latestCustomerMessage = \"\";\nlet failCount = 0;\nlet successCount = 0;\n\nallMessages.forEach(msg => {\n    let text = msg.content ? msg.content.trim() : \"\";\n    let hasAttachment = msg.attachments && msg.attachments.length > 0;\n    \n    // تخطي الرسائل المحذوفة والفارغة\n    if (text === \"تم حذف هذه الرسالة\" || (!text && !hasAttachment)) return; \n\n    // حساب مرات النجاح والفشل من كامل المحادثة\n    if (msg.message_type === 0) { \n        if (text.includes(\"جاني خطأ\") || text.includes(\"خطأ - حد اقصى\")) failCount++;\n        if (text.includes(\"نعم✅\") || text.includes(\"اشتغل\") || text.includes(\"تمام\")) successCount++;\n    }\n\n    let dateObj = new Date(msg.created_at * 1000);\n    let msgDate = dateFormatter.format(dateObj); // المخرج: 28/02/2026\n    \n    // تحديد المرسل\n    let sender = \"U\"; \n    if (msg.message_type === 0) {\n        sender = \"C\"; // Customer\n        latestCustomerMessage = text;\n    } else if (msg.message_type === 1) {\n        if (msg.content_attributes && msg.content_attributes.sent_by_ai === true) sender = \"A\"; // AI\n        else if (msg.content_attributes && msg.content_attributes.sent_by_otp === true) sender = \"Bot\"; // OTP\n        else sender = \"H\"; // Human\n    } else if (msg.message_type === 2 || msg.message_type === 3) {\n        sender = \"S\"; // System\n    }\n\n    // فلترة وضغط الرسائل الثابتة والروابط\n    if (sender === \"S\" && text.includes(\"تم تحديث حالة المحادثة لـ\\\"مغلقة\\\"\")) return; \n\n    if (text.includes(\"youtube.com/shorts/Z5gtTL-9UYg\")) {\n        text = \"[Agent: Sent Disney+ instructional video & requested Email/Order No.]\";\n    }\n\n    if (sender === \"Bot\") {\n        if (text.includes(\"تمت معالجة طلبك بنجاح\")) text = \"[Bot: Started OTP Flow - Sent 3min warning]\";\n        else if (text.includes(\"الرجاء الرجوع إلى صفحة الطلب\") || \n                 text.includes(\"ثم انتقل إلى تطبيق Disney+\") || \n                 text.includes(\"هذه هي الصفحة التي ستقوم بإدخال الرمز\") ||\n                 text.includes(\"اظغط على هذا الزر اذا لم يصلك الرمز\")) return; // حذف كامل\n        else if (text.includes(\"هل قمت باتباع الخطوات؟\")) text = \"[Bot: Asked if ready (Options)]\";\n        else if (text.includes(\"ممتاز، سيصلك رمز التحقق قريبًا\")) text = \"[Bot: Warned to wait 20s]\";\n        else if (text.includes(\"عذراً، انتهى وقت الجلسة\")) text = \"[Bot: Session Timeout (3 mins passed)]\";\n        else if (text.includes(\"نعتذر عن ذلك 🙏. لقد حدثت مشكلة بسيطة\")) text = \"[Bot: 10-minute block applied due to max attempts]\";\n    }\n\n    let optionsText = \"\";\n    if (msg.content_attributes && msg.content_attributes.items) {\n        let opts = msg.content_attributes.items.map(i => i.title || i.value).join(\" | \");\n        optionsText = ` (Options: ${opts})`;\n    }\n\n    if (hasAttachment && !text.includes(\"[Bot:\") && !text.includes(\"[Agent:\")) {\n        text += \" [Image Attached]\";\n    }\n\n    // حفظ الرسالة مع تاريخها (بدون الوقت)\n    processedMessages.push({\n        date: msgDate,\n        sender: sender,\n        text: text + optionsText\n    });\n});\n\n// ==========================================\n// 4. بناء المخرج النهائي (تجميع العناوين بالأيام)\n// ==========================================\n\n// أخذ آخر 10 رسائل فقط\nlet recentMessages = processedMessages.slice(-10);\n\nlet formattedHistory = \"\";\nlet currentDateTracker = \"\";\n\nrecentMessages.forEach(m => {\n    // إذا تغير التاريخ، نضع التاريخ كعنوان رئيسي\n    if (m.date !== currentDateTracker) {\n        if (currentDateTracker !== \"\") formattedHistory += \"\\n\"; // مسافة بين الأيام\n        formattedHistory += `${m.date}\\n`;\n        currentDateTracker = m.date;\n    }\n    // إضافة الرسالة بدون الوقت\n    formattedHistory += `${m.sender}: ${m.text}\\n`;\n});\n\n// تجميع الملخص النهائي\nlet finalOutput = `Conversation State Summary:\\n`;\nfinalOutput += `- Failed OTP Attempts: ${failCount}\\n`;\nfinalOutput += `- Successful OTP Activations: ${successCount}\\n\\n`;\n\nfinalOutput += `Recent messages (latest 10):\\n`;\nfinalOutput += formattedHistory.trim();\n\nreturn [{ \n    json: { \n        ...$input.first().json,\n        compact_history: finalOutput,\n        latest_customer_message: latestCustomerMessage,\n        fail_count: failCount,\n        success_count: successCount\n    } \n}];"
+      },
+      "id": "bba0ee38-b6cb-4ad1-9604-70103841d6b1",
+      "name": "Code: Format Chat History",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2864,
+        6496
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f6bbaf8c-5e9a-4757-bcfc-153cf242d0b8",
+              "leftValue": "={{ $('Set: Extract Incoming').first().json.has_escalation_label }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "61928477-b1e7-4287-9c1f-0fdfef21ff4e",
+      "name": "IF: Escalation Label Override?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -944,
+        7280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9b9d8d90-fa30-4a82-9479-e798a55224cd",
+              "leftValue": "={{ $('Set: Extract Incoming').first().json.is_human_outgoing }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ed180f40-1eaa-4a92-b731-36c2d0865b02",
+      "name": "IF: Human Agent Outgoing?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -688,
+        7296
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9a1828bb-e414-43c6-a2ad-97db3386003c",
+              "leftValue": "={{ $('Set: Extract Incoming').first().json.is_video_attachment }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f3e54f11-7851-4877-b21b-aa1b7eee63ed",
+      "name": "IF: Video Attachment?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        64,
+        7312
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Extract Incoming').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={\n  \"content\": \"نعتذر، النظام الحالي لا يدعم الصور أو مقاطع الفيديو أو الرسائل الصوتية. يرجى إرسال طلبك كنص فقط.\",\n  \"content_attributes\": {\n    \"sent_by_ai\": true\n  }\n}"
+      },
+      "id": "a36f2038-262f-4b29-8699-7a19b1dad4f2",
+      "name": "Chatwoot: Video Not Supported",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        384,
+        7184
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "43e71f7d-9f64-4b30-a5a3-364ddbbaf6d5",
+              "leftValue": "={{ $('Set: Extract Incoming').first().json.has_attachment }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "f1224f6b-57bc-47f5-9c98-3b9cdcdf09f5",
+              "leftValue": "={{ $('Set: Extract Incoming').first().json.is_video_attachment }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c5510d31-7b48-48a3-85df-884aa44ce344",
+      "name": "IF: Has Media Attachment?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1632,
+        6464
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {
+          "maxOutputTokens": 2000,
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3232,
+        6704
+      ],
+      "id": "7e301ece-0255-4e6b-9f2e-58495a0f051e",
+      "name": "Google Gemini Chat Model",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "urWGK40OGKvJRZEM",
+          "name": "Early Store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Extract Incoming').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "{\n  \"content\": \"نعتذر، النظام الحالي لا يدعم الصور أو مقاطع الفيديو أو الرسائل الصوتية. يرجى إرسال طلبك كنص فقط.\",\n  \"content_attributes\": {\n    \"sent_by_ai\": true\n  }\n}"
+      },
+      "id": "93ed9ff7-37cb-4462-8330-4e77084e2348",
+      "name": "Chatwoot: Video Not Supported1",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        1904,
+        6320
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'user_state:' + $('Set: Extract Incoming').first().json.phone }}"
+      },
+      "id": "8efb2853-4781-49f3-a77b-113587af29d3",
+      "name": "Redis DEL: user_state (Exit)1",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2672,
+        7728
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'account_lock:' + $('Code: Normalize State').first().json.account_key }}"
+      },
+      "id": "82edf5a6-385a-4c83-8354-a126e9322145",
+      "name": "Redis DEL: account_lock (Exit)1",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        7728
+      ],
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Extract Incoming').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ content: \"تم تسجيل الخروج من نظام استلام الرمز، يرجى توضيح سبب المغادرة.\", content_attributes: { sent_by_otp: true } }) }}"
+      },
+      "id": "22cb29d5-76d9-4224-81d0-0d91b84e50e8",
+      "name": "exit completed",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        3136,
+        7936
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Extract Incoming').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ content: 'نعتذر عن ذلك 🙏. لقد حدثت مشكلة بسيطة في الحساب بسبب المحاولات المتكررة. يرجى تسجيل الخروج، ثم الانتظار لمدة 10 دقائق تقريباً قبل إرسال رسالة جديدة إلينا. سنقوم حينها بتمرير طلب جديد لتزويدك بالكود. نشكر لك تفهمك.', content_attributes: { sent_by_otp: true } }) }}"
+      },
+      "id": "89a6d1bc-744d-4d8e-a9b4-48b982ad04d6",
+      "name": "account limit",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        3104,
+        7728
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Extract Incoming').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ \nJSON.stringify({ \n  content: \"تم تأكيد استلام الرمز الخاص بك بنجاح، سعيدون بخدمتكم! ✅\\n\\nيمكنكم الآن العثور على رقم الملف والكود الخاص بكم في صفحة الطلب (أو تفاصيل الشراء).\\n\\n💡 يرجى اختيار ملف المستخدم (Profile) الموضح في الإيصال.\\n\\nأتمنى لك مشاهدة ممتعة مع ديزني بلس. ❤️\", \n  content_attributes: { sent_by_otp: true } \n}) \n}}"
+      },
+      "id": "090efdac-2494-4fc2-b643-87f48841427a",
+      "name": "Chatwoot: Press Resend2",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        3152,
+        7184
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "884923b8-4e49-4f48-9749-e479d4de859a",
+              "leftValue": "={{ $('Webhook (Chatwoot)').item.json.body.message_type }}",
+              "rightValue": "incoming",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -352,
+        7312
+      ],
+      "id": "bdc23e77-2f3f-4546-8493-81e031db9702",
+      "name": "incoming only"
+    },
+    {
+      "parameters": {
+        "content": "## AI agent - المسؤول عن بداية المحادثة مع العميل على حسب الحالة \n\n",
+        "height": 732,
+        "width": 1608,
+        "color": 7
+      },
+      "id": "8ed6d140-d092-4ff6-a70b-eff3074b9862",
+      "name": "Sticky: W1 AI Support1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2128,
+        6224
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## في حالة ما اذا كان العميل داخل مرحلة استخراج كود ديزني \nسوف يتم توجيه الامر على حسب رده الثابت بالردود الثابت \n\n\n",
+        "height": 1068,
+        "width": 1624,
+        "color": 2
+      },
+      "id": "d89d853f-3bd7-439a-8eab-b47224a676b2",
+      "name": "Sticky: W1 AI Support2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        7184
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Code: Normalize State').item.json.message_text }}",
+                    "rightValue": "✅اشتغل",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c2d35482-36b3-43b5-9c7c-3324efe95ebc"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "✅اشتغل"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "85d58cc0-2178-42f1-86d2-125879ab9f50",
+                    "leftValue": "={{ $('Code: Normalize State').item.json.message_text }}",
+                    "rightValue": "❌ماشتغل",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ماشتغل"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "cd54de8b-cabb-4142-9808-1f06e04e82a1",
+                    "leftValue": "={{ $('Code: Normalize State').item.json.message_text }}",
+                    "rightValue": "جاني خطأ - حد اقصى",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "جاني خطأ - حد اقصى"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "18e0ab2b-eb8f-489a-b05c-9cd540d8bccf",
+                    "leftValue": "={{ $('Code: Normalize State').item.json.message_text }}",
+                    "rightValue": "خروج",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "خروج"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6fd80c13-e42b-4fb5-9bdc-dc91ee7206fc",
+                    "leftValue": "={{ $('Code: Normalize State').item.json.message_text }}",
+                    "rightValue": "ضغطت زر",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ضغطت زر"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "58fd8735-d5fc-4227-8973-6d5697b245a5",
+                    "leftValue": "={{ $('Code: Normalize State').item.json.message_text }}",
+                    "rightValue": "✅دخلت رقم الهاتف",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "✅ تم تسجيل الدخول"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d0a826e4-6b3b-4c4f-9382-dd2b4515ae5f",
+                    "leftValue": "={{ $('Code: Normalize State').item.json.message_text }}",
+                    "rightValue": "🚪 خروج من الانتظار",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "خروج من الانتظار"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1a1ee19c-b940-4127-9069-98dc95ec5697",
+                    "leftValue": "={{ $('Code: Normalize State').item.json.message_text }}",
+                    "rightValue": "❓ وين زر الإيميل؟",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "❓ وين زر الإيميل؟"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b8e0e2ec-0212-4c8a-852f-262d783d8786",
+                    "leftValue": "={{ $('Code: Normalize State').item.json.message_text }}",
+                    "rightValue": "نعم✅",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "نعم✅"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2256,
+        7520
+      ],
+      "id": "09b38bf3-f436-4bf5-906c-747da455310c",
+      "name": "Switch: Button Type"
+    },
+    {
+      "parameters": {
+        "description": "USE THIS TOOL TO TRANSFER THE CHAT TO A HUMAN AGENT. \nCall this tool ONLY under these conditions:\n1. The user has failed to log in 3 times (the 3-attempt limit).\n2. The user has a Fasel Plus issue (Ban or Login problem).\n3. The user has an unresolvable technical error, a complaint, or is asking for a refund.\n⚠️ CRITICAL RULE: After calling this tool, YOU MUST GO SILENT. Do NOT tell the user you are transferring them. The escalation tool will automatically send the handover message. Generate NO text response.",
+        "workflowId": {
+          "__rl": true,
+          "value": "1e1FkCPcC8y7PxhZ",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/1e1FkCPcC8y7PxhZ",
+          "cachedResultName": "esclation v3"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Cuse-of-escalation": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Cuse-of-escalation', `label or title of why you are esclating the case to coustomer suppoort ( cuse of esclation ) `, 'string') }}",
+            "clearfication": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('clearfication', `explaine here to the coustomer support why you are exclating the case to them- a clearfiaction about the case`, 'string') }}",
+            "conversation_id": "={{ $json.conversation_id }}",
+            "chatwoot_account_id": "={{ $json.chatwoot_account_id }}",
+            "phonenumber": "={{ $('Set: AI Context').item.json.phone }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "chatwoot_account_id",
+              "displayName": "chatwoot_account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "Cuse-of-escalation",
+              "displayName": "Cuse-of-escalation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "clearfication",
+              "displayName": "clearfication",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "phonenumber",
+              "displayName": "phonenumber",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        3520,
+        6848
+      ],
+      "id": "b548dacd-8113-4d63-b695-352d9681a567",
+      "name": "Call 'esclation v3'"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Extract Incoming').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={\"content\":\"ممتاز، سيصلك رمز التحقق قريبًا.\\nيرجى الانتظار قليلًا، وإذا لم يصلك خلال 20 ثانية، اضغط على زر إعادة الإرسال عبر البريد الإلكتروني.\",\"content_type\":\"input_select\",\"content_attributes\":{\"sent_by_otp\":true,\"items\":[{\"title\":\"❓ وين زر الإيميل؟\",\"value\":\"❓ وين زر الإيميل؟\"}]}}"
+      },
+      "id": "66378e4d-62e8-4e29-8c91-65bc0c5595a7",
+      "name": "login/resend successfully",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        2704,
+        8160
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://drive.google.com/uc?export=download&id=195XxHzpyBnkZVIofdV6TJNx08whfZ6D_",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3232,
+        7504
+      ],
+      "id": "3947ad48-1536-4f46-a290-0e4959908439",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/{{ $('Set: Extract Incoming').item.json.chatwoot_account_id }}/conversations/{{ $('Set: Extract Incoming').item.json.conversation_id }}/messages ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments[]",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "content_attributes",
+              "value": "{\"sent_by_otp\": true}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send Image to Chatwoot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3440,
+        7504
+      ],
+      "id": "0b0283dd-bcd1-4315-bdbf-a093bad8a7ad",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        3264,
+        6896
+      ],
+      "id": "7b668ca0-4862-4593-bd39-c47a0e8ca734",
+      "name": "Create a document in Google Docs",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "GqLsxDgqPzbOtwZA",
+          "name": "Google Docs account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6bec8c31-9336-4969-9382-15c03686488d",
+              "leftValue": "={{ $('Webhook (Chatwoot)').item.json.body.conversation.labels[0] }}",
+              "rightValue": "قيد-من-بووت",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        7312
+      ],
+      "id": "77c186a5-3500-4def-8c02-a814746a70c8",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Extract Incoming').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={\n  \"content\": \"عذراً، لا يمكنك التواصل مع الوكيل حالياً. يجب عليك إنهاء جلسة استلام الكود أولاً لتتمكن من محادثته.\",\n  \"content_type\": \"input_select\",\n  \"content_attributes\": {\n    \"sent_by_otp\": true,\n    \"items\": [\n      {\n        \"title\": \"🚪 خروج من الانتظار\",\n        \"value\": \"🚪 خروج من الانتظار\"\n      }\n    ]\n  }\n}"
+      },
+      "id": "f20129f0-e342-4565-af32-d1b9a25775af",
+      "name": "Chatwoot: Use Buttons Prompt1",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        1872,
+        7856
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4o",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        3104,
+        6800
+      ],
+      "id": "88015976-8755-4269-ac33-18e8ae5576e2",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "ryLGzfacpnHkSHMf",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fe4643a2-ca84-40ef-8d09-d2db50fc8d63",
+              "leftValue": "={{ $('Set: Extract Incoming').item.json.message_text }}",
+              "rightValue": "🚪 خروج من الانتظار",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1616,
+        7664
+      ],
+      "id": "e1d49e4e-217c-414b-bfb2-0bf8626bcbca",
+      "name": "If exiting from waitting list"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "USE THIS TOOL TO SEND INTERACTIVE BUTTONS OR LISTS. \nCall this tool when you want to give the user predefined, clickable choices (e.g., \"Yes\", \"No\", \"Try Again\") to streamline the conversation and improve UX. Do not use this for standard conversational replies.\n",
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: AI Context').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ content: $fromAI('message', 'The main text to show above the options', 'string'), content_type: 'input_select', content_attributes: { sent_by_ai: true, items: JSON.parse($fromAI('options_json_array', 'Strict JSON stringified array of objects. Example: [{\"title\":\"Yes\",\"value\":\"yes\"}, {\"title\":\"No\",\"value\":\"no\"}]', 'string') || '[]') } }) }}"
+      },
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwootTool",
+      "typeVersion": 1,
+      "position": [
+        4000,
+        6736
+      ],
+      "id": "1cb49a7b-ef3b-4c5b-93cb-3084518edd48",
+      "name": "Tool: Send Options Message1",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "USE THIS TOOL TO SEND A STANDARD TEXT MESSAGE. \nCall this tool for normal conversational responses, answering questions, or asking the user for their Email/Order Number. Use this for all standard interactions unless you are intentionally routing them to the OTP or Escalation tools.\n",
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ content: $fromAI('message', 'The standard text message to send to the user', 'string'), content_attributes: { sent_by_ai: true } }) }}"
+      },
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwootTool",
+      "typeVersion": 1,
+      "position": [
+        4144,
+        6704
+      ],
+      "id": "32cfb2d8-5755-49a6-bf48-1e5018333c54",
+      "name": "Tool: Send normal Text Message1",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "USE THIS TOOL TO SEND A STANDARD TEXT MESSAGE. \nCall this tool for normal conversational responses, answering questions, or asking the user for their Email/Order Number. Use this for all standard interactions unless you are intentionally routing them to the OTP or Escalation tools.\n",
+        "workflowId": {
+          "__rl": true,
+          "value": "Og1YSAHDBoN2feGl",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Og1YSAHDBoN2feGl",
+          "cachedResultName": "Send Text Message"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "conversation_id": "={{ $json.conversation_id }}",
+            "message": "={{ JSON.stringify({ content: $fromAI('message', 'The standard text message to send to the user', 'string'), content_attributes: { sent_by_ai: true } }) }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        3696,
+        6832
+      ],
+      "id": "a3170b1a-54a9-475a-bf12-37b2438de7a9",
+      "name": "Tool: Send normal Text Message"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. جلب رقم الهاتف من العقدة السابقة\nconst phone = $input.first().json.phone || \"\";\n\nlet currentTime = 'Unavailable';\n\nif (phone) {\n  // تنظيف الرقم لضمان وجود علامة + والأرقام فقط\n  const cleanPhone = phone.replace(/[^\\d+]/g, '');\n  \n  // خريطة مفاتيح دول الشرق الأوسط وشمال أفريقيا\n  const tzMap = {\n    '+966': 'Asia/Riyadh',      // Saudi Arabia\n    '+971': 'Asia/Dubai',       // UAE\n    '+965': 'Asia/Kuwait',      // Kuwait\n    '+974': 'Asia/Qatar',       // Qatar\n    '+973': 'Asia/Bahrain',     // Bahrain\n    '+968': 'Asia/Muscat',      // Oman\n    '+962': 'Asia/Amman',       // Jordan\n    '+961': 'Asia/Beirut',      // Lebanon\n    '+963': 'Asia/Damascus',    // Syria\n    '+964': 'Asia/Baghdad',     // Iraq\n    '+967': 'Asia/Aden',        // Yemen\n    '+970': 'Asia/Jerusalem',   // Palestine\n    '+972': 'Asia/Jerusalem',   // Palestine/Israel\n    '+20':  'Africa/Cairo',     // Egypt\n    '+212': 'Africa/Casablanca',// Morocco\n    '+213': 'Africa/Algiers',   // Algeria\n    '+216': 'Africa/Tunis',     // Tunisia\n    '+218': 'Africa/Tripoli',   // Libya\n    '+249': 'Africa/Khartoum'   // Sudan\n  };\n  \n  // البحث عن مفتاح الدولة (من 4 أرقام نزولاً إلى 3 أرقام)\n  for (let i = 4; i >= 3; i--) {\n    const prefix = cleanPhone.substring(0, i);\n    \n    if (tzMap[prefix]) {\n      // حساب الوقت بناءً على المنطقة الزمنية المكتشفة\n      const options = { \n        timeZone: tzMap[prefix], \n        day: '2-digit', month: '2-digit', year: 'numeric', \n        hour: '2-digit', minute: '2-digit', hour12: false \n      };\n      \n      const formatter = new Intl.DateTimeFormat('en-GB', options);\n      const parts = formatter.formatToParts(new Date());\n      \n      const day = parts.find(p => p.type === 'day').value;\n      const month = parts.find(p => p.type === 'month').value;\n      const year = parts.find(p => p.type === 'year').value;\n      const hour = parts.find(p => p.type === 'hour').value;\n      const minute = parts.find(p => p.type === 'minute').value;\n      \n      currentTime = `${day}/${month}/${year} ${hour}:${minute}`;\n      break; // إيقاف الحلقة بمجرد العثور على تطابق\n    }\n  }\n}\n\n// 2. إرجاع البيانات بالشكل الذي يطلبه n8n\nreturn [{\n  json: {\n    ...$input.first().json, // الاحتفاظ بكل البيانات السابقة\n    user_local_time: currentTime // إضافة الوقت الجديد\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        6480
+      ],
+      "id": "95aba9f4-a4a1-483c-9737-46de37fd890b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/152788/conversations/{{ $json.conversation_id }}/labels",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"labels\": [\n    \"قيد-من-بووت\"\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -464,
+        7120
+      ],
+      "id": "5e348784-dd93-4f05-b2c3-cb0f84bb2008",
+      "name": "HTTP Request",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ 'block-receiving-message:' + $('Set: Extract Incoming').first().json.conversation_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        6480
+      ],
+      "id": "d65832b2-7864-448d-be1f-dc600ecc5ade",
+      "name": "Redis: Check Block",
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.propertyName }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2288,
+        6480
+      ],
+      "id": "a96174ca-529c-432e-8c72-2354a2501f6b",
+      "name": "If User is Blocked?"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ 'block-receiving-message:' + $('Set: Extract Incoming').first().json.conversation_id }}",
+        "value": "blocked",
+        "expire": true,
+        "ttl": 10
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2528,
+        6496
+      ],
+      "id": "131338de-35f6-46a9-b39d-a895276ab10d",
+      "name": "Redis: Block User 10s",
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ 'block-receiving-message:' + $('Set: Extract Incoming').first().json.conversation_id }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2528,
+        6304
+      ],
+      "id": "db663b97-4689-4225-8a8a-aa6d0ac4fa16",
+      "name": "remove blocked user",
+      "credentials": {
+        "redis": {
+          "id": "batlDyJpNIB9ZzNf",
+          "name": "Redis account early store"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "AKNttTBHmpOj5rgZ",
+          "mode": "list",
+          "cachedResultName": "labling-stop-bot-karim",
+          "cachedResultUrl": "/projects/lQgjPPyrJr4zMTgY/datatables/AKNttTBHmpOj5rgZ"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "convertaion_id",
+              "keyValue": "={{ $('IF: Escalation Label Override?').item.json.conversation_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "By": "Support-contact",
+            "time_to_be_free_again": "30",
+            "convertaion_id": "={{ $('IF: Escalation Label Override?').item.json.conversation_id }}"
+          },
+          "matchingColumns": [
+            "convertaion_id"
+          ],
+          "schema": [
+            {
+              "id": "convertaion_id",
+              "displayName": "convertaion_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "By",
+              "displayName": "By",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "time_to_be_free_again",
+              "displayName": "time_to_be_free_again",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        7120
+      ],
+      "id": "04248101-b480-4026-b89a-93e7aece695d",
+      "name": "Upsert row(s)"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('Set: Extract Incoming').first().json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({\n  content: `ممتاز، سيصلك رمز التحقق قريبًا ✅\n\nيرجى الانتظار قليلًا، وإذا لم يصلك خلال 20 ثانية، اضغط على زر إعادة الإرسال عبر البريد الإلكتروني كما هو موضح في الصورة 👇`,\n  content_attributes: {\n    sent_by_otp: true\n  }\n}) }}"
+      },
+      "id": "2656143c-82a6-4579-be7b-213302c580bf",
+      "name": "ممتاز سوف يصلك الكود",
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        2704,
+        8416
+      ],
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/{{ $('Set: Extract Incoming').first().json.chatwoot_account_id }}/conversations/{{ $('Set: Extract Incoming').first().json.conversation_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "attachments[]",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "content",
+              "value": "اظغط على هذا الزر اذا لم يصلك الرمز بعد قليل 👆"
+            },
+            {
+              "name": "content_attributes",
+              "value": "{\"sent_by_otp\": true}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "1. Send Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3136,
+        8416
+      ],
+      "id": "ac576a7a-39d0-4bfd-bf9a-c8632ca0e8bf",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://drive.google.com/uc?export=download&id=1CfWsMArRReJodYLRaF3VyYA0VwF8PrgQ",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2912,
+        8416
+      ],
+      "id": "41059beb-9a3f-41ec-8de6-a25a52906a87",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/{{ $('Set: Extract Incoming').first().json.chatwoot_account_id }}/conversations/{{ $('Set: Extract Incoming').first().json.conversation_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"اذا جاءك خطئ معين اثناء محاولة الدخول اخبرني بذلك 👇\",\n  \"message_type\": \"outgoing\",\n  \"content_type\": \"input_select\",\n  \"content_attributes\": {\n    \"sent_by_otp\": true,\n    \"items\": [\n      {\n        \"title\": \"جاني خطأ - حد اقصى\",\n        \"value\": \"جاني خطأ - حد اقصى\"\n      },\n      {\n        \"title\": \"خروج من العملية\",\n        \"value\": \"خروج من العملية\"\n      }\n    ]\n  }\n}",
+        "options": {}
+      },
+      "name": "2. Send Options",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3520,
+        8416
+      ],
+      "id": "a8b57069-8b97-47d3-87c0-3a798863b51f",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Code: Normalize State').item.json.status }}",
+                    "rightValue": "=Wait_Feedback",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "9e404bc1-c4e8-41af-b8b6-538f5ce48851"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "في مرحلة لاولى قبل اعطاءه الكود "
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5f75b526-e475-4251-849d-719005ef67d2",
+                    "leftValue": "={{ $('Code: Normalize State').item.json.status }}",
+                    "rightValue": "Await_Press",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "بعد اعطاءه الكود "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2272,
+        8912
+      ],
+      "id": "bedda044-e821-4c0a-91d2-4d193a59dafe",
+      "name": "state swith to use options"
+    },
+    {
+      "parameters": {
+        "amount": 6
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3328,
+        8416
+      ],
+      "id": "50ed24af-b482-4cdf-8acf-863346f7c6cb",
+      "name": "Wait",
+      "webhookId": "70f5df62-d5e0-428a-b82c-d1fadaf332e0"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/{{ $('Set: Extract Incoming').first().json.chatwoot_account_id }}/conversations/{{ $('Set: Extract Incoming').first().json.conversation_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"👇 انت داخل عملية استخراج الرمز لايمكن كتابة اي شئ الان يرجى اختيار من الاختيارات ادناه\",\n  \"message_type\": \"outgoing\",\n  \"content_type\": \"input_select\",\n  \"content_attributes\": {\n    \"sent_by_otp\": true,\n    \"items\": [\n      {\n        \"title\": \"نعم✅\",\n        \"value\": \"نعم✅\"\n      },\n      {\n        \"title\": \"جاني خطأ - حد اقصى\",\n        \"value\": \"جاني خطأ - حد اقصى\"\n      },\n      {\n        \"title\": \"خروج من العملية\",\n        \"value\": \"خروج من العملية\"\n      }\n    ]\n  }\n}",
+        "options": {}
+      },
+      "name": "2. Send Options1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2480,
+        9072
+      ],
+      "id": "dfea1b99-7989-43a1-b94f-dc4ece72101a",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/{{ $('Set: Extract Incoming').first().json.chatwoot_account_id }}/conversations/{{ $('Set: Extract Incoming').first().json.conversation_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \n  content: '👇 انت داخل عملية استخراج الرمز لايمكن كتابة اي شئ الان يرجى اختيار من الاختيارات ادناه', \n  content_type: 'input_select', \n  content_attributes: { \n    sent_by_otp: true, \n    items: [ \n      { title: '✅اشتغل', value: '✅اشتغل' }, \n      { title: '❌ماشتغل', value: '❌ماشتغل' }, \n      { title: 'جاني خطأ - حد اقصى', value: 'جاني خطأ - حد اقصى' }, \n      { title: 'خروج من العملية', value: 'خروج من العملية' } \n    ] \n  } \n}) }}",
+        "options": {}
+      },
+      "name": "2. Send Options2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2496,
+        8800
+      ],
+      "id": "7ef215b6-4f6e-4d2a-b086-04a5532f17d5",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "jnykWV7jaH3IVASO",
+          "mode": "list",
+          "cachedResultName": "tokens usage",
+          "cachedResultUrl": "/projects/lQgjPPyrJr4zMTgY/datatables/jnykWV7jaH3IVASO"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "tokens_usage_per_run": "={{ $json.intermediateSteps[0].action.messageLog[0].kwargs.usage_metadata.total_tokens }}",
+            "tokens_usage_per_run2": "={{ $json.safe_total_tokens }}",
+            "id2": "={{ $json.intermediateSteps[0].action.toolCallId }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "tokens_usage_per_run",
+              "displayName": "tokens_usage_per_run",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tokens_usage_per_run2",
+              "displayName": "tokens_usage_per_run2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "id2",
+              "displayName": "id2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4000,
+        6496
+      ],
+      "id": "03147044-dfb6-44b2-98a9-d2001f545b64",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "160DftV9xapY4_kNo1rNZQwIfy9NIfZimaCjjxfrkkDU",
+          "mode": "list",
+          "cachedResultName": "Early AI Store Bots",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/160DftV9xapY4_kNo1rNZQwIfy9NIfZimaCjjxfrkkDU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1006114582,
+          "mode": "list",
+          "cachedResultName": "Token Usage",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/160DftV9xapY4_kNo1rNZQwIfy9NIfZimaCjjxfrkkDU/edit#gid=1006114582"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "tokens_usage_per_run": "={{ $('Code in JavaScript1').item.json.safe_total_tokens }}",
+            "id": "={{ $('Code in JavaScript1').item.json.intermediateSteps[0].action.toolCallId }}",
+            "Date": "={{ $now.setZone('Asia/Riyadh').toFormat('yyyy-MM-dd HH:mm:ss') }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tokens_usage_per_run",
+              "displayName": "tokens_usage_per_run",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cost_usd",
+              "displayName": "cost_usd",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Assumptions",
+              "displayName": "Assumptions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4304,
+        6496
+      ],
+      "id": "12fa3a9a-426b-4d8d-bd99-aca6dfdd9894",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "H1id8F2PdYyf8bvK",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract token usage metadata from the AI Agent response and normalize it for analytics.\nconst aiOutput = $input.first().json;\n\nfunction findKey(obj, keyToFind) {\n  if (obj === null || typeof obj !== 'object') return null;\n  if (Object.prototype.hasOwnProperty.call(obj, keyToFind)) return obj[keyToFind];\n\n  for (const key of Object.keys(obj)) {\n    const result = findKey(obj[key], keyToFind);\n    if (result !== null) return result;\n  }\n\n  return null;\n}\n\nconst usageMeta = findKey(aiOutput, 'usage_metadata') || {};\n\nconst inputTokens = Number(\n  usageMeta.input_tokens\n  || usageMeta.prompt_tokens\n  || usageMeta.promptTokenCount\n  || usageMeta.promptTokens\n  || findKey(aiOutput, 'input_tokens')\n  || findKey(aiOutput, 'prompt_tokens')\n  || 0\n);\n\nconst outputTokens = Number(\n  usageMeta.output_tokens\n  || usageMeta.completion_tokens\n  || usageMeta.candidatesTokenCount\n  || usageMeta.outputTokens\n  || findKey(aiOutput, 'output_tokens')\n  || findKey(aiOutput, 'completion_tokens')\n  || 0\n);\n\nconst totalTokens = Number(\n  usageMeta.total_tokens\n  || usageMeta.totalTokenCount\n  || (inputTokens + outputTokens)\n  || 0\n);\n\nconst cacheRead = Number(\n  usageMeta.cachedContentTokenCount\n  || findKey(aiOutput, 'cache_read')\n  || 0\n);\n\nreturn [{\n  json: {\n    ...aiOutput,\n    safe_total_tokens: totalTokens,\n    safe_input_tokens: inputTokens,\n    safe_output_tokens: outputTokens,\n    safe_cache_read: cacheRead,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3776,
+        6496
+      ],
+      "id": "ae2f7c14-5b05-473d-a0c2-264e4388c88c",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "content": "## Analytics Tracking\nThis branch sends non-blocking analytics events to an external API.\nMain support behavior is unchanged.",
+        "height": 240,
+        "width": 560
+      },
+      "id": "55020d87-e990-4860-a947-e8e057fb1735",
+      "name": "Sticky: Analytics Instrumentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        1600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b45e90a1-d42d-4ab8-b85e-e3a6ad3e92f7",
+              "leftValue": "={{ ($json.message_type || '').toString() }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "incoming"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b0a36d75-e520-445c-b29c-c1cd4f9c1a63",
+      "name": "Analytics IF: Incoming?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        1840
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6191c38b-e4f5-44d1-8421-05f95ef71702",
+              "leftValue": "={{ (($(\"Webhook (Chatwoot)\").item.json.body.message_type === 'outgoing' || $(\"Webhook (Chatwoot)\").item.json.body.message_type === 1) && ($(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_ai === true || $(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_otp === true)) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1b86cb53-577a-4328-be1a-97256482857f",
+      "name": "Analytics IF: Outbound AI/Bot?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2dc9fda3-0310-4a3f-b4e3-701b5bd4a359",
+              "leftValue": "={{ Math.abs((Number($(\"Webhook (Chatwoot)\").item.json.body.created_at || 0) - Number($(\"Webhook (Chatwoot)\").item.json.body.conversation?.created_at || 0))) <= 2 }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "13c5ecfe-889a-4e7f-a285-55998252bbc1",
+      "name": "Analytics IF: Conversation Created?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -640,
+        1960
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "inbound_message",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['inbound_message', $json.conversation_id || '', $json.message_id || ''].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date((Number($(\"Webhook (Chatwoot)\").item.json.body.created_at || Math.floor(Date.now()/1000)) * 1000)).toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $json.phone || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "inbound",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "={{ /disney|ديزني/i.test($json.message_text || '') ? 'disney' : (/fasel|فاصل/i.test($json.message_text || '') ? 'fasel' : 'general') }}",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "={{ /otp|code|كود|رمز/i.test($json.message_text || '') ? 'otp_request' : (/login|دخول|تسجيل/i.test($json.message_text || '') ? 'login_help' : (/order|طلب/i.test($json.message_text || '') ? 'order_support' : 'general_support')) }}",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'W1', source_event_id: $json.message_id || '', message_preview: ($json.message_text || '').slice(0, 160) }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3294a2b3-0c90-4dd8-aed5-b1f8a0136eb3",
+      "name": "Analytics Event: Inbound Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -640,
+        1840
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "intent_classification",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['intent_classification', $json.conversation_id || '', $json.message_id || ''].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $json.phone || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "system",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "={{ /disney|ديزني/i.test($json.message_text || '') ? 'disney' : (/fasel|فاصل/i.test($json.message_text || '') ? 'fasel' : 'general') }}",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "={{ /otp|code|كود|رمز/i.test($json.message_text || '') ? 'otp_request' : (/login|دخول|تسجيل/i.test($json.message_text || '') ? 'login_help' : (/order|طلب/i.test($json.message_text || '') ? 'order_support' : 'general_support')) }}",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'W1', source_event_id: $json.message_id || '' }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "67f0346e-8fe3-4111-bc21-61608852965d",
+      "name": "Analytics Event: Intent Classification",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -640,
+        1700
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "conversation_created",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['conversation_created', $json.conversation_id || '', String($(\"Webhook (Chatwoot)\").item.json.body.conversation?.created_at || '')].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date((Number($(\"Webhook (Chatwoot)\").item.json.body.conversation?.created_at || Math.floor(Date.now()/1000)) * 1000)).toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $json.phone || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "system",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "={{ /disney|ديزني/i.test($json.message_text || '') ? 'disney' : (/fasel|فاصل/i.test($json.message_text || '') ? 'fasel' : 'general') }}",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "={{ /otp|code|كود|رمز/i.test($json.message_text || '') ? 'otp_request' : 'general_support' }}",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'W1', source_event_id: $json.message_id || '' }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ed6b2bd7-b1fc-4b0d-abc5-f3e057e21620",
+      "name": "Analytics Event: Conversation Created",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        1960
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "outbound_message",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['outbound_message', $json.conversation_id || '', $json.message_id || ''].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date((Number($(\"Webhook (Chatwoot)\").item.json.body.created_at || Math.floor(Date.now()/1000)) * 1000)).toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $json.phone || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "outbound",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "={{ /disney|ديزني/i.test($json.message_text || '') ? 'disney' : (/fasel|فاصل/i.test($json.message_text || '') ? 'fasel' : 'general') }}",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "agent_response",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'W1', source_event_id: $json.message_id || '', sent_by_ai: $(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_ai === true, sent_by_otp: $(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_otp === true }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a850c300-f284-4dea-bce9-b5080bd5828b",
+      "name": "Analytics Event: Outbound Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -640,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "otp_outcome",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['otp_outcome', 'success', $('Set: Extract Incoming').first().json.conversation_id || '', $('Set: Extract Incoming').first().json.message_id || ''].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($('Set: Extract Incoming').first().json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $('Set: Extract Incoming').first().json.phone || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "inbound",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "disney",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "otp_feedback",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'W1', source_event_id: $('Set: Extract Incoming').first().json.message_id || '', user_reply: $('Code: Normalize State').item.json.message_text || '' }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a842390e-9e19-4863-b118-3722164c5531",
+      "name": "Analytics Event: OTP Outcome Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        2300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "otp_outcome",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['otp_outcome', 'failed', $('Set: Extract Incoming').first().json.conversation_id || '', $('Set: Extract Incoming').first().json.message_id || ''].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($('Set: Extract Incoming').first().json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $('Set: Extract Incoming').first().json.phone || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "inbound",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "disney",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "otp_feedback",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "failed",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "={{ $('Code: Normalize State').item.json.message_text === 'جاني خطأ - حد اقصى' ? 'retry_limit' : '' }}",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'W1', source_event_id: $('Set: Extract Incoming').first().json.message_id || '', user_reply: $('Code: Normalize State').item.json.message_text || '' }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "368755c0-6df1-4565-a104-0d4202226407",
+      "name": "Analytics Event: OTP Outcome Failed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        2460
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "otp_outcome",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['otp_outcome', 'unconfirmed', $('Set: Extract Incoming').first().json.conversation_id || '', $('Set: Extract Incoming').first().json.message_id || ''].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($('Set: Extract Incoming').first().json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $('Set: Extract Incoming').first().json.phone || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "inbound",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "disney",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "otp_feedback",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "unconfirmed",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'W1', source_event_id: $('Set: Extract Incoming').first().json.message_id || '', user_reply: $('Code: Normalize State').item.json.message_text || '' }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aba6cee8-ac59-4825-b2e3-5587cabf6614",
+      "name": "Analytics Event: OTP Outcome Unconfirmed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        2620
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "ai_usage",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['ai_usage', $('Set: Extract Incoming').first().json.conversation_id || '', ($json.intermediateSteps?.[0]?.action?.toolCallId || $execution.id || '')].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($('Set: Extract Incoming').first().json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $('Set: Extract Incoming').first().json.phone || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "system",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "={{ /disney|ديزني/i.test($('Set: Extract Incoming').first().json.message_text || '') ? 'disney' : (/fasel|فاصل/i.test($('Set: Extract Incoming').first().json.message_text || '') ? 'fasel' : 'general') }}",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "ai_response",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": "={{ Number($json.safe_input_tokens || 0) }}",
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": "={{ Number($json.safe_output_tokens || 0) }}",
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'W1', source_event_id: ($json.intermediateSteps?.[0]?.action?.toolCallId || ''), execution_id: ($execution.id || ''), total_tokens: Number($json.safe_total_tokens || 0) }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "23840072-e200-4132-964e-ee7f9549bb8d",
+      "name": "Analytics Event: AI Usage",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        2920
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ANALYTICS_INGEST_URL || 'http://localhost:8000/events' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "b0c6ee93-4f1b-4847-99c9-e25a1fec203a",
+      "name": "Analytics: Send Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -40,
+        1800
+      ],
+      "continueOnFail": true
+    }
+  ],
+  "pinData": {
+    "Webhook (Chatwoot)": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.aura-reply.cloud",
+            "user-agent": "axios/1.12.0",
+            "content-length": "2598",
+            "accept": "application/json,text/html,application/xhtml+xml,application/xml,text/*;q=0.9, image/*;q=0.8, */*;q=0.7",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "content-type": "application/json",
+            "x-forwarded-for": "172.18.0.1",
+            "x-forwarded-host": "n8n.aura-reply.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "c3abe5fdeec7",
+            "x-real-ip": "172.18.0.1"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "account": {
+              "id": 152788,
+              "name": "Inblaj"
+            },
+            "additional_attributes": {},
+            "content_attributes": {},
+            "content_type": "text",
+            "content": "نعم",
+            "conversation": {
+              "additional_attributes": {},
+              "can_reply": true,
+              "channel": "Channel::Whatsapp",
+              "contact_inbox": {
+                "id": 719175935,
+                "contact_id": 720833879,
+                "inbox_id": 96755,
+                "source_id": "966550875958",
+                "created_at": "2026-03-02T06:50:40.969Z",
+                "updated_at": "2026-03-02T06:50:40.969Z",
+                "hmac_verified": false,
+                "pubsub_token": "NmDpR7yZCdob6nKJNrjHUotg"
+              },
+              "id": 2026,
+              "inbox_id": 96755,
+              "messages": [
+                {
+                  "id": 491898573,
+                  "content": "نعم",
+                  "account_id": 152788,
+                  "inbox_id": 96755,
+                  "conversation_id": 2026,
+                  "message_type": 0,
+                  "created_at": 1772436191,
+                  "updated_at": "2026-03-02T07:23:11.281Z",
+                  "private": false,
+                  "status": "sent",
+                  "source_id": "wamid.HBgMOTY2NTUwODc1OTU4FQIAEhggQUM2RjhGRURGMjhDMDg3OUE1RDJEQ0NDQzE2NjJEQkYA",
+                  "content_type": "text",
+                  "content_attributes": {},
+                  "sender_type": "Contact",
+                  "sender_id": 720833879,
+                  "external_source_ids": {},
+                  "additional_attributes": {},
+                  "processed_message_content": "نعم",
+                  "sentiment": {},
+                  "conversation": {
+                    "assignee_id": 162487,
+                    "unread_count": 10,
+                    "last_activity_at": 1772436191,
+                    "contact_inbox": {
+                      "source_id": "966550875958"
+                    }
+                  },
+                  "sender": {
+                    "additional_attributes": {},
+                    "custom_attributes": {},
+                    "email": null,
+                    "id": 720833879,
+                    "identifier": null,
+                    "name": "manazer",
+                    "phone_number": "+966550875958",
+                    "thumbnail": "",
+                    "blocked": false,
+                    "type": "contact"
+                  }
+                }
+              ],
+              "labels": [],
+              "meta": {
+                "sender": {
+                  "additional_attributes": {},
+                  "custom_attributes": {},
+                  "email": null,
+                  "id": 720833879,
+                  "identifier": null,
+                  "name": "manazer",
+                  "phone_number": "+966550875958",
+                  "thumbnail": "",
+                  "blocked": false,
+                  "type": "contact"
+                },
+                "assignee": {
+                  "id": 162487,
+                  "name": "Early Store",
+                  "available_name": "Early Store",
+                  "avatar_url": "",
+                  "type": "user",
+                  "availability_status": null,
+                  "thumbnail": ""
+                },
+                "assignee_type": "User",
+                "team": null,
+                "hmac_verified": false
+              },
+              "status": "open",
+              "custom_attributes": {},
+              "snoozed_until": null,
+              "unread_count": 10,
+              "first_reply_created_at": "2026-03-02T06:50:44.284Z",
+              "priority": null,
+              "waiting_since": 1772436191,
+              "agent_last_seen_at": 0,
+              "contact_last_seen_at": 0,
+              "last_activity_at": 1772436191,
+              "timestamp": 1772436191,
+              "created_at": 1772434241,
+              "updated_at": 1772436191.3201962
+            },
+            "created_at": "2026-03-02T07:23:11.281Z",
+            "id": 491898573,
+            "inbox": {
+              "id": 96755,
+              "name": "واتس اب"
+            },
+            "message_type": "incoming",
+            "private": false,
+            "sender": {
+              "account": {
+                "id": 152788,
+                "name": "Inblaj"
+              },
+              "additional_attributes": {},
+              "avatar": "",
+              "custom_attributes": {},
+              "email": null,
+              "id": 720833879,
+              "identifier": null,
+              "name": "manazer",
+              "phone_number": "+966550875958",
+              "thumbnail": "",
+              "blocked": false
+            },
+            "source_id": "wamid.HBgMOTY2NTUwODc1OTU4FQIAEhggQUM2RjhGRURGMjhDMDg3OUE1RDJEQ0NDQzE2NjJEQkYA",
+            "event": "message_created"
+          },
+          "webhookUrl": "https://n8n.aura-reply.cloud/webhook/enterprise-chatwootv2",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Login Mail.tm1": {
+      "main": [
+        [
+          {
+            "node": "Fetch Inbox (Mail.tm)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Chatwoot)": {
+      "main": [
+        [
+          {
+            "node": "Set: Extract Incoming",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set: Extract Incoming": {
+      "main": [
+        [
+          {
+            "node": "IF: Escalation Label Override?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics IF: Incoming?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics IF: Outbound AI/Bot?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis GET: user_state": {
+      "main": [
+        [
+          {
+            "node": "Code: Normalize State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Normalize State": {
+      "main": [
+        [
+          {
+            "node": "Switch: User State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: User State": {
+      "main": [
+        [
+          {
+            "node": "IF: Has Media Attachment?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch: Button Type",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch: Button Type",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If exiting from waitting list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Fetch Chat History": {
+      "main": [
+        [
+          {
+            "node": "Code: Format Chat History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set: AI Context": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (Master Prompt)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: trigger_otp": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Master Prompt)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis DEL: user_state (Success)": {
+      "main": [
+        [
+          {
+            "node": "Redis DEL: account_lock (Success)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis SET: user_state (Fail +1)": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Press Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot: Press Resend": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis DEL: user_state (Exit)": {
+      "main": [
+        [
+          {
+            "node": "Redis DEL: account_lock (Exit)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis DEL: account_lock (Success)": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Press Resend2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis DEL: account_lock (Exit)": {
+      "main": [
+        [
+          {
+            "node": "exit completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Format Chat History": {
+      "main": [
+        [
+          {
+            "node": "Set: AI Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Escalation Label Override?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "IF: Human Agent Outgoing?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Human Agent Outgoing?": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "incoming only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Video Attachment?": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Video Not Supported",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis GET: user_state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Has Media Attachment?": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Video Not Supported1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent (Master Prompt)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis DEL: user_state (Exit)1": {
+      "main": [
+        [
+          {
+            "node": "Redis DEL: account_lock (Exit)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis DEL: account_lock (Exit)1": {
+      "main": [
+        [
+          {
+            "node": "account limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "incoming only": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Button Type": {
+      "main": [
+        [
+          {
+            "node": "Redis DEL: user_state (Success)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics Event: OTP Outcome Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis SET: user_state (Fail +1)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics Event: OTP Outcome Failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis DEL: user_state (Exit)1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics Event: OTP Outcome Failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis DEL: user_state (Exit)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics Event: OTP Outcome Unconfirmed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "login/resend successfully",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "login/resend successfully",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis DEL: user_state (Exit)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics Event: OTP Outcome Unconfirmed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ممتاز سوف يصلك الكود",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "state swith to use options",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'esclation v3'": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Master Prompt)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Send Image to Chatwoot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [],
+        [
+          {
+            "node": "IF: Video Attachment?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If exiting from waitting list": {
+      "main": [
+        [
+          {
+            "node": "Redis DEL: user_state (Exit)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Chatwoot: Use Buttons Prompt1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Send normal Text Message": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Master Prompt)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Redis: Check Block",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Upsert row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis: Check Block": {
+      "main": [
+        [
+          {
+            "node": "If User is Blocked?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If User is Blocked?": {
+      "main": [
+        [
+          {
+            "node": "remove blocked user",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis: Block User 10s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis: Block User 10s": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Fetch Chat History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ممتاز سوف يصلك الكود": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Send Image": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "1. Send Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "state swith to use options": {
+      "main": [
+        [
+          {
+            "node": "2. Send Options2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "2. Send Options1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "2. Send Options",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent (Master Prompt)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics Event: AI Usage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics IF: Incoming?": {
+      "main": [
+        [
+          {
+            "node": "Analytics Event: Inbound Message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics Event: Intent Classification",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics IF: Conversation Created?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics IF: Conversation Created?": {
+      "main": [
+        [
+          {
+            "node": "Analytics Event: Conversation Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics IF: Outbound AI/Bot?": {
+      "main": [
+        [
+          {
+            "node": "Analytics Event: Outbound Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: Inbound Message": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: Intent Classification": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: Conversation Created": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: Outbound Message": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: OTP Outcome Success": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: OTP Outcome Failed": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: OTP Outcome Unconfirmed": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: AI Usage": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "46c4fd0a-d99b-404a-bfb4-72d151483819",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "98c9121775f2c350960fe151740521cb03acfc1cee54bd926992bb3e7c435f9d"
+  },
+  "id": "v0Mrt2dbsQnc00T0",
+  "tags": []
+}

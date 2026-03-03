@@ -1,0 +1,538 @@
+{
+  "name": "esclation v3",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "conversation_id"
+            },
+            {
+              "name": "chatwoot_account_id"
+            },
+            {
+              "name": "Cuse-of-escalation"
+            },
+            {
+              "name": "clearfication"
+            },
+            {
+              "name": "phonenumber"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "180d8bd5-4a64-4fab-887b-734d94a070ea",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=923449340849036",
+        "recipientPhoneNumber": "={{ $json.target_number }}",
+        "textBody": "=رقم المحادثة: {{ $('Set: Standardize and Output Data').first().json.conversation_id }}\nرقم العميل: {{ $('Set: Standardize and Output Data').first().json.customer_phone_number }}\nسبب الإيقاف: {{ $('Set: Parse AI JSON Response').first().json.reason_to_stop_bot }}\nوصف للحال:\n{{ $('Set: Parse AI JSON Response').first().json.message_content }}\n-------------------\nالإيميل: {{ $('Set: Parse AI JSON Response').first().json.account_email }}\nالباسوورد: {{ $('Set: Parse AI JSON Response').first().json.account_password }}",
+        "additionalFields": {}
+      },
+      "id": "49d797d7-4a29-4cb4-9d9a-a2e53d22de01",
+      "name": "Notify Support Loop1",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1392,
+        256
+      ],
+      "webhookId": "2179ba14-c3fc-451d-81be-37c9e2b037b3",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "pjziPeDEzlZwREEQ",
+          "name": "EARLY STORE"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $('When Executed by Another Workflow').item.json.conversation_id }}",
+        "content": "✅ تم تحويل محادثتك إلى فريق الدعم الفني المختص.\n⏳ سيتم الرد عليك خلال مدة تتراوح بين 1 إلى 24 ساعة .\n\nشكرًا لتفهمك وتعاونك.",
+        "additionalOptions": {}
+      },
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "id": "97cc1f10-966b-4ca9-8a33-8853df892c3f",
+      "name": "Create a message",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "=1884",
+        "content": "=رابط المحادثى : https://app.chatwoot.com/app/accounts/{{ $('When Executed by Another Workflow').item.json.chatwoot_account_id }}/inbox-view/conversation/{{ $('When Executed by Another Workflow').item.json.conversation_id }}\nرقم العميل: {{ $('When Executed by Another Workflow').item.json.phonenumber }}\nرقم المحادثة:{{ $('When Executed by Another Workflow').item.json.chatwoot_account_id }}\nسبب الإيقاف: {{ $('When Executed by Another Workflow').item.json['Cuse-of-escalation'] }}\nوصف للحال:\n{{ $('When Executed by Another Workflow').item.json.clearfication }}\n",
+        "additionalOptions": {}
+      },
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        832,
+        352
+      ],
+      "id": "a8e79eb9-c1fc-4045-b9e9-6663a5da2cf5",
+      "name": "send to support",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7791f365-d89d-4ec4-aef6-58e37214ad4c",
+              "name": "status",
+              "value": "SUCCESS: Text message successfully delivered to the user. 🚨 CRITICAL INSTRUCTION: You have reached your messaging limit for this turn. You are STRICTLY FORBIDDEN from using the 'Send Options Message' tool or 'Tool: Send normal Text Messag ' or calling this tool again right now or any other tool. You should stop action immediately.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        0
+      ],
+      "id": "1969e015-38ca-4ae8-b87e-79ffd3fa5cc9",
+      "name": "success"
+    },
+    {
+      "parameters": {
+        "resource": "conversation",
+        "operation": "addLabels",
+        "conversationId": 0
+      },
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        496,
+        368
+      ],
+      "id": "a57c3358-cd04-48fa-9702-40ba364afa1f",
+      "name": "Add labels to conversation",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://app.chatwoot.com/api/v1/accounts/152788/conversations/{{ $json.conversation_id }}/labels",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "chatwootApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"labels\": [\n    \"قيد-من-بووت\"\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        240,
+        16
+      ],
+      "id": "6a3b45b2-9742-41b8-b837-a6269dd7b890",
+      "name": "HTTP Request",
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=923449340849036",
+        "recipientPhoneNumber": "=+966535755325",
+        "textBody": "=رابط المحادثى : https://app.chatwoot.com/app/accounts/{{ $('When Executed by Another Workflow').item.json.chatwoot_account_id }}/inbox-view/conversation/{{ $('When Executed by Another Workflow').item.json.conversation_id }}\nرقم العميل: {{ $('When Executed by Another Workflow').item.json.phonenumber }}\nرقم المحادثة:{{ $('When Executed by Another Workflow').item.json.chatwoot_account_id }}\nسبب الإيقاف: {{ $('When Executed by Another Workflow').item.json['Cuse-of-escalation'] }}\nوصف للحال:\n{{ $('When Executed by Another Workflow').item.json.clearfication }}\n",
+        "additionalFields": {}
+      },
+      "id": "9bc1343a-4279-4902-a398-4493eef2fb0a",
+      "name": "Notify Support Loop",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        0
+      ],
+      "webhookId": "2179ba14-c3fc-451d-81be-37c9e2b037b3",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "pjziPeDEzlZwREEQ",
+          "name": "EARLY STORE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "AKNttTBHmpOj5rgZ",
+          "mode": "list",
+          "cachedResultName": "labling-stop-bot-karim",
+          "cachedResultUrl": "/projects/lQgjPPyrJr4zMTgY/datatables/AKNttTBHmpOj5rgZ"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "convertaion_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.conversation_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "By": "eslatedby-bot",
+            "time_to_be_free_again": "15",
+            "convertaion_id": "={{ $('When Executed by Another Workflow').item.json.conversation_id }}"
+          },
+          "matchingColumns": [
+            "convertaion_id"
+          ],
+          "schema": [
+            {
+              "id": "convertaion_id",
+              "displayName": "convertaion_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "By",
+              "displayName": "By",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "time_to_be_free_again",
+              "displayName": "time_to_be_free_again",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        928,
+        16
+      ],
+      "id": "a52ce834-b9c1-467e-8077-107fadf0574a",
+      "name": "Upsert row(s)"
+    },
+    {
+      "parameters": {
+        "content": "## Analytics Tracking\nLogs support escalation events for dashboard reporting.",
+        "height": 240,
+        "width": 560
+      },
+      "id": "bf4c67d7-0c83-47b9-9e23-b46ef9dc9aa3",
+      "name": "Sticky: Analytics Instrumentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -920,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "support_escalation",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['support_escalation', String($json.conversation_id || ''), String($execution.id || '')].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $json.phonenumber || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "system",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "={{ /disney|ديزني/i.test($json['Cuse-of-escalation'] || '') ? 'disney' : (/fasel|فاصل/i.test($json['Cuse-of-escalation'] || '') ? 'fasel' : 'general') }}",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "support_handoff",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "={{ $json['Cuse-of-escalation'] || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'esclation', source_event_id: String($execution.id || ''), conversation_url: ('https://app.chatwoot.com/app/accounts/' + String($json.chatwoot_account_id || '') + '/inbox-view/conversation/' + String($json.conversation_id || '')) }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f4323a48-475d-400e-b584-0b686f5273a3",
+      "name": "Analytics Event: Escalation",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -680,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ANALYTICS_INGEST_URL || 'http://localhost:8000/events' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "175e46a4-b8f9-4198-85ef-d9c26e1f120a",
+      "name": "Analytics: Send Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -360,
+        -120
+      ],
+      "continueOnFail": true
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "conversation_id": 2031,
+          "chatwoot_account_id": 152788,
+          "Cuse-of-escalation": "استفسار مبيعات - اشتراك شاشات",
+          "clearfication": "العميل يسأل عن توفر اشتراكات تدعم التشغيل على الشاشات (TV) بعد ما عرف أن اشتراك ديزني بلس الحالي مخصص للجوال فقط. يرجى إفادته بالخيارات المتاحة.",
+          "phonenumber": "+966544347735"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "send to support": [
+      {
+        "json": {
+          "id": 487516097,
+          "content": "رابط المحادثى : https://app.chatwoot.com/app/accounts/152788/inbox-view/conversation/2031\nرقم العميل: +966544347735\nرقم المحادثة:152788\nسبب الإيقاف: استفسار مبيعات - اشتراك شاشات\nوصف للحال:\nالعميل يسأل عن توفر اشتراكات تدعم التشغيل على الشاشات (TV) بعد ما عرف أن اشتراك ديزني بلس الحالي مخصص للجوال فقط. يرجى إفادته بالخيارات المتاحة.\n",
+          "inbox_id": 96755,
+          "conversation_id": 1884,
+          "message_type": 1,
+          "content_type": "text",
+          "status": "sent",
+          "content_attributes": {},
+          "created_at": 1772198860,
+          "private": false,
+          "source_id": null,
+          "sender": {
+            "id": 162487,
+            "name": "Early Store",
+            "available_name": "Early Store",
+            "avatar_url": "",
+            "type": "user",
+            "availability_status": "online",
+            "thumbnail": ""
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics Event: Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a message": {
+      "main": [
+        [
+          {
+            "node": "Notify Support Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send to support": {
+      "main": [
+        []
+      ]
+    },
+    "Add labels to conversation": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Create a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Support Loop": {
+      "main": [
+        [
+          {
+            "node": "Upsert row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert row(s)": {
+      "main": [
+        [
+          {
+            "node": "success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: Escalation": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "bd912629-3e24-4473-bb2d-b088a010ffb6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "98c9121775f2c350960fe151740521cb03acfc1cee54bd926992bb3e7c435f9d"
+  },
+  "id": "1e1FkCPcC8y7PxhZ",
+  "tags": []
+}

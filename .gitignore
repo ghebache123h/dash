@@ -1,0 +1,17 @@
+# Local env
+.env
+
+# Runtime artifacts
+.runtime/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Local native DB
+analytics/local_analytics.db
+
+# OS/editor
+.DS_Store
+Thumbs.db

@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: whatsapp-analytics-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-analytics}
+      POSTGRES_USER: ${POSTGRES_USER:-analytics}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-analytics}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  analytics-api:
+    build:
+      context: .
+      dockerfile: analytics/api/Dockerfile
+    container_name: whatsapp-analytics-api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-analytics}:${POSTGRES_PASSWORD:-analytics}@postgres:5432/${POSTGRES_DB:-analytics}
+      MIGRATIONS_DIR: /app/db/migrations
+    ports:
+      - "${ANALYTICS_API_PORT:-8000}:8000"
+
+  analytics-dashboard:
+    build:
+      context: .
+      dockerfile: analytics/dashboard/Dockerfile
+    container_name: whatsapp-analytics-dashboard
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-analytics}:${POSTGRES_PASSWORD:-analytics}@postgres:5432/${POSTGRES_DB:-analytics}
+    ports:
+      - "${ANALYTICS_DASHBOARD_PORT:-8501}:8501"
+
+volumes:
+  postgres_data:

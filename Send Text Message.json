@@ -1,0 +1,212 @@
+{
+  "name": "Send Text Message",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "conversation_id"
+            },
+            {
+              "name": "message"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "aabb6edd-5fe6-4823-91eb-a576d978c754",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "dataToSave": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executionData",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        160
+      ],
+      "id": "ee992da6-dc9d-469f-8472-d91e8e4f5fc2",
+      "name": "Execution Data"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "={{ $json.conversation_id }}",
+        "sendMode": "json",
+        "customJson": "={{ $json.message }}"
+      },
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        304,
+        0
+      ],
+      "id": "12e98f82-d2b4-41bc-bce2-55047cc2dd78",
+      "name": "Create a message",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4207549f-6060-4330-97dd-6d3c8c874f35",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "sent",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        0
+      ],
+      "id": "175e6c85-27a0-499f-b8ea-e1b10c9b9c01",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7791f365-d89d-4ec4-aef6-58e37214ad4c",
+              "name": "status",
+              "value": "SUCCESS: Text message successfully delivered to the user. 🚨 CRITICAL INSTRUCTION: You have reached your messaging limit for this turn. You are STRICTLY FORBIDDEN from using the 'Send Options Message' tool or calling this tool again right now. You may proceed with other non-messaging tools if required by your instructions.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        -16
+      ],
+      "id": "bbc104b0-078a-4f96-a897-f2dd1e5afecc",
+      "name": "success"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "conversationId": "=1778",
+        "sendMode": "json",
+        "customJson": "={{ JSON.stringify({ \n  content: 'نعتذر عن ذلك 🙏\\nيرجى الضغط على زر الإيميل مرة أخرى (الموضح في الصورة التي سأرسلها لك).\\nبعد الضغط، انتظر قليلًا حتى يصل الرمز، ثم سأرسله لك 🔐.\\nإذا لم يعمل مرة أخرى، يرجى إبلاغي بذلك.', \n  content_type: 'input_select', \n  content_attributes: { \n    sent_by_otp: true, \n    items: [ \n      { title: '📧 ضغطت زر الإيميل', value: '📧 ضغطت زر الإيميل' }, \n      { title: '❓ وين زر الإيميل؟', value: '❓ وين زر الإيميل؟' }, \n      { title: 'جاني خطأ - حد اقصى', value: 'جاني خطأ - حد اقصى' }, \n      { title: 'خروج', value: 'خروج' } \n    ] \n  } \n}) }}"
+      },
+      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
+      "typeVersion": 1,
+      "position": [
+        208,
+        240
+      ],
+      "id": "fe2ff2d4-170b-4bc1-ae09-3f4455a1c9e5",
+      "name": "Create a message1",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "credentials": {
+        "chatwootApi": {
+          "id": "px6EIZp51k70B9Xp",
+          "name": "Chatwoot account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "conversation_id": 1757,
+          "message": "{\"content\":\"تمام، ولا يهمك. ولا تنسى قبل ما نبدأ تطلع على هذا الفيديو القصير عشان تعرف من وين تجيب بياناتك (رقم الطلب والإيميل):\\n📺 https://youtube.com/shorts/Z5gtTL-9UYg?si=q85UK0bIzS-VfHgK\\n\\nإذا البيانات جاهزة عندك، يا ليت تزودني برقم الطلب (6 أرقام أو أكثر) والإيميل المسجل في المتجر.\",\"content_attributes\":{\"sent_by_ai\":true}}"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Create a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a message": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a65a19a3-779a-4ab6-b464-274518933041",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "98c9121775f2c350960fe151740521cb03acfc1cee54bd926992bb3e7c435f9d"
+  },
+  "id": "Og1YSAHDBoN2feGl",
+  "tags": []
+}
