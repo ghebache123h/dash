@@ -29,7 +29,7 @@ services:
   analytics-dashboard:
     build:
       context: .
-      dockerfile: analytics/dashboard/Dockerfile
+      dockerfile: analytics/dashboard_next/Dockerfile
     container_name: whatsapp-analytics-dashboard
     restart: unless-stopped
     depends_on:

@@ -3,7 +3,7 @@
 This stack now supports two modes:
 
 - Native local mode (no Docker): SQLite + local Python services.
-- Docker mode (for server deployment later): PostgreSQL + containers.
+- Docker mode (for server deployment): PostgreSQL + FastAPI + Next.js dashboard.
 
 ## 1) Native Local Mode (No Docker)
 
@@ -25,7 +25,7 @@ This will:
 
 1. Install required Python packages (unless you pass `-SkipInstall`).
 2. Run API locally on `http://localhost:8000`.
-3. Run dashboard locally on `http://localhost:8501`.
+3. Run legacy local dashboard locally on `http://localhost:8501`.
 4. Use SQLite file DB at `./analytics/local_analytics.db`.
 5. Start Cloudflare quick tunnel (unless you pass `-SkipTunnel`) and print public `/events` URL.
 
@@ -70,6 +70,8 @@ or explicit URL:
 ```powershell
 .\scripts\start-analytics-local.ps1
 ```
+
+Docker dashboard serves the Antigravity-style UI on `http://localhost:8501`.
 
 ### Stop
 

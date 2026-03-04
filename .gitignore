@@ -9,6 +9,10 @@
 __pycache__/
 *.pyc
 
+# Node / Next.js
+node_modules/
+.next/
+
 # Local native DB
 analytics/local_analytics.db
 
