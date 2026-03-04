@@ -5,6 +5,14 @@ export const dynamic = "force-dynamic";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
+function safeLocaleDate(value: string | Date): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+  return date.toLocaleString();
+}
+
 export default async function CrmPage({
   searchParams,
 }: {
@@ -62,8 +70,8 @@ export default async function CrmPage({
                 <td>{row.conversationId}</td>
                 <td>{row.escalationCount}</td>
                 <td>{row.escalationReason}</td>
-                <td>{row.firstEscalationAt.toLocaleString()}</td>
-                <td>{row.lastEscalationAt.toLocaleString()}</td>
+                <td>{safeLocaleDate(row.firstEscalationAt)}</td>
+                <td>{safeLocaleDate(row.lastEscalationAt)}</td>
                 <td>{row.repeated ? "Repeated" : "Single"}</td>
                 <td>
                   {row.conversationReference ? (

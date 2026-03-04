@@ -45,6 +45,14 @@ function eventLabel(value: string): string {
   return map[value] || value;
 }
 
+function safeLocaleDate(value: string | Date): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+  return date.toLocaleString();
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -233,7 +241,7 @@ export default async function DashboardPage({
           <tbody>
             {data.recentEvents.map((event, idx) => (
               <tr key={`${event.event_key}-${idx}`}>
-                <td>{new Date(event.event_time).toLocaleString()}</td>
+                <td>{safeLocaleDate(event.event_time)}</td>
                 <td>{eventLabel(event.event_type)}</td>
                 <td>{event.conversation_id || "-"}</td>
                 <td>{event.customer_id || "-"}</td>

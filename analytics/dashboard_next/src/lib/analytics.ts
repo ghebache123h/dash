@@ -81,6 +81,9 @@ function toDate(value: string | Date | null | undefined, fallback: Date): Date {
     return fallback;
   }
   if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      return fallback;
+    }
     return value;
   }
   const parsed = parseISO(value);
@@ -401,7 +404,15 @@ function bucketKey(date: Date, bucket: BucketType): string {
 }
 
 function labelFromBucketKey(key: string, bucket: BucketType): string {
-  const date = new Date(`${key.replace(" ", "T")}:00Z`);
+  const hourLike = key.includes(" ");
+  const isoLike =
+    bucket === "hour" && hourLike
+      ? `${key.replace(" ", "T")}:00Z`
+      : `${key}T00:00:00Z`;
+  const date = new Date(isoLike);
+  if (Number.isNaN(date.getTime())) {
+    return key;
+  }
   if (bucket === "hour") {
     return format(date, "MMM d HH:mm");
   }
