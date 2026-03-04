@@ -1,12 +1,17 @@
 import hashlib
 import json
 import os
+import sys
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 try:
     from analytics.api.db import apply_migrations, insert_event
 except ImportError:  # pragma: no cover - script execution fallback
-    from db import apply_migrations, insert_event
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    from analytics.api.db import apply_migrations, insert_event
 
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./analytics/local_analytics.db")
