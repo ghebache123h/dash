@@ -24,7 +24,7 @@ export function DashboardCharts({
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
             {/* Row 1: Messages + OTP */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
                 <ChartCard title="Message Volume" subtitle="User vs AI messages over time">
                     <GroupedBarChart
                         data={messageTrendData}
@@ -40,7 +40,7 @@ export function DashboardCharts({
             </div>
 
             {/* Row 2: OTP + Escalations */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
                 <ChartCard title="OTP Outcomes" subtitle="Request, success, failed, unconfirmed">
                     <GroupedBarChart
                         data={otpTrendData}
@@ -58,7 +58,7 @@ export function DashboardCharts({
             </div>
 
             {/* Row 3: Token Usage + OTP Donut  */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '20px' }}>
                 <ChartCard title="Token Usage" subtitle="Input vs Output tokens consumed">
                     <GroupedBarChart
                         data={tokenTrendData}

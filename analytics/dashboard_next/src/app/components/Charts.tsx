@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
     AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -45,7 +46,7 @@ interface ChartCardProps {
 
 export function ChartCard({ title, subtitle, children, height = 280 }: ChartCardProps) {
     return (
-        <div className="chart-container">
+        <div className="chart-container" style={{ minWidth: 0 }}>
             <div style={{ marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-highlight)', margin: 0 }}>
                     {title}
@@ -54,7 +55,7 @@ export function ChartCard({ title, subtitle, children, height = 280 }: ChartCard
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0' }}>{subtitle}</p>
                 )}
             </div>
-            <div style={{ width: '100%', height }}>
+            <div style={{ width: '100%', height, minWidth: 0, minHeight: height }}>
                 {children}
             </div>
         </div>
@@ -70,9 +71,11 @@ interface TrendChartProps {
 }
 
 export function TrendAreaChart({ data, color = COLORS.blue, label = 'Count' }: TrendChartProps) {
+    const chartReady = useChartReady();
     if (!data.length) return <EmptyChart />;
+    if (!chartReady) return <LoadingChart />;
     return (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220} debounce={80}>
             <AreaChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: -10 }}>
                 <defs>
                     <linearGradient id={`grad-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
@@ -100,9 +103,11 @@ interface MultiBarProps {
 }
 
 export function GroupedBarChart({ data, bars }: MultiBarProps) {
+    const chartReady = useChartReady();
     if (!data.length) return <EmptyChart />;
+    if (!chartReady) return <LoadingChart />;
     return (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220} debounce={80}>
             <BarChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: -10 }} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                 <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} />
@@ -127,10 +132,12 @@ interface DonutData {
     color: string;
 }
 export function DonutChart({ data }: { data: DonutData[] }) {
+    const chartReady = useChartReady();
     const total = data.reduce((s, d) => s + d.value, 0);
     if (!total) return <EmptyChart />;
+    if (!chartReady) return <LoadingChart />;
     return (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220} debounce={80}>
             <PieChart>
                 <Pie
                     data={data}
@@ -155,6 +162,21 @@ export function DonutChart({ data }: { data: DonutData[] }) {
             </PieChart>
         </ResponsiveContainer>
     );
+}
+
+function useChartReady(): boolean {
+    const [ready, setReady] = useState(false);
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setReady(true));
+        return () => cancelAnimationFrame(raf);
+    }, []);
+
+    return ready;
+}
+
+function LoadingChart() {
+    return <div className="skeleton" style={{ width: '100%', height: '100%' }} />;
 }
 
 function EmptyChart() {

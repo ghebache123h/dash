@@ -88,7 +88,7 @@ def apply_migrations(migrations_dir: str) -> None:
             if already_applied:
                 continue
 
-            sql_text = file_path.read_text(encoding="utf-8-sig")
+            sql_text = file_path.read_text(encoding="utf-8-sig").lstrip("\ufeff")
             
             with conn.cursor() as cur:
                 # psycopg 3 requires executing statements one by one if they contain certain DDL
