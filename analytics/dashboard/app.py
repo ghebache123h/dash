@@ -1,3 +1,4 @@
+﻿
 import json
 import os
 import sqlite3
@@ -6,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 try:
@@ -16,7 +19,220 @@ except ImportError:  # pragma: no cover - sqlite local mode
     dict_row = None
 
 
-st.set_page_config(page_title="WhatsApp AI Analytics", layout="wide")
+st.set_page_config(
+    page_title="WhatsApp AI Analytics",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+
+EVENT_COLUMNS = [
+    "event_time",
+    "event_type",
+    "conversation_id",
+    "customer_id",
+    "channel",
+    "direction",
+    "category",
+    "intent",
+    "otp_status",
+    "escalation_reason",
+    "token_input",
+    "token_output",
+    "metadata",
+    "event_key",
+]
+
+CHART_COLORS = {
+    "inbound": "#60A5FA",
+    "outbound": "#34D399",
+    "success": "#22C55E",
+    "failed": "#EF4444",
+    "unconfirmed": "#F59E0B",
+    "escalation": "#F97316",
+    "input_tokens": "#22D3EE",
+    "output_tokens": "#A3E635",
+    "input_cost": "#38BDF8",
+    "output_cost": "#4ADE80",
+    "total_cost": "#F59E0B",
+}
+
+
+def apply_custom_css() -> None:
+    st.markdown(
+        """
+        <style>
+        :root {
+            --bg: #050B16;
+            --bg-soft: #0B1426;
+            --panel: #0F1A30;
+            --panel-2: #111E36;
+            --border: #223556;
+            --text: #E6EEFF;
+            --muted: #A8B6D8;
+            --accent: #38BDF8;
+            --good: #22C55E;
+            --bad: #EF4444;
+            --warn: #F59E0B;
+        }
+
+        [data-testid="stAppViewContainer"] {
+            background:
+              radial-gradient(1200px 500px at 90% -10%, rgba(56, 189, 248, 0.10), transparent 60%),
+              radial-gradient(1000px 500px at -10% -20%, rgba(37, 99, 235, 0.12), transparent 60%),
+              var(--bg);
+            color: var(--text);
+        }
+
+        [data-testid="stSidebar"] {
+            background: linear-gradient(180deg, #0A1325 0%, #08101F 100%);
+            border-right: 1px solid rgba(148, 163, 184, 0.18);
+        }
+
+        [data-testid="stHeader"] {
+            background: rgba(5, 11, 22, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        .page-hero {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.14), rgba(59, 130, 246, 0.10));
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 16px;
+            padding: 20px 22px;
+            margin-bottom: 16px;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: 1.7rem;
+            line-height: 1.2;
+            letter-spacing: 0.2px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .page-subtitle {
+            margin: 8px 0 0 0;
+            font-size: 0.94rem;
+            color: var(--muted);
+        }
+
+        .chip-row {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.77rem;
+            color: #DBEAFE;
+            border: 1px solid rgba(147, 197, 253, 0.34);
+            background: rgba(37, 99, 235, 0.18);
+        }
+
+        .section-title {
+            font-size: 1rem;
+            margin: 16px 0 8px 0;
+            font-weight: 600;
+            color: #DCE7FF;
+            letter-spacing: 0.2px;
+        }
+        .kpi-card {
+            background: linear-gradient(180deg, rgba(17, 30, 54, 0.90), rgba(15, 24, 43, 0.95));
+            border: 1px solid rgba(148, 163, 184, 0.20);
+            border-radius: 14px;
+            padding: 14px 14px;
+            min-height: 128px;
+            transition: all 0.18s ease;
+            box-shadow: 0 6px 20px rgba(2, 6, 23, 0.26);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(56, 189, 248, 0.48);
+            box-shadow: 0 10px 28px rgba(2, 6, 23, 0.36);
+        }
+
+        .kpi-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .kpi-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+            letter-spacing: 0.2px;
+        }
+
+        .kpi-icon {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        .kpi-value {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: #F8FBFF;
+            line-height: 1.2;
+            margin: 2px 0 10px 0;
+        }
+
+        .delta-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 0.74rem;
+            border: 1px solid transparent;
+        }
+
+        .delta-up {
+            color: #BBF7D0;
+            background: rgba(34, 197, 94, 0.14);
+            border-color: rgba(34, 197, 94, 0.35);
+        }
+
+        .delta-down {
+            color: #FECACA;
+            background: rgba(239, 68, 68, 0.16);
+            border-color: rgba(239, 68, 68, 0.35);
+        }
+
+        .delta-neutral {
+            color: #BFDBFE;
+            background: rgba(59, 130, 246, 0.14);
+            border-color: rgba(59, 130, 246, 0.35);
+        }
+
+        .panel-empty {
+            border: 1px dashed rgba(148, 163, 184, 0.35);
+            border-radius: 12px;
+            padding: 22px 12px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            border: 1px solid rgba(148, 163, 184, 0.18) !important;
+            background: linear-gradient(180deg, rgba(15, 26, 48, 0.86), rgba(12, 21, 38, 0.94));
+            border-radius: 14px;
+        }
+
+        [data-testid="stDataFrame"] div[role="grid"] {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def get_database_url() -> str:
@@ -34,6 +250,7 @@ def sqlite_path() -> str:
 def ensure_sqlite_schema() -> None:
     if not is_sqlite():
         return
+
     path = sqlite_path()
     parent = Path(path).parent
     if parent and str(parent) not in (".", ""):
@@ -81,6 +298,9 @@ def ensure_sqlite_schema() -> None:
         )
         conn.commit()
 
+def empty_events_df() -> pd.DataFrame:
+    return pd.DataFrame(columns=EVENT_COLUMNS)
+
 
 def run_query(sql: str, params: Any | None = None) -> list[dict[str, Any]]:
     if is_sqlite():
@@ -93,6 +313,7 @@ def run_query(sql: str, params: Any | None = None) -> list[dict[str, Any]]:
 
     if psycopg is None:
         raise RuntimeError("psycopg is required for PostgreSQL mode.")
+
     with psycopg.connect(get_database_url(), row_factory=dict_row) as conn:
         with conn.cursor() as cur:
             cur.execute(sql, params or {})
@@ -109,6 +330,7 @@ def run_execute(sql: str, params: Any | None = None) -> None:
 
     if psycopg is None:
         raise RuntimeError("psycopg is required for PostgreSQL mode.")
+
     with psycopg.connect(get_database_url(), row_factory=dict_row) as conn:
         with conn.cursor() as cur:
             cur.execute(sql, params or {})
@@ -137,19 +359,15 @@ def parse_metadata(value: Any) -> dict[str, Any]:
 
 def load_distinct_values(column: str) -> list[str]:
     try:
-        if is_sqlite():
-            rows = run_query(
-                f"SELECT DISTINCT {column} AS value FROM analytics_events WHERE {column} IS NOT NULL AND {column} != '' ORDER BY 1"
-            )
-        else:
-            rows = run_query(
-                f"SELECT DISTINCT {column} AS value FROM analytics_events WHERE {column} IS NOT NULL AND {column} <> '' ORDER BY 1"
-            )
+        op = "!=" if is_sqlite() else "<>"
+        rows = run_query(
+            f"SELECT DISTINCT {column} AS value FROM analytics_events WHERE {column} IS NOT NULL AND {column} {op} '' ORDER BY 1"
+        )
         return [row["value"] for row in rows if row.get("value")]
-    except Exception as e:
-        if "does not exist" in str(e) or "no such table" in str(e):
+    except Exception as exc:
+        if "does not exist" in str(exc) or "no such table" in str(exc):
             return []
-        raise e
+        raise exc
 
 
 def load_events_range(start_utc: datetime, end_utc: datetime) -> pd.DataFrame:
@@ -158,20 +376,8 @@ def load_events_range(start_utc: datetime, end_utc: datetime) -> pd.DataFrame:
             rows = run_query(
                 """
                 SELECT
-                  event_time,
-                  event_type,
-                  conversation_id,
-                  customer_id,
-                  channel,
-                  direction,
-                  category,
-                  intent,
-                  otp_status,
-                  escalation_reason,
-                  token_input,
-                  token_output,
-                  metadata,
-                  event_key
+                  event_time, event_type, conversation_id, customer_id, channel, direction, category,
+                  intent, otp_status, escalation_reason, token_input, token_output, metadata, event_key
                 FROM analytics_events
                 WHERE event_time >= :start_dt
                   AND event_time <= :end_dt
@@ -183,20 +389,8 @@ def load_events_range(start_utc: datetime, end_utc: datetime) -> pd.DataFrame:
             rows = run_query(
                 """
                 SELECT
-                  event_time,
-                  event_type,
-                  conversation_id,
-                  customer_id,
-                  channel,
-                  direction,
-                  category,
-                  intent,
-                  otp_status,
-                  escalation_reason,
-                  token_input,
-                  token_output,
-                  metadata,
-                  event_key
+                  event_time, event_type, conversation_id, customer_id, channel, direction, category,
+                  intent, otp_status, escalation_reason, token_input, token_output, metadata, event_key
                 FROM analytics_events
                 WHERE event_time >= %(start_dt)s
                   AND event_time <= %(end_dt)s
@@ -204,85 +398,41 @@ def load_events_range(start_utc: datetime, end_utc: datetime) -> pd.DataFrame:
                 """,
                 {"start_dt": start_utc, "end_dt": end_utc},
             )
+    except Exception as exc:
+        if "does not exist" in str(exc) or "no such table" in str(exc):
+            return empty_events_df()
+        raise exc
 
-        if not rows:
-            return pd.DataFrame(
-                columns=[
-                    "event_time",
-                    "event_type",
-                    "conversation_id",
-                    "customer_id",
-                    "channel",
-                    "direction",
-                    "category",
-                    "intent",
-                    "otp_status",
-                    "escalation_reason",
-                    "token_input",
-                    "token_output",
-                    "metadata",
-                    "event_key",
-                ]
-            )
+    if not rows:
+        return empty_events_df()
 
-        df = pd.DataFrame(rows)
-        df["event_time"] = pd.to_datetime(df["event_time"], utc=True, errors="coerce")
-        df["token_input"] = pd.to_numeric(df["token_input"], errors="coerce").fillna(0).astype(int)
-        df["token_output"] = pd.to_numeric(df["token_output"], errors="coerce").fillna(0).astype(int)
-        return df
-    except Exception as e:
-        if "does not exist" in str(e) or "no such table" in str(e):
-            return pd.DataFrame(
-                columns=[
-                    "event_time",
-                    "event_type",
-                    "conversation_id",
-                    "customer_id",
-                    "channel",
-                    "direction",
-                    "category",
-                    "intent",
-                    "otp_status",
-                    "escalation_reason",
-                    "token_input",
-                    "token_output",
-                    "metadata",
-                    "event_key",
-                ]
-            )
-        raise e
-
+    df = pd.DataFrame(rows)
+    df["event_time"] = pd.to_datetime(df["event_time"], utc=True, errors="coerce")
+    df["token_input"] = pd.to_numeric(df["token_input"], errors="coerce").fillna(0).astype(int)
+    df["token_output"] = pd.to_numeric(df["token_output"], errors="coerce").fillna(0).astype(int)
+    return df
 
 def load_inbound_all_time() -> pd.DataFrame:
     try:
-        if is_sqlite():
-            rows = run_query(
-                """
-                SELECT conversation_id, customer_id, channel, category, event_time
-                FROM analytics_events
-                WHERE event_type = 'inbound_message'
-                  AND conversation_id IS NOT NULL
-                """
-            )
-        else:
-            rows = run_query(
-                """
-                SELECT conversation_id, customer_id, channel, category, event_time
-                FROM analytics_events
-                WHERE event_type = 'inbound_message'
-                  AND conversation_id IS NOT NULL
-                """
-            )
+        rows = run_query(
+            """
+            SELECT conversation_id, customer_id, channel, category, event_time
+            FROM analytics_events
+            WHERE event_type = 'inbound_message'
+              AND conversation_id IS NOT NULL
+            """
+        )
+    except Exception as exc:
+        if "does not exist" in str(exc) or "no such table" in str(exc):
+            return pd.DataFrame(columns=["conversation_id", "customer_id", "channel", "category", "event_time"])
+        raise exc
 
-        if not rows:
-            return pd.DataFrame(columns=["conversation_id", "customer_id", "channel", "category", "event_time"])
-        df = pd.DataFrame(rows)
-        df["event_time"] = pd.to_datetime(df["event_time"], utc=True, errors="coerce")
-        return df
-    except Exception as e:
-        if "does not exist" in str(e) or "no such table" in str(e):
-            return pd.DataFrame(columns=["conversation_id", "customer_id", "channel", "category", "event_time"])
-        raise e
+    if not rows:
+        return pd.DataFrame(columns=["conversation_id", "customer_id", "channel", "category", "event_time"])
+
+    df = pd.DataFrame(rows)
+    df["event_time"] = pd.to_datetime(df["event_time"], utc=True, errors="coerce")
+    return df
 
 
 def get_pricing_row() -> dict[str, float]:
@@ -294,16 +444,18 @@ def get_pricing_row() -> dict[str, float]:
             WHERE id = 1
             """
         )
-        if not rows:
+    except Exception as exc:
+        if "does not exist" in str(exc) or "no such table" in str(exc):
             return {"input_price_per_million": 0.0, "output_price_per_million": 0.0}
-        return {
-            "input_price_per_million": float(rows[0]["input_price_per_million"] or 0),
-            "output_price_per_million": float(rows[0]["output_price_per_million"] or 0),
-        }
-    except Exception as e:
-        if "does not exist" in str(e) or "no such table" in str(e):
-            return {"input_price_per_million": 0.0, "output_price_per_million": 0.0}
-        raise e
+        raise exc
+
+    if not rows:
+        return {"input_price_per_million": 0.0, "output_price_per_million": 0.0}
+
+    return {
+        "input_price_per_million": float(rows[0]["input_price_per_million"] or 0),
+        "output_price_per_million": float(rows[0]["output_price_per_million"] or 0),
+    }
 
 
 def save_pricing(input_price: float, output_price: float) -> None:
@@ -335,80 +487,54 @@ def save_pricing(input_price: float, output_price: float) -> None:
     )
 
 
-ensure_sqlite_schema()
+def apply_filters(events_df: pd.DataFrame, channels: list[str], categories: list[str]) -> pd.DataFrame:
+    if events_df.empty:
+        return events_df
+    filtered = events_df.copy()
+    if channels:
+        filtered = filtered[filtered["channel"].isin(channels)]
+    if categories:
+        filtered = filtered[filtered["category"].isin(categories)]
+    return filtered
 
-st.title("WhatsApp AI Support Analytics Dashboard")
-st.caption("Operational KPIs, OTP performance, token usage, cost tracking, and escalation monitoring.")
+def compute_kpis(
+    events_df: pd.DataFrame,
+    all_inbound_df: pd.DataFrame,
+    start_utc: datetime,
+    end_utc: datetime,
+    input_price: float,
+    output_price: float,
+) -> dict[str, float | int]:
+    if not all_inbound_df.empty:
+        first_inbound = all_inbound_df.groupby("conversation_id", dropna=True)["event_time"].min()
+        new_conversations = int(
+            ((first_inbound >= pd.Timestamp(start_utc)) & (first_inbound <= pd.Timestamp(end_utc))).sum()
+        )
+    else:
+        new_conversations = 0
 
+    if events_df.empty:
+        return {
+            "total_messages": 0,
+            "new_conversations": new_conversations,
+            "disney_customers": 0,
+            "disney_code_requests": 0,
+            "otp_success_count": 0,
+            "otp_failed_count": 0,
+            "otp_unconfirmed_count": 0,
+            "support_escalation_count": 0,
+            "avg_messages_per_conversation": 0.0,
+            "input_tokens_total": 0,
+            "output_tokens_total": 0,
+            "avg_input_tokens_per_conversation": 0.0,
+            "avg_output_tokens_per_conversation": 0.0,
+            "input_cost": 0.0,
+            "output_cost": 0.0,
+            "total_cost": 0.0,
+        }
 
-default_end = datetime.now()
-default_start = default_end - timedelta(days=7)
+    total_messages = int(events_df["event_type"].isin(["inbound_message", "outbound_message"]).sum())
 
-st.sidebar.header("Filters")
-start_date = st.sidebar.date_input("Start date", value=default_start.date())
-start_time = st.sidebar.time_input("Start time", value=default_start.time())
-end_date = st.sidebar.date_input("End date", value=default_end.date())
-end_time = st.sidebar.time_input("End time", value=default_end.time())
-start_dt = datetime.combine(start_date, start_time)
-end_dt = datetime.combine(end_date, end_time)
-start_utc = to_utc(start_dt)
-end_utc = to_utc(end_dt)
-
-if end_utc <= start_utc:
-    st.error("End datetime must be after start datetime.")
-    st.stop()
-
-channel_options = load_distinct_values("channel")
-category_options = load_distinct_values("category")
-
-selected_channels = st.sidebar.multiselect("Channel", options=channel_options, default=channel_options)
-selected_categories = st.sidebar.multiselect("Category", options=category_options, default=category_options)
-
-pricing_row = get_pricing_row()
-
-st.sidebar.header("Token Pricing")
-input_price = st.sidebar.number_input(
-    "Input price per 1M tokens",
-    min_value=0.0,
-    value=float(pricing_row["input_price_per_million"]),
-    step=0.01,
-    format="%.6f",
-)
-output_price = st.sidebar.number_input(
-    "Output price per 1M tokens",
-    min_value=0.0,
-    value=float(pricing_row["output_price_per_million"]),
-    step=0.01,
-    format="%.6f",
-)
-
-if st.sidebar.button("Save pricing"):
-    save_pricing(input_price, output_price)
-    st.sidebar.success("Pricing updated.")
-
-events_df = load_events_range(start_utc, end_utc)
-if selected_channels:
-    events_df = events_df[events_df["channel"].isin(selected_channels)]
-if selected_categories:
-    events_df = events_df[events_df["category"].isin(selected_categories)]
-
-if not events_df.empty:
-    events_df = events_df.sort_values("event_time", ascending=False)
-
-all_inbound_df = load_inbound_all_time()
-if selected_channels and not all_inbound_df.empty:
-    all_inbound_df = all_inbound_df[all_inbound_df["channel"].isin(selected_channels)]
-if selected_categories and not all_inbound_df.empty:
-    all_inbound_df = all_inbound_df[all_inbound_df["category"].isin(selected_categories)]
-
-if not all_inbound_df.empty:
-    first_inbound = all_inbound_df.groupby("conversation_id", dropna=True)["event_time"].min()
-    new_conversations = int(((first_inbound >= pd.Timestamp(start_utc)) & (first_inbound <= pd.Timestamp(end_utc))).sum())
-else:
-    new_conversations = 0
-
-total_messages = int(events_df["event_type"].isin(["inbound_message", "outbound_message"]).sum()) if not events_df.empty else 0
-if not events_df.empty:
     disney_customers = int(
         events_df[
             (events_df["category"] == "disney") & (events_df["event_type"] == "inbound_message")
@@ -417,65 +543,172 @@ if not events_df.empty:
         ["customer_key"]
         .nunique()
     )
-else:
-    disney_customers = 0
 
-disney_code_requests = int((events_df["event_type"] == "otp_request").sum()) if not events_df.empty else 0
-otp_success_count = int(((events_df["event_type"] == "otp_outcome") & (events_df["otp_status"] == "success")).sum()) if not events_df.empty else 0
-otp_failed_count = int(((events_df["event_type"] == "otp_outcome") & (events_df["otp_status"] == "failed")).sum()) if not events_df.empty else 0
-otp_unconfirmed_count = int(
-    ((events_df["event_type"] == "otp_outcome") & (events_df["otp_status"] == "unconfirmed")).sum()
-) if not events_df.empty else 0
-support_escalation_count = int((events_df["event_type"] == "support_escalation").sum()) if not events_df.empty else 0
+    disney_code_requests = int((events_df["event_type"] == "otp_request").sum())
+    otp_success_count = int(
+        ((events_df["event_type"] == "otp_outcome") & (events_df["otp_status"] == "success")).sum()
+    )
+    otp_failed_count = int(
+        ((events_df["event_type"] == "otp_outcome") & (events_df["otp_status"] == "failed")).sum()
+    )
+    otp_unconfirmed_count = int(
+        ((events_df["event_type"] == "otp_outcome") & (events_df["otp_status"] == "unconfirmed")).sum()
+    )
+    support_escalation_count = int((events_df["event_type"] == "support_escalation").sum())
 
-conversation_count = int(events_df["conversation_id"].dropna().nunique()) if not events_df.empty else 0
-avg_messages_per_conversation = round(total_messages / conversation_count, 2) if conversation_count > 0 else 0.0
+    conversation_count = int(events_df["conversation_id"].dropna().nunique())
+    avg_messages_per_conversation = round(total_messages / conversation_count, 2) if conversation_count > 0 else 0.0
 
-input_tokens_total = int(events_df["token_input"].sum()) if not events_df.empty else 0
-output_tokens_total = int(events_df["token_output"].sum()) if not events_df.empty else 0
+    input_tokens_total = int(events_df["token_input"].sum())
+    output_tokens_total = int(events_df["token_output"].sum())
 
-input_conv_count = int(events_df[events_df["token_input"] > 0]["conversation_id"].dropna().nunique()) if not events_df.empty else 0
-output_conv_count = int(events_df[events_df["token_output"] > 0]["conversation_id"].dropna().nunique()) if not events_df.empty else 0
-avg_input_tokens_per_conversation = round(input_tokens_total / input_conv_count, 2) if input_conv_count > 0 else 0.0
-avg_output_tokens_per_conversation = round(output_tokens_total / output_conv_count, 2) if output_conv_count > 0 else 0.0
+    input_conv_count = int(events_df[events_df["token_input"] > 0]["conversation_id"].dropna().nunique())
+    output_conv_count = int(events_df[events_df["token_output"] > 0]["conversation_id"].dropna().nunique())
+    avg_input_tokens_per_conversation = (
+        round(input_tokens_total / input_conv_count, 2) if input_conv_count > 0 else 0.0
+    )
+    avg_output_tokens_per_conversation = (
+        round(output_tokens_total / output_conv_count, 2) if output_conv_count > 0 else 0.0
+    )
 
-input_cost = (input_tokens_total / 1_000_000) * input_price
-output_cost = (output_tokens_total / 1_000_000) * output_price
-total_cost = input_cost + output_cost
+    input_cost = (input_tokens_total / 1_000_000) * input_price
+    output_cost = (output_tokens_total / 1_000_000) * output_price
+    total_cost = input_cost + output_cost
 
-
-row1 = st.columns(4)
-row1[0].metric("Total messages", total_messages)
-row1[1].metric("New conversations", new_conversations)
-row1[2].metric("Disney customers", disney_customers)
-row1[3].metric("Disney code requests", disney_code_requests)
-
-row2 = st.columns(4)
-row2[0].metric("OTP success", otp_success_count)
-row2[1].metric("OTP failed", otp_failed_count)
-row2[2].metric("OTP unconfirmed", otp_unconfirmed_count)
-row2[3].metric("Escalations", support_escalation_count)
-
-row3 = st.columns(4)
-row3[0].metric("Avg messages / conversation", avg_messages_per_conversation)
-row3[1].metric("Input tokens", input_tokens_total)
-row3[2].metric("Output tokens", output_tokens_total)
-row3[3].metric("Total token cost", f"${total_cost:,.4f}")
-
-row4 = st.columns(4)
-row4[0].metric("Avg input tokens / conversation", avg_input_tokens_per_conversation)
-row4[1].metric("Avg output tokens / conversation", avg_output_tokens_per_conversation)
-row4[2].metric("Input cost", f"${input_cost:,.4f}")
-row4[3].metric("Output cost", f"${output_cost:,.4f}")
+    return {
+        "total_messages": total_messages,
+        "new_conversations": new_conversations,
+        "disney_customers": disney_customers,
+        "disney_code_requests": disney_code_requests,
+        "otp_success_count": otp_success_count,
+        "otp_failed_count": otp_failed_count,
+        "otp_unconfirmed_count": otp_unconfirmed_count,
+        "support_escalation_count": support_escalation_count,
+        "avg_messages_per_conversation": avg_messages_per_conversation,
+        "input_tokens_total": input_tokens_total,
+        "output_tokens_total": output_tokens_total,
+        "avg_input_tokens_per_conversation": avg_input_tokens_per_conversation,
+        "avg_output_tokens_per_conversation": avg_output_tokens_per_conversation,
+        "input_cost": input_cost,
+        "output_cost": output_cost,
+        "total_cost": total_cost,
+    }
 
 
-st.subheader("Escalated Conversations (Support Monitoring)")
-if not events_df.empty:
+def infer_time_bucket(start_utc: datetime, end_utc: datetime) -> tuple[str, str]:
+    duration = end_utc - start_utc
+    if duration <= timedelta(days=2):
+        return "H", "Hourly"
+    if duration <= timedelta(days=62):
+        return "D", "Daily"
+    return "W", "Weekly"
+
+
+def style_figure(fig: go.Figure, y_axis_title: str) -> go.Figure:
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(12, 21, 38, 0.72)",
+        margin=dict(l=24, r=18, t=36, b=24),
+        height=320,
+        hovermode="x unified",
+        font=dict(color="#DDE7FF", size=13),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+        xaxis=dict(
+            title=None,
+            showgrid=True,
+            gridcolor="rgba(148, 163, 184, 0.15)",
+            linecolor="rgba(148, 163, 184, 0.25)",
+            tickfont=dict(color="#B7C6E8"),
+        ),
+        yaxis=dict(
+            title=y_axis_title,
+            showgrid=True,
+            gridcolor="rgba(148, 163, 184, 0.15)",
+            zeroline=False,
+            tickfont=dict(color="#B7C6E8"),
+            title_font=dict(color="#AFC3EE"),
+        ),
+    )
+    return fig
+
+
+def render_empty_panel(message: str) -> None:
+    st.markdown(f"<div class='panel-empty'>{message}</div>", unsafe_allow_html=True)
+
+def fmt_int(value: float | int) -> str:
+    return f"{int(value):,}"
+
+
+def fmt_float(value: float | int) -> str:
+    return f"{float(value):,.2f}"
+
+
+def fmt_currency(value: float | int) -> str:
+    return f"${float(value):,.4f}"
+
+
+def format_delta(delta: float, kind: str) -> str:
+    if kind in {"int", "token"}:
+        return f"{delta:+,.0f} vs prev"
+    if kind == "currency":
+        return f"{delta:+,.4f} vs prev"
+    return f"{delta:+,.2f} vs prev"
+
+
+def render_kpi_card(
+    title: str,
+    value: float | int,
+    delta: float | int,
+    kind: str,
+    icon: str,
+    inverse_good: bool = False,
+) -> None:
+    if kind in {"int", "token"}:
+        value_text = fmt_int(value)
+    elif kind == "currency":
+        value_text = fmt_currency(value)
+    else:
+        value_text = fmt_float(value)
+
+    if delta > 0:
+        is_positive = not inverse_good
+    elif delta < 0:
+        is_positive = inverse_good
+    else:
+        is_positive = None
+
+    if is_positive is None:
+        delta_class = "delta-neutral"
+        arrow = "•"
+    elif is_positive:
+        delta_class = "delta-up"
+        arrow = "▲"
+    else:
+        delta_class = "delta-down"
+        arrow = "▼"
+
+    delta_text = format_delta(float(delta), kind)
+    st.markdown(
+        f"""
+        <div class="kpi-card">
+          <div class="kpi-head">
+            <span class="kpi-label">{title}</span>
+            <span class="kpi-icon">{icon}</span>
+          </div>
+          <div class="kpi-value">{value_text}</div>
+          <span class="delta-pill {delta_class}">{arrow}&nbsp;{delta_text}</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def build_escalation_table(events_df: pd.DataFrame) -> pd.DataFrame:
     esc_df = events_df[events_df["event_type"] == "support_escalation"].copy()
-else:
-    esc_df = pd.DataFrame()
+    if esc_df.empty:
+        return pd.DataFrame()
 
-if not esc_df.empty:
     esc_df["customer_id"] = esc_df["customer_id"].fillna("unknown")
     esc_df["conversation_id"] = esc_df["conversation_id"].fillna("unknown")
     esc_df["metadata_dict"] = esc_df["metadata"].apply(parse_metadata)
@@ -486,42 +719,550 @@ if not esc_df.empty:
     for (customer_id, conversation_id), group in grouped:
         reasons = sorted({str(v) for v in group["escalation_reason"].dropna().tolist() if str(v).strip()})
         references = [ref for ref in group["conversation_reference"].tolist() if ref]
+        escalation_count = int(len(group))
+        if escalation_count >= 3:
+            priority = "🔴 High"
+        elif escalation_count == 2:
+            priority = "🟠 Medium"
+        else:
+            priority = "🟢 Low"
+
         grouped_rows.append(
             {
                 "customer_id": customer_id,
                 "conversation_id": conversation_id,
-                "escalation_count": int(len(group)),
+                "escalation_count": escalation_count,
+                "priority": priority,
                 "escalation_reason": ", ".join(reasons) if reasons else "unspecified",
                 "first_escalation_at": group["event_time"].min(),
                 "last_escalation_at": group["event_time"].max(),
-                "repeated_support_requests": "Yes" if len(group) > 1 else "No",
+                "repeated_support_requests": "🔁 Repeated" if escalation_count > 1 else "Single",
                 "conversation_reference": references[-1] if references else "",
             }
         )
 
-    escalation_view_df = pd.DataFrame(grouped_rows).sort_values("last_escalation_at", ascending=False)
-    st.dataframe(escalation_view_df, use_container_width=True)
-else:
-    st.info("No escalations in selected time range.")
+    table_df = pd.DataFrame(grouped_rows).sort_values("last_escalation_at", ascending=False)
+    return table_df
 
 
-st.subheader("Recent Events")
-if not events_df.empty:
-    recent_df = events_df[
-        [
-            "event_time",
-            "event_type",
-            "conversation_id",
-            "customer_id",
-            "category",
-            "intent",
-            "otp_status",
-            "escalation_reason",
-            "token_input",
-            "token_output",
-            "event_key",
-        ]
-    ].head(200)
-    st.dataframe(recent_df, use_container_width=True)
-else:
-    st.info("No events available for selected filters.")
+def safe_selected(options: list[str], key: str) -> None:
+    selected = st.session_state.get(key, options)
+    selected = [item for item in selected if item in options]
+    if not selected and options:
+        selected = options
+    st.session_state[key] = selected
+
+
+def init_filters(channel_options: list[str], category_options: list[str]) -> tuple[datetime, datetime]:
+    default_end = datetime.now()
+    default_start = default_end - timedelta(days=7)
+
+    if "filter_start_date" not in st.session_state:
+        st.session_state["filter_start_date"] = default_start.date()
+    if "filter_start_time" not in st.session_state:
+        st.session_state["filter_start_time"] = default_start.time().replace(second=0, microsecond=0)
+    if "filter_end_date" not in st.session_state:
+        st.session_state["filter_end_date"] = default_end.date()
+    if "filter_end_time" not in st.session_state:
+        st.session_state["filter_end_time"] = default_end.time().replace(second=0, microsecond=0)
+    if "filter_channels" not in st.session_state:
+        st.session_state["filter_channels"] = channel_options
+    if "filter_categories" not in st.session_state:
+        st.session_state["filter_categories"] = category_options
+
+    safe_selected(channel_options, "filter_channels")
+    safe_selected(category_options, "filter_categories")
+
+    return default_start, default_end
+
+ensure_sqlite_schema()
+apply_custom_css()
+
+channel_options = load_distinct_values("channel")
+category_options = load_distinct_values("category")
+default_start, default_end = init_filters(channel_options, category_options)
+pricing_row = get_pricing_row()
+input_price = float(pricing_row["input_price_per_million"])
+output_price = float(pricing_row["output_price_per_million"])
+
+with st.sidebar:
+    st.markdown("### Control Center")
+    st.caption("Filter timeframe, channels/categories, and token pricing.")
+
+    with st.form("filters_form", clear_on_submit=False):
+        st.markdown("#### Date & Time")
+        cols_dt_1 = st.columns(2)
+        cols_dt_1[0].date_input("From date", key="filter_start_date")
+        cols_dt_1[1].time_input("From time", key="filter_start_time", step=60)
+
+        cols_dt_2 = st.columns(2)
+        cols_dt_2[0].date_input("To date", key="filter_end_date")
+        cols_dt_2[1].time_input("To time", key="filter_end_time", step=60)
+
+        st.markdown("#### Scope")
+        st.multiselect("Channel", options=channel_options, key="filter_channels")
+        st.multiselect("Category", options=category_options, key="filter_categories")
+
+        col_apply, col_reset = st.columns(2)
+        apply_filters_btn = col_apply.form_submit_button("Apply", use_container_width=True)
+        reset_filters_btn = col_reset.form_submit_button("Reset", use_container_width=True)
+
+    if reset_filters_btn:
+        st.session_state["filter_start_date"] = default_start.date()
+        st.session_state["filter_start_time"] = default_start.time().replace(second=0, microsecond=0)
+        st.session_state["filter_end_date"] = default_end.date()
+        st.session_state["filter_end_time"] = default_end.time().replace(second=0, microsecond=0)
+        st.session_state["filter_channels"] = channel_options
+        st.session_state["filter_categories"] = category_options
+        st.rerun()
+
+    if apply_filters_btn:
+        st.success("Filters applied.")
+
+    st.markdown("---")
+    st.markdown("### Pricing & Cost")
+    with st.form("pricing_form", clear_on_submit=False):
+        input_price = st.number_input(
+            "Input price / 1M",
+            min_value=0.0,
+            value=float(pricing_row["input_price_per_million"]),
+            step=0.01,
+            format="%.6f",
+        )
+        output_price = st.number_input(
+            "Output price / 1M",
+            min_value=0.0,
+            value=float(pricing_row["output_price_per_million"]),
+            step=0.01,
+            format="%.6f",
+        )
+        save_pricing_btn = st.form_submit_button("Save pricing", use_container_width=True)
+        if save_pricing_btn:
+            save_pricing(input_price, output_price)
+            st.success("Pricing updated.")
+
+start_dt = datetime.combine(st.session_state["filter_start_date"], st.session_state["filter_start_time"])
+end_dt = datetime.combine(st.session_state["filter_end_date"], st.session_state["filter_end_time"])
+start_utc = to_utc(start_dt)
+end_utc = to_utc(end_dt)
+
+if end_utc <= start_utc:
+    st.error("End datetime must be after start datetime.")
+    st.stop()
+
+selected_channels = st.session_state.get("filter_channels", channel_options)
+selected_categories = st.session_state.get("filter_categories", category_options)
+
+with st.spinner("Loading analytics data..."):
+    events_df = apply_filters(load_events_range(start_utc, end_utc), selected_channels, selected_categories)
+    if not events_df.empty:
+        events_df = events_df.sort_values("event_time", ascending=False)
+
+    all_inbound_df = apply_filters(load_inbound_all_time(), selected_channels, selected_categories)
+    current_kpis = compute_kpis(events_df, all_inbound_df, start_utc, end_utc, input_price, output_price)
+
+    prev_start_utc = start_utc - (end_utc - start_utc)
+    prev_end_utc = start_utc
+    previous_events_df = apply_filters(load_events_range(prev_start_utc, prev_end_utc), selected_channels, selected_categories)
+    previous_kpis = compute_kpis(
+        previous_events_df,
+        all_inbound_df,
+        prev_start_utc,
+        prev_end_utc,
+        input_price,
+        output_price,
+    )
+
+bucket_rule, bucket_label = infer_time_bucket(start_utc, end_utc)
+
+filter_chips = [
+    f"Range: {start_dt:%Y-%m-%d %H:%M} → {end_dt:%Y-%m-%d %H:%M}",
+    f"Bucket: {bucket_label}",
+    f"Channels: {len(selected_channels) if selected_channels else 0}",
+    f"Categories: {len(selected_categories) if selected_categories else 0}",
+]
+
+st.markdown(
+    f"""
+    <div class="page-hero">
+      <h1 class="page-title">WhatsApp AI Support Analytics</h1>
+      <p class="page-subtitle">
+        Premium operations view for message flow, OTP performance, token usage, cost, and support escalations.
+      </p>
+      <div class="chip-row">
+        {''.join([f"<span class='chip'>{item}</span>" for item in filter_chips])}
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown("<div class='section-title'>Operational Overview</div>", unsafe_allow_html=True)
+core_cards = [
+    ("Total Messages", current_kpis["total_messages"], current_kpis["total_messages"] - previous_kpis["total_messages"], "int", "💬", False),
+    ("New Conversations", current_kpis["new_conversations"], current_kpis["new_conversations"] - previous_kpis["new_conversations"], "int", "🧵", False),
+    (
+        "Avg Msg / Conversation",
+        current_kpis["avg_messages_per_conversation"],
+        current_kpis["avg_messages_per_conversation"] - previous_kpis["avg_messages_per_conversation"],
+        "float",
+        "📈",
+        False,
+    ),
+    (
+        "Support Escalations",
+        current_kpis["support_escalation_count"],
+        current_kpis["support_escalation_count"] - previous_kpis["support_escalation_count"],
+        "int",
+        "🆘",
+        True,
+    ),
+]
+core_cols = st.columns(len(core_cards))
+for col, (title, value, delta, kind, icon, inverse_good) in zip(core_cols, core_cards):
+    with col:
+        render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good)
+
+st.markdown("<div class='section-title'>OTP & Request Performance</div>", unsafe_allow_html=True)
+otp_cards = [
+    ("Disney Customers", current_kpis["disney_customers"], current_kpis["disney_customers"] - previous_kpis["disney_customers"], "int", "🎬", False),
+    ("Disney Code Requests", current_kpis["disney_code_requests"], current_kpis["disney_code_requests"] - previous_kpis["disney_code_requests"], "int", "🔐", False),
+    ("OTP Success", current_kpis["otp_success_count"], current_kpis["otp_success_count"] - previous_kpis["otp_success_count"], "int", "✅", False),
+    ("OTP Failed", current_kpis["otp_failed_count"], current_kpis["otp_failed_count"] - previous_kpis["otp_failed_count"], "int", "❌", True),
+    (
+        "OTP Unconfirmed",
+        current_kpis["otp_unconfirmed_count"],
+        current_kpis["otp_unconfirmed_count"] - previous_kpis["otp_unconfirmed_count"],
+        "int",
+        "⏳",
+        True,
+    ),
+]
+otp_cols = st.columns(len(otp_cards))
+for col, (title, value, delta, kind, icon, inverse_good) in zip(otp_cols, otp_cards):
+    with col:
+        render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good)
+
+st.markdown("<div class='section-title'>Token Usage & Cost</div>", unsafe_allow_html=True)
+token_cards = [
+    ("Input Tokens", current_kpis["input_tokens_total"], current_kpis["input_tokens_total"] - previous_kpis["input_tokens_total"], "token", "⬇️", False),
+    ("Output Tokens", current_kpis["output_tokens_total"], current_kpis["output_tokens_total"] - previous_kpis["output_tokens_total"], "token", "⬆️", False),
+    (
+        "Avg Input / Conversation",
+        current_kpis["avg_input_tokens_per_conversation"],
+        current_kpis["avg_input_tokens_per_conversation"] - previous_kpis["avg_input_tokens_per_conversation"],
+        "float",
+        "🧠",
+        False,
+    ),
+    (
+        "Avg Output / Conversation",
+        current_kpis["avg_output_tokens_per_conversation"],
+        current_kpis["avg_output_tokens_per_conversation"] - previous_kpis["avg_output_tokens_per_conversation"],
+        "float",
+        "🗣️",
+        False,
+    ),
+]
+token_cols = st.columns(len(token_cards))
+for col, (title, value, delta, kind, icon, inverse_good) in zip(token_cols, token_cards):
+    with col:
+        render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good)
+
+cost_cards = [
+    ("Input Cost", current_kpis["input_cost"], current_kpis["input_cost"] - previous_kpis["input_cost"], "currency", "💠", True),
+    ("Output Cost", current_kpis["output_cost"], current_kpis["output_cost"] - previous_kpis["output_cost"], "currency", "💠", True),
+    ("Total Cost", current_kpis["total_cost"], current_kpis["total_cost"] - previous_kpis["total_cost"], "currency", "💲", True),
+]
+cost_cols = st.columns(len(cost_cards))
+for col, (title, value, delta, kind, icon, inverse_good) in zip(cost_cols, cost_cards):
+    with col:
+        render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good)
+
+st.markdown("<div class='section-title'>Trends & Analytics</div>", unsafe_allow_html=True)
+
+chart_config = {"displayModeBar": False, "responsive": True}
+
+row_1_col_1, row_1_col_2 = st.columns([2, 1])
+with row_1_col_1:
+    with st.container(border=True):
+        st.markdown("**Messages Trend**")
+        messages_df = events_df[events_df["event_type"].isin(["inbound_message", "outbound_message"])].copy()
+        if messages_df.empty:
+            render_empty_panel("No message data in the selected period.")
+        else:
+            messages_df = messages_df.dropna(subset=["event_time"])
+            messages_df["direction_group"] = messages_df["direction"].fillna("unknown").replace(
+                {"inbound": "Inbound", "outbound": "Outbound"}
+            )
+            messages_trend = (
+                messages_df.set_index("event_time")
+                .groupby([pd.Grouper(freq=bucket_rule), "direction_group"])
+                .size()
+                .reset_index(name="messages")
+            )
+            fig_messages = px.area(
+                messages_trend,
+                x="event_time",
+                y="messages",
+                color="direction_group",
+                color_discrete_map={"Inbound": CHART_COLORS["inbound"], "Outbound": CHART_COLORS["outbound"], "unknown": "#94A3B8"},
+                labels={"event_time": "Time", "messages": "Messages", "direction_group": "Direction"},
+            )
+            fig_messages = style_figure(fig_messages, "Messages")
+            st.plotly_chart(fig_messages, use_container_width=True, config=chart_config)
+
+with row_1_col_2:
+    with st.container(border=True):
+        st.markdown("**New Conversations Trend**")
+        if all_inbound_df.empty:
+            render_empty_panel("No inbound conversations available.")
+        else:
+            first_contact = all_inbound_df.groupby("conversation_id", dropna=True)["event_time"].min()
+            first_contact = first_contact[
+                (first_contact >= pd.Timestamp(start_utc)) & (first_contact <= pd.Timestamp(end_utc))
+            ]
+            if first_contact.empty:
+                render_empty_panel("No new conversations for this time range.")
+            else:
+                conv_trend = (
+                    first_contact.to_frame(name="first_contact_at")
+                    .set_index("first_contact_at")
+                    .resample(bucket_rule)
+                    .size()
+                    .reset_index(name="new_conversations")
+                )
+                fig_conv = px.bar(
+                    conv_trend,
+                    x="first_contact_at",
+                    y="new_conversations",
+                    color_discrete_sequence=[CHART_COLORS["inbound"]],
+                    labels={"first_contact_at": "Time", "new_conversations": "New conversations"},
+                )
+                fig_conv = style_figure(fig_conv, "New conversations")
+                st.plotly_chart(fig_conv, use_container_width=True, config=chart_config)
+
+row_2_col_1, row_2_col_2 = st.columns([1, 1])
+with row_2_col_1:
+    with st.container(border=True):
+        st.markdown("**OTP Outcomes**")
+        otp_df = events_df[events_df["event_type"] == "otp_outcome"].copy()
+        if otp_df.empty:
+            render_empty_panel("No OTP outcomes in the selected period.")
+        else:
+            status_counts = (
+                otp_df["otp_status"]
+                .fillna("unconfirmed")
+                .value_counts()
+                .reindex(["success", "failed", "unconfirmed"], fill_value=0)
+                .rename_axis("status")
+                .reset_index(name="count")
+            )
+            fig_otp = px.bar(
+                status_counts,
+                x="status",
+                y="count",
+                color="status",
+                color_discrete_map={
+                    "success": CHART_COLORS["success"],
+                    "failed": CHART_COLORS["failed"],
+                    "unconfirmed": CHART_COLORS["unconfirmed"],
+                },
+                labels={"status": "OTP status", "count": "Count"},
+            )
+            fig_otp = style_figure(fig_otp, "Outcomes")
+            st.plotly_chart(fig_otp, use_container_width=True, config=chart_config)
+
+with row_2_col_2:
+    with st.container(border=True):
+        st.markdown("**Escalations Trend**")
+        escalation_df = events_df[events_df["event_type"] == "support_escalation"].copy()
+        if escalation_df.empty:
+            render_empty_panel("No escalations in the selected period.")
+        else:
+            escalation_trend = (
+                escalation_df.dropna(subset=["event_time"])
+                .set_index("event_time")
+                .resample(bucket_rule)
+                .size()
+                .reset_index(name="escalations")
+            )
+            fig_esc = px.line(
+                escalation_trend,
+                x="event_time",
+                y="escalations",
+                markers=True,
+                color_discrete_sequence=[CHART_COLORS["escalation"]],
+                labels={"event_time": "Time", "escalations": "Escalations"},
+            )
+            fig_esc = style_figure(fig_esc, "Escalations")
+            st.plotly_chart(fig_esc, use_container_width=True, config=chart_config)
+
+row_3_col_1, row_3_col_2 = st.columns([1, 1])
+with row_3_col_1:
+    with st.container(border=True):
+        st.markdown("**Token Trend (Input vs Output)**")
+        if events_df.empty:
+            render_empty_panel("No token data for selected period.")
+        else:
+            token_trend = (
+                events_df.dropna(subset=["event_time"])
+                .set_index("event_time")
+                .resample(bucket_rule)[["token_input", "token_output"]]
+                .sum()
+                .reset_index()
+            )
+            if token_trend.empty:
+                render_empty_panel("No token data for selected period.")
+            else:
+                token_long = token_trend.melt(
+                    id_vars=["event_time"],
+                    value_vars=["token_input", "token_output"],
+                    var_name="token_type",
+                    value_name="tokens",
+                )
+                token_long["token_type"] = token_long["token_type"].replace(
+                    {"token_input": "Input tokens", "token_output": "Output tokens"}
+                )
+                fig_tokens = px.line(
+                    token_long,
+                    x="event_time",
+                    y="tokens",
+                    color="token_type",
+                    markers=True,
+                    color_discrete_map={
+                        "Input tokens": CHART_COLORS["input_tokens"],
+                        "Output tokens": CHART_COLORS["output_tokens"],
+                    },
+                    labels={"event_time": "Time", "tokens": "Tokens", "token_type": ""},
+                )
+                fig_tokens = style_figure(fig_tokens, "Tokens")
+                st.plotly_chart(fig_tokens, use_container_width=True, config=chart_config)
+
+with row_3_col_2:
+    with st.container(border=True):
+        st.markdown("**Cost Trend**")
+        if events_df.empty:
+            render_empty_panel("No cost data for selected period.")
+        else:
+            cost_trend = (
+                events_df.dropna(subset=["event_time"])
+                .set_index("event_time")
+                .resample(bucket_rule)[["token_input", "token_output"]]
+                .sum()
+                .reset_index()
+            )
+            if cost_trend.empty:
+                render_empty_panel("No cost data for selected period.")
+            else:
+                cost_trend["input_cost"] = (cost_trend["token_input"] / 1_000_000) * input_price
+                cost_trend["output_cost"] = (cost_trend["token_output"] / 1_000_000) * output_price
+                cost_trend["total_cost"] = cost_trend["input_cost"] + cost_trend["output_cost"]
+                fig_cost = go.Figure()
+                fig_cost.add_trace(
+                    go.Scatter(
+                        x=cost_trend["event_time"],
+                        y=cost_trend["input_cost"],
+                        mode="lines+markers",
+                        name="Input cost",
+                        line=dict(color=CHART_COLORS["input_cost"], width=2.2),
+                    )
+                )
+                fig_cost.add_trace(
+                    go.Scatter(
+                        x=cost_trend["event_time"],
+                        y=cost_trend["output_cost"],
+                        mode="lines+markers",
+                        name="Output cost",
+                        line=dict(color=CHART_COLORS["output_cost"], width=2.2),
+                    )
+                )
+                fig_cost.add_trace(
+                    go.Scatter(
+                        x=cost_trend["event_time"],
+                        y=cost_trend["total_cost"],
+                        mode="lines+markers",
+                        name="Total cost",
+                        line=dict(color=CHART_COLORS["total_cost"], width=2.5),
+                    )
+                )
+                fig_cost = style_figure(fig_cost, "Cost ($)")
+                st.plotly_chart(fig_cost, use_container_width=True, config=chart_config)
+
+st.markdown("<div class='section-title'>Escalation / Support Monitoring</div>", unsafe_allow_html=True)
+with st.container(border=True):
+    escalation_table = build_escalation_table(events_df)
+    if escalation_table.empty:
+        render_empty_panel("No escalated conversations found in the selected period.")
+    else:
+        st.dataframe(
+            escalation_table,
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "customer_id": st.column_config.TextColumn("Customer"),
+                "conversation_id": st.column_config.TextColumn("Conversation ID"),
+                "escalation_count": st.column_config.NumberColumn("Escalations", format="%d"),
+                "priority": st.column_config.TextColumn("Priority"),
+                "escalation_reason": st.column_config.TextColumn("Reason"),
+                "first_escalation_at": st.column_config.DatetimeColumn("First escalation"),
+                "last_escalation_at": st.column_config.DatetimeColumn("Last escalation"),
+                "repeated_support_requests": st.column_config.TextColumn("Pattern"),
+                "conversation_reference": st.column_config.LinkColumn("Conversation link"),
+            },
+        )
+
+st.markdown("<div class='section-title'>Event Stream (Recent 200)</div>", unsafe_allow_html=True)
+with st.container(border=True):
+    if events_df.empty:
+        render_empty_panel("No events available for selected filters.")
+    else:
+        recent_df = events_df[
+            [
+                "event_time",
+                "event_type",
+                "conversation_id",
+                "customer_id",
+                "category",
+                "intent",
+                "otp_status",
+                "escalation_reason",
+                "token_input",
+                "token_output",
+                "event_key",
+            ]
+        ].head(200)
+
+        event_label_map = {
+            "inbound_message": "Inbound message",
+            "outbound_message": "Outbound message",
+            "conversation_created": "Conversation created",
+            "otp_request": "OTP request",
+            "otp_outcome": "OTP outcome",
+            "support_escalation": "Support escalation",
+            "ai_usage": "AI usage",
+            "intent_classification": "Intent classified",
+        }
+        recent_df = recent_df.copy()
+        recent_df["event_type"] = recent_df["event_type"].map(event_label_map).fillna(recent_df["event_type"])
+        recent_df["otp_status"] = recent_df["otp_status"].fillna("-")
+        recent_df["escalation_reason"] = recent_df["escalation_reason"].fillna("-")
+
+        st.dataframe(
+            recent_df,
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "event_time": st.column_config.DatetimeColumn("Time"),
+                "event_type": st.column_config.TextColumn("Event"),
+                "conversation_id": st.column_config.TextColumn("Conversation ID"),
+                "customer_id": st.column_config.TextColumn("Customer"),
+                "category": st.column_config.TextColumn("Category"),
+                "intent": st.column_config.TextColumn("Intent"),
+                "otp_status": st.column_config.TextColumn("OTP status"),
+                "escalation_reason": st.column_config.TextColumn("Escalation reason"),
+                "token_input": st.column_config.NumberColumn("Input tokens", format="%d"),
+                "token_output": st.column_config.NumberColumn("Output tokens", format="%d"),
+                "event_key": st.column_config.TextColumn("Event key"),
+            },
+        )
