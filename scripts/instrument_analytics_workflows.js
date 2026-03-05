@@ -147,6 +147,24 @@ function makeStickyNode(name, position, content) {
   };
 }
 
+function removeMainConnection(workflow, sourceName, targetName, outputIndex = 0) {
+  if (!workflow.connections[sourceName] || !workflow.connections[sourceName].main) {
+    return;
+  }
+
+  if (!workflow.connections[sourceName].main[outputIndex]) {
+    return;
+  }
+
+  workflow.connections[sourceName].main[outputIndex] = workflow.connections[sourceName].main[outputIndex].filter(
+    (conn) => conn.node !== targetName,
+  );
+
+  if (workflow.connections[sourceName].main[outputIndex].length === 0) {
+    workflow.connections[sourceName].main[outputIndex] = [];
+  }
+}
+
 function instrumentW1() {
   const { fullPath, data } = readWorkflow('W1_ AI Agent.json');
 
@@ -532,9 +550,39 @@ function instrumentWf2() {
     makeStickyNode(
       'Sticky: Analytics Instrumentation',
       [-1160, -380],
-      '## Analytics Tracking\nLogs OTP request events as non-blocking side effects.',
+      "## Analytics Tracking\nLogs OTP request with an execution-level confirmation marker, and logs workflow-entry for traceability.",
     ),
   );
+
+  addNode(
+    data,
+    makeSetNode('Analytics Event: Workflow Entry', [-840, -220], [
+      { name: 'event_type', value: 'workflow_entry', type: 'string' },
+      {
+        name: 'event_key',
+        value: "={{ ['wf2_entry', String($json.conversation_id || ''), String($json.phone || ''), String($execution.id || '')].join('|') }}",
+        type: 'string',
+      },
+      { name: 'event_time', value: "={{ new Date().toISOString() }}", type: 'string' },
+      { name: 'conversation_id', value: "={{ String($json.conversation_id || '') }}", type: 'string' },
+      { name: 'customer_id', value: "={{ $json.phone || '' }}", type: 'string' },
+      { name: 'channel', value: 'whatsapp', type: 'string' },
+      { name: 'direction', value: 'system', type: 'string' },
+      { name: 'category', value: 'disney', type: 'string' },
+      { name: 'intent', value: 'wf2_entry', type: 'string' },
+      { name: 'otp_status', value: 'entry', type: 'string' },
+      { name: 'escalation_reason', value: '', type: 'string' },
+      { name: 'token_input', value: 0, type: 'number' },
+      { name: 'token_output', value: 0, type: 'number' },
+      {
+        name: 'metadata',
+        value: "={{ ({ source: 'wf2', source_event_id: String($execution.id || ''), stage: 'entry' }) }}",
+        type: 'json',
+      },
+    ]),
+  );
+
+  addNode(data, makeAnalyticsHttpNode('Analytics: Send Event wf2 Entry', [-520, -220]));
 
   addNode(
     data,
@@ -542,7 +590,7 @@ function instrumentWf2() {
       { name: 'event_type', value: 'otp_request', type: 'string' },
       {
         name: 'event_key',
-        value: "={{ ['otp_request', String($json.conversation_id || ''), String($execution.id || '')].join('|') }}",
+        value: "={{ ['otp_request', 'confirmed', String($json.conversation_id || ''), String($execution.id || '')].join('|') }}",
         type: 'string',
       },
       { name: 'event_time', value: "={{ new Date().toISOString() }}", type: 'string' },
@@ -552,22 +600,29 @@ function instrumentWf2() {
       { name: 'direction', value: 'inbound', type: 'string' },
       { name: 'category', value: 'disney', type: 'string' },
       { name: 'intent', value: 'otp_request', type: 'string' },
-      { name: 'otp_status', value: 'requested', type: 'string' },
+      { name: 'otp_status', value: 'confirmed', type: 'string' },
       { name: 'escalation_reason', value: '', type: 'string' },
       { name: 'token_input', value: 0, type: 'number' },
       { name: 'token_output', value: 0, type: 'number' },
       {
         name: 'metadata',
-        value: "={{ ({ source: 'wf2', source_event_id: String($execution.id || ''), email: $json.email || '', order_number: $json.order_number || '' }) }}",
+        value:
+          "={{ ({ source: 'wf2', source_event_id: String($execution.id || ''), email: $json.email || '', order_number: $json.order_number || '', stage: 'confirmed' }) }}",
         type: 'json',
       },
     ]),
   );
 
-  addNode(data, makeAnalyticsHttpNode('Analytics: Send Event', [-520, -220]));
+  addNode(data, makeAnalyticsHttpNode('Analytics: Send Event OTP Request', [-520, -220]));
 
-  ensureMainConnection(data, 'Trigger (From W1)', 0, 'Analytics Event: OTP Request', 0);
-  ensureMainConnection(data, 'Analytics Event: OTP Request', 0, 'Analytics: Send Event', 0);
+  ensureMainConnection(data, 'Set: Normalize Inputs2', 0, 'Analytics Event: Workflow Entry', 0);
+  ensureMainConnection(data, 'Execute W3 (Poller)2', 0, 'Analytics Event: OTP Request', 0);
+  removeMainConnection(data, 'finsh message', 'Analytics Event: OTP Request', 0);
+  removeMainConnection(data, 'Analytics Event: OTP Request', 'Analytics: Send Event', 0);
+  ensureMainConnection(data, 'Analytics Event: OTP Request', 0, 'Analytics: Send Event OTP Request', 0);
+  ensureMainConnection(data, 'Analytics Event: Workflow Entry', 0, 'Analytics: Send Event wf2 Entry', 0);
+  ensureMainConnection(data, 'Analytics: Send Event OTP Request', 0, 'Edit Fields', 0);
+  removeMainConnection(data, 'Analytics: Send Event wf2 Entry', 'Analytics Event: OTP Request', 0);
 
   writeWorkflow(fullPath, data);
 }

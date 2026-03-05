@@ -1752,7 +1752,7 @@
     },
     {
       "parameters": {
-        "content": "## Analytics Tracking\nLogs OTP request events as non-blocking side effects.",
+        "content": "## Analytics Tracking\nLogs workflow entry markers and confirmed OTP request only when wf2 reaches terminal execution point.",
         "height": 240,
         "width": 560
       },
@@ -1776,7 +1776,7 @@
             },
             {
               "name": "event_key",
-              "value": "={{ ['otp_request', String($json.conversation_id || ''), String($execution.id || '')].join('|') }}",
+              "value": "={{ ['otp_request', 'confirmed', String($json.conversation_id || ''), String($execution.id || '')].join('|') }}",
               "type": "string"
             },
             {
@@ -1816,7 +1816,7 @@
             },
             {
               "name": "otp_status",
-              "value": "requested",
+              "value": "confirmed",
               "type": "string"
             },
             {
@@ -1836,10 +1836,11 @@
             },
             {
               "name": "metadata",
-              "value": "={{ ({ source: 'wf2', source_event_id: String($execution.id || ''), email: $json.email || '', order_number: $json.order_number || '' }) }}",
+              "value": "={{ ({ source: 'wf2', source_event_id: String($execution.id || ''), email: $json.email || '', order_number: $json.order_number || '', stage: 'confirmed' }) }}",
               "type": "json"
             }
-          ]
+          ],
+          "options": {}
         },
         "options": {}
       },
@@ -1862,13 +1863,119 @@
         "options": {}
       },
       "id": "f6d3ff77-32bd-4f12-8f5b-4335739659b5",
-      "name": "Analytics: Send Event",
+      "name": "Analytics: Send Event OTP Request",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         -520,
         -220
       ],
+      "continueOnFail": true
+    },
+    {
+      "id": "0c7b4f38-20e0-4ea6-b599-0194d865573d",
+      "name": "Analytics Event: Workflow Entry",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -840,
+        -220
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "workflow_entry",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['wf2_entry', String($json.conversation_id || ''), String($json.phone || ''), String($execution.id || '')].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $json.phone || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "system",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "disney",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "wf2_entry",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "entry",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'wf2', source_event_id: String($execution.id || ''), stage: 'entry' }) }}",
+              "type": "json"
+            }
+          ],
+          "options": {}
+        }
+      }
+    },
+    {
+      "id": "ac6e7714-7ea8-49d0-b41c-c4dcd2304294",
+      "name": "Analytics: Send Event wf2 Entry",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -520,
+        -220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ANALYTICS_INGEST_URL || 'http://localhost:8000/events' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
       "continueOnFail": true
     }
   ],
@@ -1903,6 +2010,11 @@
         [
           {
             "node": "IF: Has Email & Order?2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analytics Event: Workflow Entry",
             "type": "main",
             "index": 0
           }
@@ -2193,11 +2305,6 @@
             "node": "Set: Normalize Inputs2",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Analytics Event: OTP Request",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -2453,7 +2560,7 @@
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "Analytics Event: OTP Request",
             "type": "main",
             "index": 0
           }
@@ -2464,7 +2571,29 @@
       "main": [
         [
           {
-            "node": "Analytics: Send Event",
+            "node": "Analytics: Send Event OTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: Workflow Entry": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event wf2 Entry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics: Send Event OTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
             "type": "main",
             "index": 0
           }
