@@ -9,8 +9,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
         }
 
-        const adminStr = process.env.DASH_ADMINS || 'admin:adminpassword';
-        const userStr = process.env.DASH_USERS || 'user:userpassword';
+        const adminStr = process.env.DASH_ADMINS || '';
+        const userStr = process.env.DASH_USERS || '';
+
+        if (!adminStr && !userStr) {
+            console.error('[AUTH] Neither DASH_ADMINS nor DASH_USERS env vars are set.');
+            return NextResponse.json({ error: 'Server auth not configured. Set DASH_ADMINS / DASH_USERS env vars.' }, { status: 500 });
+        }
 
         // Parse env vars strictly using Format: user1:pass1,user2:pass2
         const checkAuth = (str: string, targetRole: 'admin' | 'user') => {

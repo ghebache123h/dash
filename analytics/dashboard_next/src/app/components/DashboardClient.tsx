@@ -484,6 +484,90 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                 />
             )}
 
+            {/* ═══════════ OTP Metrics by Customer ═══════════ */}
+            <div className="glass-card animate-fade-in-up delay-200" style={{ overflow: 'hidden', marginBottom: 20 }}>
+                <div style={{ padding: '20px 20px 10px' }}>
+                    <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-highlight)' }}>{t('otp_per_user_title')}</h2>
+                    <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>{t('otp_per_user_sub')}</p>
+                </div>
+                <table className="data-table">
+                    <thead>
+                        <tr>
+                            <th>{t('th_customer')}</th>
+                            <th>{t('th_requested')}</th>
+                            <th>{t('th_success')}</th>
+                            <th>{t('th_failed')}</th>
+                            <th>{t('th_unconfirmed')}</th>
+                            <th>{t('th_not_sent')}</th>
+                            <th>{t('th_total')}</th>
+                            <th>{t('th_success_rate')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.otpPerUserRows.map((row) => (
+                            <tr key={row.customerId}>
+                                <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{row.customerId}</td>
+                                <td>{row.requested}</td>
+                                <td style={{ color: 'var(--accent-emerald)' }}>{row.success}</td>
+                                <td style={{ color: 'var(--accent-rose)' }}>{row.failed}</td>
+                                <td style={{ color: 'var(--accent-amber)' }}>{row.unconfirmed}</td>
+                                <td style={{ color: 'var(--text-muted)' }}>{row.notSent}</td>
+                                <td style={{ fontWeight: 600 }}>{row.total}</td>
+                                <td>
+                                    <span style={{
+                                        padding: '3px 10px', borderRadius: 99, fontSize: 12, fontWeight: 600,
+                                        background: row.successRate >= 70 ? 'var(--accent-emerald-glow)' : row.successRate >= 40 ? 'var(--accent-amber-glow)' : 'var(--accent-rose-glow)',
+                                        color: row.successRate >= 70 ? 'var(--accent-emerald)' : row.successRate >= 40 ? 'var(--accent-amber)' : 'var(--accent-rose)',
+                                    }}>
+                                        {row.successRate.toFixed(1)}%
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                        {data.otpPerUserRows.length === 0 && (
+                            <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{t('no_otp_data')}</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* ═══════════ Token Usage by Conversation ═══════════ */}
+            {isAdmin && (
+                <div className="glass-card animate-fade-in-up delay-300" style={{ overflow: 'hidden', marginBottom: 20 }}>
+                    <div style={{ padding: '20px 20px 10px' }}>
+                        <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-highlight)' }}>{t('tokens_per_conv_title')}</h2>
+                        <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>{t('tokens_per_conv_sub')}</p>
+                    </div>
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>{t('th_conversation')}</th>
+                                <th>{t('th_customer')}</th>
+                                <th>{t('th_input_tokens')}</th>
+                                <th>{t('th_output_tokens')}</th>
+                                <th>{t('th_total_tokens')}</th>
+                                <th>{t('th_messages')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.tokensPerConversationRows.slice(0, 50).map((row) => (
+                                <tr key={row.conversationId}>
+                                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{row.conversationId}</td>
+                                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{row.customerId}</td>
+                                    <td>{row.inputTokens.toLocaleString()}</td>
+                                    <td>{row.outputTokens.toLocaleString()}</td>
+                                    <td style={{ fontWeight: 600 }}>{row.totalTokens.toLocaleString()}</td>
+                                    <td>{row.messageCount}</td>
+                                </tr>
+                            ))}
+                            {data.tokensPerConversationRows.length === 0 && (
+                                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{t('no_token_data')}</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
             {/* ═══════════ Recent Events Table ═══════════ */}
             <div className="glass-card animate-fade-in-up delay-300" style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '20px 20px 10px' }}>

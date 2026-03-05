@@ -74,6 +74,24 @@ export type DashboardData = {
     repeated: boolean;
     conversationReference: string;
   }>;
+  otpPerUserRows: Array<{
+    customerId: string;
+    requested: number;
+    success: number;
+    failed: number;
+    unconfirmed: number;
+    notSent: number;
+    total: number;
+    successRate: number;
+  }>;
+  tokensPerConversationRows: Array<{
+    conversationId: string;
+    customerId: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    messageCount: number;
+  }>;
   recentEvents: EventRow[];
 };
 
@@ -599,6 +617,47 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
     .sort((a, b) => toDate(b.event_time, new Date(0)).getTime() - toDate(a.event_time, new Date(0)).getTime())
     .slice(0, 200);
 
+  // --- OTP per user ---
+  const otpUserMap = new Map<string, { requested: number; success: number; failed: number; unconfirmed: number; notSent: number }>();
+  for (const event of events) {
+    if (event.event_type !== 'otp_request' && event.event_type !== 'otp_outcome') continue;
+    const uid = event.customer_id || event.conversation_id || 'unknown';
+    if (!otpUserMap.has(uid)) otpUserMap.set(uid, { requested: 0, success: 0, failed: 0, unconfirmed: 0, notSent: 0 });
+    const entry = otpUserMap.get(uid)!;
+    if (event.event_type === 'otp_request') entry.requested++;
+    if (event.event_type === 'otp_outcome') {
+      if (event.otp_status === 'success') entry.success++;
+      else if (event.otp_status === 'failed') entry.failed++;
+      else if (event.otp_status === 'unconfirmed') entry.unconfirmed++;
+      else if (event.otp_status === 'not_sent') entry.notSent++;
+    }
+  }
+  const otpPerUserRows = Array.from(otpUserMap.entries()).map(([customerId, counts]) => {
+    const total = counts.success + counts.failed + counts.unconfirmed + counts.notSent;
+    const successRate = total > 0 ? ((counts.success + counts.unconfirmed) / total) * 100 : 0;
+    return { customerId, ...counts, total, successRate };
+  }).sort((a, b) => b.total - a.total);
+
+  // --- Tokens per conversation ---
+  const convTokenMap = new Map<string, { customerId: string; inputTokens: number; outputTokens: number; messageCount: number }>();
+  for (const event of events) {
+    if (!event.conversation_id) continue;
+    const cid = event.conversation_id;
+    if (!convTokenMap.has(cid)) convTokenMap.set(cid, { customerId: event.customer_id || 'unknown', inputTokens: 0, outputTokens: 0, messageCount: 0 });
+    const entry = convTokenMap.get(cid)!;
+    entry.inputTokens += Number(event.token_input || 0);
+    entry.outputTokens += Number(event.token_output || 0);
+    if (event.event_type === 'inbound_message' || event.event_type === 'outbound_message') entry.messageCount++;
+  }
+  const tokensPerConversationRows = Array.from(convTokenMap.entries()).map(([conversationId, data]) => ({
+    conversationId,
+    customerId: data.customerId,
+    inputTokens: data.inputTokens,
+    outputTokens: data.outputTokens,
+    totalTokens: data.inputTokens + data.outputTokens,
+    messageCount: data.messageCount,
+  })).filter(r => r.totalTokens > 0).sort((a, b) => b.totalTokens - a.totalTokens);
+
   return {
     pricing,
     kpis,
@@ -612,6 +671,8 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
     escalationTrendData,
     costTrendData,
     escalationRows,
+    otpPerUserRows,
+    tokensPerConversationRows,
     recentEvents,
   };
 }

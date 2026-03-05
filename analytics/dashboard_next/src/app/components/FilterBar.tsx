@@ -63,6 +63,13 @@ export function FilterBar({ basePath, filters, channels, categories }: FilterBar
     const params = new URLSearchParams();
     params.set('from', from);
     params.set('to', to);
+    // Preserve active channel/category filters
+    for (const ch of filters.channels) {
+      params.append('channel', ch);
+    }
+    for (const cat of filters.categories) {
+      params.append('category', cat);
+    }
     router.push(`${basePath}?${params.toString()}`);
   };
 

@@ -81,18 +81,20 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '18px',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color: '#fff',
                         flexShrink: 0,
                     }}>
-                        AI
+                        ES
                     </div>
                     {!isCollapsed && (
                         <div>
                             <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-highlight)', lineHeight: 1.2 }}>
-                                Analytics
+                                Early Store
                             </div>
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
-                                AI Support Agent
+                                Analytics Dashboard
                             </div>
                         </div>
                     )}

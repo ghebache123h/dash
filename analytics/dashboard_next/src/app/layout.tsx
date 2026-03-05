@@ -3,8 +3,11 @@ import "./globals.css";
 import { AppShell } from "./components/AppShell";
 
 export const metadata: Metadata = {
-  title: "Analytics Dashboard | WhatsApp AI Support",
-  description: "Real-time analytics for your WhatsApp AI support agent",
+  title: "Early Store | Analytics Dashboard",
+  description: "Real-time analytics dashboard for Early Store AI customer support",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
