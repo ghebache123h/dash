@@ -9,12 +9,15 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
         }
 
+        // Read credentials from environment variables.
+        // If not set, fallback to a single default admin so the user isn't locked out.
         const adminStr = process.env.DASH_ADMINS || '';
         const userStr = process.env.DASH_USERS || '';
 
-        if (!adminStr && !userStr) {
-            console.error('[AUTH] Neither DASH_ADMINS nor DASH_USERS env vars are set.');
-            return NextResponse.json({ error: 'Server auth not configured. Set DASH_ADMINS / DASH_USERS env vars.' }, { status: 500 });
+        const effectiveAdminStr = adminStr || 'admin:admin123';
+
+        if (!adminStr) {
+            console.warn('[AUTH] DASH_ADMINS env var not set. Using default admin:admin123. Set DASH_ADMINS in Dokploy to override.');
         }
 
         // Parse env vars strictly using Format: user1:pass1,user2:pass2
@@ -29,7 +32,7 @@ export async function POST(req: NextRequest) {
             return null;
         };
 
-        const role = checkAuth(adminStr, 'admin') || checkAuth(userStr, 'user');
+        const role = checkAuth(effectiveAdminStr, 'admin') || checkAuth(userStr, 'user');
 
         if (role) {
             return NextResponse.json({ success: true, role, username });

@@ -501,6 +501,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                             <th>{t('th_not_sent')}</th>
                             <th>{t('th_total')}</th>
                             <th>{t('th_success_rate')}</th>
+                            <th>{t('th_reference')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -522,10 +523,17 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                                         {row.successRate.toFixed(1)}%
                                     </span>
                                 </td>
+                                <td>
+                                    {row.conversationUrl ? (
+                                        <a href={row.conversationUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-blue)' }}>
+                                            {t('action_open')}
+                                        </a>
+                                    ) : '-'}
+                                </td>
                             </tr>
                         ))}
                         {data.otpPerUserRows.length === 0 && (
-                            <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{t('no_otp_data')}</td></tr>
+                            <tr><td colSpan={9} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{t('no_otp_data')}</td></tr>
                         )}
                     </tbody>
                 </table>

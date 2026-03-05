@@ -83,6 +83,7 @@ export type DashboardData = {
     notSent: number;
     total: number;
     successRate: number;
+    conversationUrl: string;
   }>;
   tokensPerConversationRows: Array<{
     conversationId: string;
@@ -618,11 +619,11 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
     .slice(0, 200);
 
   // --- OTP per user ---
-  const otpUserMap = new Map<string, { requested: number; success: number; failed: number; unconfirmed: number; notSent: number }>();
+  const otpUserMap = new Map<string, { requested: number; success: number; failed: number; unconfirmed: number; notSent: number; conversationUrl: string }>();
   for (const event of events) {
     if (event.event_type !== 'otp_request' && event.event_type !== 'otp_outcome') continue;
     const uid = event.customer_id || event.conversation_id || 'unknown';
-    if (!otpUserMap.has(uid)) otpUserMap.set(uid, { requested: 0, success: 0, failed: 0, unconfirmed: 0, notSent: 0 });
+    if (!otpUserMap.has(uid)) otpUserMap.set(uid, { requested: 0, success: 0, failed: 0, unconfirmed: 0, notSent: 0, conversationUrl: '' });
     const entry = otpUserMap.get(uid)!;
     if (event.event_type === 'otp_request') entry.requested++;
     if (event.event_type === 'otp_outcome') {
@@ -631,11 +632,14 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
       else if (event.otp_status === 'unconfirmed') entry.unconfirmed++;
       else if (event.otp_status === 'not_sent') entry.notSent++;
     }
+    // Grab the latest conversation URL from metadata
+    const url = typeof event.metadata?.conversation_url === 'string' ? event.metadata.conversation_url : '';
+    if (url) entry.conversationUrl = url;
   }
   const otpPerUserRows = Array.from(otpUserMap.entries()).map(([customerId, counts]) => {
     const total = counts.success + counts.failed + counts.unconfirmed + counts.notSent;
     const successRate = total > 0 ? ((counts.success + counts.unconfirmed) / total) * 100 : 0;
-    return { customerId, ...counts, total, successRate };
+    return { customerId, ...counts, total, successRate, conversationUrl: counts.conversationUrl };
   }).sort((a, b) => b.total - a.total);
 
   // --- Tokens per conversation ---

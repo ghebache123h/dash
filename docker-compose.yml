@@ -36,6 +36,8 @@ services:
       - postgres
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-analytics}:${POSTGRES_PASSWORD:-analytics}@postgres:5432/${POSTGRES_DB:-analytics}
+      DASH_ADMINS: ${DASH_ADMINS:-admin:admin123}
+      DASH_USERS: ${DASH_USERS:-}
     ports:
       - "${ANALYTICS_DASHBOARD_PORT:-8501}:8501"
 
