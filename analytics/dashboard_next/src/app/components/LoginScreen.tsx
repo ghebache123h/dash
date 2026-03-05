@@ -10,10 +10,14 @@ export function LoginScreen() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const ok = login(username, password);
+        setIsLoading(true);
+        setError(false);
+        const ok = await login(username, password);
+        setIsLoading(false);
         if (!ok) setError(true);
     };
 
@@ -25,7 +29,7 @@ export function LoginScreen() {
             justifyContent: 'center',
             background: 'var(--bg-primary)',
         }}>
-            <div style={{
+            <div className="animate-scale-in" style={{
                 width: '100%',
                 maxWidth: 420,
                 padding: '40px 32px',
@@ -95,8 +99,8 @@ export function LoginScreen() {
                             {t('invalid_creds')}
                         </div>
                     )}
-                    <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px 0', fontSize: 15 }}>
-                        {t('login_btn')}
+                    <button type="submit" disabled={isLoading} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px 0', fontSize: 15, opacity: isLoading ? 0.7 : 1 }}>
+                        {isLoading ? '...' : t('login_btn')}
                     </button>
                 </form>
             </div>

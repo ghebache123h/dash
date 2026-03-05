@@ -8,6 +8,7 @@ import { FilterBar } from './FilterBar';
 import { DashboardCharts } from './DashboardCharts';
 import { useAuth } from './AuthProvider';
 import { useI18n } from './I18nProvider';
+import { useNotification } from './NotificationProvider';
 import type { FilterState, DashboardData } from '@/lib/analytics';
 
 /* ------------------------------------------------------------------ */
@@ -161,7 +162,27 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
     const { role } = useAuth();
     const { t } = useI18n();
     const router = useRouter();
+    const { notifyEscalation } = useNotification();
     const isAdmin = role === 'admin';
+
+    const defaultKpis = ['total_messages', 'new_conversations', 'disney_customers', 'disney_code_req', 'otp_success', 'otp_failed', 'escalations', 'avg_msg_conv'];
+    const [visibleKpis, setVisibleKpis] = useState<string[]>(defaultKpis);
+    const [showKpiMenu, setShowKpiMenu] = useState(false);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('visible-kpis');
+        if (saved) {
+            try { setVisibleKpis(JSON.parse(saved)); } catch (e) { }
+        }
+    }, []);
+
+    const toggleKpi = (id: string) => {
+        setVisibleKpis(prev => {
+            const next = prev.includes(id) ? prev.filter(k => k !== id) : [...prev, id];
+            localStorage.setItem('visible-kpis', JSON.stringify(next));
+            return next;
+        });
+    };
 
     // Mandatory 15s Auto-refresh
     useEffect(() => {
@@ -169,11 +190,17 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
         return () => clearInterval(timer);
     }, [router]);
 
+    const k = data.kpis;
+    const pk = data.prevKpis;
+
+    // Trigger Notification if escalations increase
+    useEffect(() => {
+        notifyEscalation(k.supportEscalationCount);
+    }, [k.supportEscalationCount, notifyEscalation]);
+
     const eventLabelMap = getEventLabelMap(t);
 
     // Computed analytics
-    const k = data.kpis;
-    const pk = data.prevKpis;
 
     // OTP Success Rate: (success + unconfirmed) / sent codes
     // "sent" = success + failed + unconfirmed (not_sent never reached user)
@@ -198,99 +225,147 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
     // AI Automation Rate: (conversations - escalations) / conversations
     const automationRate = conversationCount > 0 ? ((conversationCount - k.supportEscalationCount) / conversationCount) * 100 : 100;
 
+    const kpiDefinitions: any[] = [
+        {
+            id: 'total_messages',
+            title: t('total_messages'),
+            value: k.totalMessages.toLocaleString(),
+            subtitle: `In: ${(k.totalMessages - k.newConversations).toLocaleString()} · Out: ${k.newConversations.toLocaleString()}`,
+            tooltip: t('tt_total_messages'),
+            accentColor: 'blue',
+            trend: { value: trendValue(k.totalMessages, pk.totalMessages), positive: trendPositive(k.totalMessages, pk.totalMessages) },
+            icon: Icons.messages
+        },
+        {
+            id: 'new_conversations',
+            title: t('new_conversations'),
+            value: k.newConversations.toLocaleString(),
+            subtitle: "First inbound in period",
+            accentColor: 'purple',
+            trend: { value: trendValue(k.newConversations, pk.newConversations), positive: trendPositive(k.newConversations, pk.newConversations) },
+            icon: Icons.conversations
+        },
+        {
+            id: 'disney_customers',
+            title: t('disney_customers'),
+            value: k.disneyCustomers.toLocaleString(),
+            subtitle: "Unique Disney users",
+            tooltip: t('tt_disney_customers'),
+            accentColor: 'cyan',
+            trend: { value: trendValue(k.disneyCustomers, pk.disneyCustomers), positive: trendPositive(k.disneyCustomers, pk.disneyCustomers) },
+            icon: Icons.users
+        },
+        {
+            id: 'disney_code_req',
+            title: t('disney_code_req'),
+            value: k.disneyCodeRequests.toLocaleString(),
+            subtitle: `Delivery rate: ${pct(otpSentTotal, k.disneyCodeRequests)}`,
+            tooltip: t('tt_disney_code_req'),
+            accentColor: 'amber',
+            trend: { value: trendValue(k.disneyCodeRequests, pk.disneyCodeRequests), positive: trendPositive(k.disneyCodeRequests, pk.disneyCodeRequests) },
+            icon: Icons.key
+        },
+        {
+            id: 'otp_success',
+            title: t('otp_success'),
+            value: k.otpSuccessCount.toLocaleString(),
+            subtitle: `Confirmed: ${k.otpSuccessCount} · Unconfirmed: ${k.otpUnconfirmedCount} (counted as success)`,
+            tooltip: t('tt_otp_success'),
+            accentColor: 'emerald',
+            trend: { value: trendValue(k.otpSuccessCount, pk.otpSuccessCount), positive: trendPositive(k.otpSuccessCount, pk.otpSuccessCount) },
+            icon: Icons.shieldCheck
+        },
+        {
+            id: 'otp_failed',
+            title: t('otp_failed'),
+            value: k.otpFailedCount.toLocaleString(),
+            subtitle: `Not sent: ${k.otpNotSentCount} · Failure rate: ${otpFailureRate.toFixed(1)}%`,
+            tooltip: t('tt_otp_failed'),
+            accentColor: 'rose',
+            trend: { value: trendValue(k.otpFailedCount, pk.otpFailedCount), positive: trendPositive(k.otpFailedCount, pk.otpFailedCount, true) },
+            icon: Icons.alertTriangle
+        },
+        {
+            id: 'escalations',
+            title: t('escalations'),
+            value: k.supportEscalationCount.toLocaleString(),
+            subtitle: `Escalation rate: ${escalationRate.toFixed(1)}%`,
+            tooltip: t('tt_escalations'),
+            accentColor: 'rose',
+            trend: { value: trendValue(k.supportEscalationCount, pk.supportEscalationCount), positive: trendPositive(k.supportEscalationCount, pk.supportEscalationCount, true) },
+            icon: Icons.headphones
+        },
+        {
+            id: 'avg_msg_conv',
+            title: t('avg_msg_conv'),
+            value: k.avgMessagesPerConversation.toFixed(2),
+            subtitle: "Conversation density",
+            accentColor: 'blue',
+            trend: { value: trendValue(k.avgMessagesPerConversation, pk.avgMessagesPerConversation), positive: trendPositive(k.avgMessagesPerConversation, pk.avgMessagesPerConversation) },
+            icon: Icons.barChart
+        }
+    ];
+
     return (
-        <div style={{ maxWidth: '1500px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1500px', margin: '0 auto', paddingBottom: 60 }}>
             {/* Header */}
-            <header style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-                    <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-highlight)', margin: 0, letterSpacing: '-0.02em' }}>
-                        {t('page_title')}
-                    </h1>
+            <header style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+                        <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-highlight)', margin: 0, letterSpacing: '-0.02em' }}>
+                            {t('page_title')}
+                        </h1>
+                    </div>
+                    <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                        {t('page_subtitle')} — {data.bucketLabel}
+                    </p>
                 </div>
-                <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    {t('page_subtitle')} — {data.bucketLabel}
-                </p>
+
+                {/* Customization Menu */}
+                <div style={{ position: 'relative' }}>
+                    <button onClick={() => setShowKpiMenu(!showKpiMenu)} className="btn-secondary" style={{ padding: '8px 16px', borderRadius: '8px', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+                            <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+                            <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+                            <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+                        </svg>
+                        Customize KPIs
+                    </button>
+                    {showKpiMenu && (
+                        <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: 12, width: 240, zIndex: 100, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 12 }}>Visible Metrics</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                {kpiDefinitions.map(kpi => (
+                                    <label key={kpi.id} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                                        <input type="checkbox" checked={visibleKpis.includes(kpi.id)} onChange={() => toggleKpi(kpi.id)} style={{ cursor: 'pointer', accentColor: 'var(--accent-blue)' }} />
+                                        {kpi.title}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </header>
 
             {/* Filters */}
             <FilterBar basePath="/" filters={filters} channels={channels} categories={categories} />
 
-            {/* ═══════════ KPI Row 1 — Core Operations ═══════════ */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-                <KpiCard
-                    title={t('total_messages')}
-                    value={k.totalMessages.toLocaleString()}
-                    subtitle={`In: ${(k.totalMessages - k.newConversations).toLocaleString()} · Out: ${k.newConversations.toLocaleString()}`}
-                    tooltip={t('tt_total_messages')}
-                    accentColor="blue"
-                    trend={{ value: trendValue(k.totalMessages, pk.totalMessages), positive: trendPositive(k.totalMessages, pk.totalMessages) }}
-                    icon={Icons.messages}
-                />
-                <KpiCard
-                    title={t('new_conversations')}
-                    value={k.newConversations.toLocaleString()}
-                    subtitle="First inbound in period"
-                    accentColor="purple"
-                    trend={{ value: trendValue(k.newConversations, pk.newConversations), positive: trendPositive(k.newConversations, pk.newConversations) }}
-                    icon={Icons.conversations}
-                />
-                <KpiCard
-                    title={t('disney_customers')}
-                    value={k.disneyCustomers.toLocaleString()}
-                    subtitle="Unique Disney users"
-                    tooltip={t('tt_disney_customers')}
-                    accentColor="cyan"
-                    trend={{ value: trendValue(k.disneyCustomers, pk.disneyCustomers), positive: trendPositive(k.disneyCustomers, pk.disneyCustomers) }}
-                    icon={Icons.users}
-                />
-                <KpiCard
-                    title={t('disney_code_req')}
-                    value={k.disneyCodeRequests.toLocaleString()}
-                    subtitle={`Delivery rate: ${pct(otpSentTotal, k.disneyCodeRequests)}`}
-                    tooltip={t('tt_disney_code_req')}
-                    accentColor="amber"
-                    trend={{ value: trendValue(k.disneyCodeRequests, pk.disneyCodeRequests), positive: trendPositive(k.disneyCodeRequests, pk.disneyCodeRequests) }}
-                    icon={Icons.key}
-                />
-            </div>
-
-            {/* ═══════════ KPI Row 2 — OTP Performance ═══════════ */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-                <KpiCard
-                    title={t('otp_success')}
-                    value={k.otpSuccessCount.toLocaleString()}
-                    subtitle={`Confirmed: ${k.otpSuccessCount} · Unconfirmed: ${k.otpUnconfirmedCount} (counted as success)`}
-                    tooltip={t('tt_otp_success')}
-                    accentColor="emerald"
-                    trend={{ value: trendValue(k.otpSuccessCount, pk.otpSuccessCount), positive: trendPositive(k.otpSuccessCount, pk.otpSuccessCount) }}
-                    icon={Icons.shieldCheck}
-                />
-                <KpiCard
-                    title={t('otp_failed')}
-                    value={k.otpFailedCount.toLocaleString()}
-                    subtitle={`Not sent: ${k.otpNotSentCount} · Failure rate: ${otpFailureRate.toFixed(1)}%`}
-                    tooltip={t('tt_otp_failed')}
-                    accentColor="rose"
-                    trend={{ value: trendValue(k.otpFailedCount, pk.otpFailedCount), positive: trendPositive(k.otpFailedCount, pk.otpFailedCount, true) }}
-                    icon={Icons.alertTriangle}
-                />
-                <KpiCard
-                    title={t('escalations')}
-                    value={k.supportEscalationCount.toLocaleString()}
-                    subtitle={`Escalation rate: ${escalationRate.toFixed(1)}%`}
-                    tooltip={t('tt_escalations')}
-                    accentColor="rose"
-                    trend={{ value: trendValue(k.supportEscalationCount, pk.supportEscalationCount), positive: trendPositive(k.supportEscalationCount, pk.supportEscalationCount, true) }}
-                    icon={Icons.headphones}
-                />
-                <KpiCard
-                    title={t('avg_msg_conv')}
-                    value={k.avgMessagesPerConversation.toFixed(2)}
-                    subtitle="Conversation density"
-                    accentColor="blue"
-                    trend={{ value: trendValue(k.avgMessagesPerConversation, pk.avgMessagesPerConversation), positive: trendPositive(k.avgMessagesPerConversation, pk.avgMessagesPerConversation) }}
-                    icon={Icons.barChart}
-                />
+            {/* ═══════════ KPI Grid ═══════════ */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                {kpiDefinitions.filter(kpi => visibleKpis.includes(kpi.id)).map((kpi, index) => (
+                    <div key={kpi.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 50}ms` }}>
+                        <KpiCard
+                            title={kpi.title}
+                            value={kpi.value}
+                            subtitle={kpi.subtitle}
+                            tooltip={kpi.tooltip}
+                            accentColor={kpi.accentColor}
+                            trend={kpi.trend}
+                            icon={kpi.icon}
+                        />
+                    </div>
+                ))}
             </div>
 
             {/* ═══════════ Analytics Gauges — Success & Automation ═══════════ */}
@@ -345,14 +420,14 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                         <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-highlight)' }}>
                             {otpSuccessRate.toFixed(1)}%
                         </span>
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Current period</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('selected_period')}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', fontSize: 18, color: 'var(--text-muted)' }}>{t('vs')}</div>
                     <div className="glass-card" style={{ padding: '14px 20px', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                         <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-secondary)' }}>
                             {prevOtpSuccessRate.toFixed(1)}%
                         </span>
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Previous period</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('prev_period')}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         <span className={otpSuccessRate >= prevOtpSuccessRate ? 'badge-success' : 'badge-danger'} style={{
@@ -367,7 +442,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
 
             {/* Admin-only: Token Totals KPI */}
             {isAdmin && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                <div className="animate-fade-in-up delay-100" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                     <KpiCard
                         title={t('token_totals')}
                         value={(k.inputTokensTotal + k.outputTokensTotal).toLocaleString()}
@@ -383,16 +458,18 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
             )}
 
             {/* Charts */}
-            <DashboardCharts
-                messageTrendData={data.messageTrendData}
-                conversationTrendData={data.conversationTrendData}
-                tokenTrendData={isAdmin ? data.tokenTrendData : []}
-                otpTrendData={data.otpTrendData}
-                otpDonutData={data.otpDonutData}
-                escalationTrendData={data.escalationTrendData}
-                costTrendData={isAdmin ? data.costTrendData : []}
-                showTokenCostCharts={isAdmin}
-            />
+            <div className="animate-fade-in-up delay-200">
+                <DashboardCharts
+                    messageTrendData={data.messageTrendData}
+                    conversationTrendData={data.conversationTrendData}
+                    tokenTrendData={isAdmin ? data.tokenTrendData : []}
+                    otpTrendData={data.otpTrendData}
+                    otpDonutData={data.otpDonutData}
+                    escalationTrendData={data.escalationTrendData}
+                    costTrendData={isAdmin ? data.costTrendData : []}
+                    showTokenCostCharts={isAdmin}
+                />
+            </div>
 
             {/* Cost Section — admin only */}
             {isAdmin && (
@@ -408,7 +485,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
             )}
 
             {/* ═══════════ Recent Events Table ═══════════ */}
-            <div className="glass-card" style={{ overflow: 'hidden' }}>
+            <div className="glass-card animate-fade-in-up delay-300" style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '20px 20px 10px' }}>
                     <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-highlight)' }}>{t('recent_events')}</h2>
                     <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>

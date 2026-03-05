@@ -126,6 +126,53 @@ export function GroupedBarChart({ data, bars }: MultiBarProps) {
     );
 }
 
+interface MultiAreaProps {
+    data: any[];
+    areas: { key: string; color: string; label: string }[];
+}
+
+export function MultiAreaChart({ data, areas }: MultiAreaProps) {
+    const chartReady = useChartReady();
+    if (!data.length) return <EmptyChart />;
+    if (!chartReady) return <LoadingChart />;
+    return (
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220} debounce={80}>
+            <AreaChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: -10 }}>
+                <defs>
+                    {areas.map((area) => (
+                        <linearGradient key={area.key} id={`grad-multi-${area.color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={area.color} stopOpacity={0.2} />
+                            <stop offset="100%" stopColor={area.color} stopOpacity={0} />
+                        </linearGradient>
+                    ))}
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} />
+                <YAxis tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                    wrapperStyle={{ fontSize: '12px', color: '#94a3b8', paddingTop: '12px' }}
+                    iconType="square"
+                    iconSize={10}
+                />
+                {areas.map((area) => (
+                    <Area
+                        key={area.key}
+                        type="monotone"
+                        dataKey={area.key}
+                        name={area.label}
+                        stroke={area.color}
+                        strokeWidth={2}
+                        fill={`url(#grad-multi-${area.color.replace('#', '')})`}
+                        dot={false}
+                        activeDot={{ r: 4, fill: area.color, stroke: '#1a1f2e', strokeWidth: 2 }}
+                    />
+                ))}
+            </AreaChart>
+        </ResponsiveContainer>
+    );
+}
+
 interface DonutData {
     name: string;
     value: number;

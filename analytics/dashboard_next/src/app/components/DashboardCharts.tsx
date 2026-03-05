@@ -1,6 +1,7 @@
 'use client';
 
-import { ChartCard, TrendAreaChart, GroupedBarChart, DonutChart } from './Charts';
+import { ChartCard, TrendAreaChart, GroupedBarChart, DonutChart, MultiAreaChart } from './Charts';
+import { useI18n } from './I18nProvider';
 
 interface DashboardChartsProps {
     messageTrendData: { name: string; inbound: number; outbound: number }[];
@@ -23,11 +24,13 @@ export function DashboardCharts({
     costTrendData,
     showTokenCostCharts = true,
 }: DashboardChartsProps) {
+    const { t } = useI18n();
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
             {/* Row 1: Messages + Conversations */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-                <ChartCard title="Message Volume" subtitle="User vs AI messages over time">
+                <ChartCard title={t('chart_msg_volume')} subtitle="User vs AI messages over time">
                     <GroupedBarChart
                         data={messageTrendData}
                         bars={[
@@ -36,14 +39,14 @@ export function DashboardCharts({
                         ]}
                     />
                 </ChartCard>
-                <ChartCard title="Conversation Trend" subtitle="New conversations in selected period">
+                <ChartCard title={t('chart_conv_trend')} subtitle="New conversations in selected period">
                     <TrendAreaChart data={conversationTrendData} color="#06b6d4" label="Conversations" />
                 </ChartCard>
             </div>
 
             {/* Row 2: OTP + Escalations */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-                <ChartCard title="OTP Outcomes" subtitle="Request, success, failed, unconfirmed, not sent">
+                <ChartCard title={t('chart_auto_outcomes')} subtitle="Request, success, failed, unconfirmed, not sent">
                     <GroupedBarChart
                         data={otpTrendData}
                         bars={[
@@ -55,7 +58,7 @@ export function DashboardCharts({
                         ]}
                     />
                 </ChartCard>
-                <ChartCard title="Escalation Trend" subtitle="Human handoff events over time">
+                <ChartCard title={t('chart_esc_trend')} subtitle="Human handoff events over time">
                     <TrendAreaChart data={escalationTrendData} color="#f43f5e" label="Escalations" />
                 </ChartCard>
             </div>
@@ -63,7 +66,7 @@ export function DashboardCharts({
             {/* Row 3: Token Usage + OTP Donut — token chart admin only */}
             <div style={{ display: 'grid', gridTemplateColumns: showTokenCostCharts ? 'minmax(0, 2fr) minmax(0, 1fr)' : '1fr', gap: '20px' }}>
                 {showTokenCostCharts && (
-                    <ChartCard title="Token Usage" subtitle="Input vs Output tokens consumed">
+                    <ChartCard title={t('chart_token_usage')} subtitle="Input vs Output tokens consumed">
                         <GroupedBarChart
                             data={tokenTrendData}
                             bars={[
@@ -73,7 +76,7 @@ export function DashboardCharts({
                         />
                     </ChartCard>
                 )}
-                <ChartCard title="OTP Distribution" subtitle="Overall success rate">
+                <ChartCard title={t('chart_auto_dist')} subtitle="Overall success rate">
                     <DonutChart data={otpDonutData} />
                 </ChartCard>
             </div>
@@ -81,10 +84,10 @@ export function DashboardCharts({
             {/* Row 4: Cost Trend — admin only */}
             {showTokenCostCharts && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-                    <ChartCard title="LLM Cost Trend" subtitle="Input, output, and total spend over time">
-                        <GroupedBarChart
+                    <ChartCard title={t('chart_llm_cost')} subtitle="Input, output, and total spend over time">
+                        <MultiAreaChart
                             data={costTrendData}
-                            bars={[
+                            areas={[
                                 { key: 'input', color: '#06b6d4', label: 'Input Cost' },
                                 { key: 'output', color: '#10b981', label: 'Output Cost' },
                                 { key: 'total', color: '#f59e0b', label: 'Total Cost' },

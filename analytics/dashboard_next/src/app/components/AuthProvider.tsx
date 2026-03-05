@@ -11,18 +11,13 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
-    login: (username: string, password: string) => boolean;
+    login: (username: string, password: string) => Promise<boolean>;
     logout: () => void;
 }
 
-const USERS: Record<string, { password: string; role: Role }> = {
-    admin: { password: 'adminpassword', role: 'admin' },
-    user: { password: 'userpassword', role: 'user' },
-};
-
 const AuthContext = createContext<AuthContextValue>({
     authenticated: false, role: null, username: null,
-    login: () => false, logout: () => { },
+    login: async () => false, logout: () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -47,13 +42,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoaded(true);
     }, []);
 
-    const login = useCallback((username: string, password: string): boolean => {
-        const entry = USERS[username];
-        if (entry && entry.password === password) {
-            const newState = { authenticated: true, role: entry.role, username };
-            setState(newState);
-            localStorage.setItem('auth_state', JSON.stringify(newState));
-            return true;
+    const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+        try {
+            const res = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                const newState = { authenticated: true, role: data.role as Role, username: data.username };
+                setState(newState);
+                localStorage.setItem('auth_state', JSON.stringify(newState));
+                return true;
+            }
+        } catch (error) {
+            console.error('Login error', error);
         }
         return false;
     }, []);
