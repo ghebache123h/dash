@@ -10,6 +10,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 
 try:
     import psycopg
@@ -25,6 +26,219 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# --- i18n Translations ---
+TRANSLATIONS = {
+    "en": {
+        "login_title": "Login to Dashboard",
+        "username": "Username",
+        "password": "Password",
+        "login_btn": "Login",
+        "invalid_creds": "Invalid credentials",
+        "logout": "Logout",
+        "role_admin": "Admin",
+        "role_user": "User",
+        "language": "Language",
+        "page_title": "WhatsApp AI Support Analytics",
+        "page_subtitle": "Premium operations view for message flow, OTP performance, token usage, cost, and support escalations.",
+        "control_center": "Control Center",
+        "date_time": "Date & Time",
+        "scope": "Scope",
+        "pricing_cost": "Pricing & Cost",
+        "from_date": "From date",
+        "from_time": "From time",
+        "to_date": "To date",
+        "to_time": "To time",
+        "channel": "Channel",
+        "category": "Category",
+        "apply": "Apply",
+        "reset": "Reset",
+        "save_pricing": "Save pricing",
+        "presets": "Quick Presets",
+        "today": "Today",
+        "last_7": "Last 7 Days",
+        "last_30": "Last 30 Days",
+        "this_month": "This Month",
+        "auto_refresh": "Auto-Refresh (Live)",
+        "refresh_off": "Off",
+        "refresh_30s": "Every 30s",
+        "refresh_60s": "Every 60s",
+        "op_overview": "Operational Overview",
+        "total_messages": "Total Messages",
+        "new_conversations": "New Conversations",
+        "avg_msg_conv": "Avg Msg / Conversation",
+        "support_escalations": "Support Escalations",
+        "otp_perf": "OTP & Request Performance",
+        "disney_customers": "Disney Customers",
+        "disney_code_req": "Disney Code Requests",
+        "otp_success": "OTP Success",
+        "otp_failed": "OTP Failed",
+        "otp_unconfirmed": "OTP Unconfirmed",
+        "otp_not_sent": "OTP Not Sent",
+        "token_usage": "Token Usage & Cost",
+        "input_tokens": "Input Tokens",
+        "output_tokens": "Output Tokens",
+        "avg_input": "Avg Input / Conversation",
+        "avg_output": "Avg Output / Conversation",
+        "input_cost": "Input Cost",
+        "output_cost": "Output Cost",
+        "total_cost": "Total Cost",
+        "trends": "Trends & Analytics",
+        "msg_trend": "Messages Trend",
+        "conv_trend": "New Conversations Trend",
+        "otp_outcomes": "OTP Outcomes",
+        "esc_trend": "Escalations Trend",
+        "token_trend": "Token Trend (Input vs Output)",
+        "cost_trend": "Cost Trend",
+        "esc_monitoring": "Escalation / Support Monitoring",
+        "event_stream": "Event Stream (Recent 200)",
+        "tt_total_messages": "Total inbound & outbound messages.",
+        "tt_otp_failed": "OTP failed. Usually due to maximum retries without correct code.",
+        "tt_otp_unconfirmed": "OTP sent but the user never responded or confirmed.",
+        "tt_otp_not_sent": "OTP fetch failed silently from email, blocked before sending to user.",
+        "tt_escalations": "Sessions transferred to human agents.",
+        "vs": "vs"
+    },
+    "ar": {
+        "login_title": "تسجيل الدخول إلى لوحة القيادة",
+        "username": "اسم المستخدم",
+        "password": "كلمة المرور",
+        "login_btn": "دخول",
+        "invalid_creds": "بيانات الاعتماد غير صالحة",
+        "logout": "تسجيل خروج",
+        "role_admin": "مسؤول",
+        "role_user": "مستخدم",
+        "language": "اللغة",
+        "page_title": "تحليلات دعم الذكاء الاصطناعي لواتساب",
+        "page_subtitle": "عرض العمليات المتميز لتدفق الرسائل، أداء رمز التحقق OTP، استخدام الرموز، التكلفة، وتصعيد الدعم.",
+        "control_center": "مركز التحكم",
+        "date_time": "التاريخ والوقت",
+        "scope": "النطاق",
+        "pricing_cost": "التسعير والتكلفة",
+        "from_date": "من تاريخ",
+        "from_time": "من وقت",
+        "to_date": "إلى تاريخ",
+        "to_time": "إلى وقت",
+        "channel": "القناة",
+        "category": "الفئة",
+        "apply": "تطبيق",
+        "reset": "إعادة ضبط",
+        "save_pricing": "حفظ التسعير",
+        "presets": "إعدادات سريعة",
+        "today": "اليوم",
+        "last_7": "آخر 7 أيام",
+        "last_30": "آخر 30 يوم",
+        "this_month": "هذا الشهر",
+        "auto_refresh": "تحديث تلقائي (مباشر)",
+        "refresh_off": "إيقاف",
+        "refresh_30s": "كل 30 ثانية",
+        "refresh_60s": "كل 60 ثانية",
+        "op_overview": "نظرة عامة على العمليات",
+        "total_messages": "إجمالي الرسائل",
+        "new_conversations": "محادثات جديدة",
+        "avg_msg_conv": "متوسط الرسائل بالمحادثة",
+        "support_escalations": "تصعيد الدعم",
+        "otp_perf": "أداء رموز التحقق (OTP)",
+        "disney_customers": "عملاء ديزني",
+        "disney_code_req": "طلبات كود ديزني",
+        "otp_success": "نجاح مع التأكيد",
+        "otp_failed": "فشل الرمز",
+        "otp_unconfirmed": "رمز غير مؤكد",
+        "otp_not_sent": "رمز لم يُرسل",
+        "token_usage": "الرموز والتكلفة الاستهلاكية",
+        "input_tokens": "رموز الإدخال (المدخلة)",
+        "output_tokens": "رموز الإخراج (المخرجة)",
+        "avg_input": "متوسط رموز الإدخال/محادثة",
+        "avg_output": "متوسط رموز الإخراج/محادثة",
+        "input_cost": "تكلفة الإدخال",
+        "output_cost": "تكلفة الإخراج",
+        "total_cost": "التكلفة الإجمالية",
+        "trends": "التحليلات والاتجاهات",
+        "msg_trend": "اتجاه الرسائل",
+        "conv_trend": "اتجاه المحادثات الجديدة",
+        "otp_outcomes": "نتائج رموز التحقق",
+        "esc_trend": "اتجاه التصعيد",
+        "token_trend": "اتجاه الرموز (إدخال وإخراج)",
+        "cost_trend": "اتجاه التكلفة",
+        "esc_monitoring": "مراقبة التصعيد / الدعم",
+        "event_stream": "تدفق الأحداث (أحدث 200)",
+        "tt_total_messages": "إجمالي الرسائل الصادرة والواردة.",
+        "tt_otp_failed": "فشل الرمز. عادة بسبب تخطي الحد الأقصى للمحاولات برموز خاطئة.",
+        "tt_otp_unconfirmed": "تم إرسال الرمز للمستخدم لكن لم يقم بتأكيده أو الرد.",
+        "tt_otp_not_sent": "تعذر جلب الرمز بصمت من البريد، تم إيقافه قبل الإرسال.",
+        "tt_escalations": "الجلسات التي تم تحويلها للموظف البشري.",
+        "vs": "مقارنة بـ",
+    }
+}
+
+if "lang" not in st.session_state:
+    st.session_state["lang"] = "en"
+
+def t(key: str) -> str:
+    return TRANSLATIONS[st.session_state["lang"]].get(key, key)
+
+# --- Authentication Logic ---
+USERS = {
+    "admin": {"password": "adminpassword", "role": "admin"},
+    "user": {"password": "userpassword", "role": "user"}
+}
+
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+    st.session_state["role"] = None
+    st.session_state["username"] = None
+
+def render_login():
+    st.markdown(
+        """
+        <style>
+        .login-box {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background: #0F1A30;
+            border-radius: 12px;
+            border: 1px solid #223556;
+            text-align: center;
+        }
+        </style>
+        """, 
+        unsafe_allow_html=True
+    )
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown(f"<div class='login-box'>", unsafe_allow_html=True)
+        st.markdown(f"<h2>{t('login_title')}</h2>", unsafe_allow_html=True)
+        
+        # Language toggle exactly on login screen
+        lang_choice = st.selectbox("🌐", ["English", "العربية"], index=0 if st.session_state["lang"] == "en" else 1, label_visibility="collapsed")
+        new_lang = "en" if lang_choice == "English" else "ar"
+        if new_lang != st.session_state["lang"]:
+            st.session_state["lang"] = new_lang
+            st.rerun()
+
+        with st.form("login_form"):
+            username = st.text_input(t("username"))
+            password = st.text_input(t("password"), type="password")
+            submitted = st.form_submit_button(t("login_btn"), use_container_width=True)
+            
+            if submitted:
+                if username in USERS and USERS[username]["password"] == password:
+                    st.session_state["authenticated"] = True
+                    st.session_state["role"] = USERS[username]["role"]
+                    st.session_state["username"] = username
+                    st.rerun()
+                else:
+                    st.error(t("invalid_creds"))
+        st.markdown("</div>", unsafe_allow_html=True)
+
+if not st.session_state["authenticated"]:
+    # Apply RTL if Arabic is selected even on login screen
+    if st.session_state["lang"] == "ar":
+        st.markdown("<style>body, div, span, p, h1, h2, h3, h4, h5, h6, input, button { direction: rtl; text-align: right; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }</style>", unsafe_allow_html=True)
+    apply_custom_css()
+    render_login()
+    st.stop()
 
 EVENT_COLUMNS = [
     "event_time",
@@ -654,12 +868,12 @@ def fmt_currency(value: float | int) -> str:
     return f"${float(value):,.4f}"
 
 
-def format_delta(delta: float, kind: str) -> str:
+def format_delta(delta: float, kind: str, delta_label: str) -> str:
     if kind in {"int", "token"}:
-        return f"{delta:+,.0f} vs prev"
+        return f"{delta:+,.0f} {delta_label}"
     if kind == "currency":
-        return f"{delta:+,.4f} vs prev"
-    return f"{delta:+,.2f} vs prev"
+        return f"{delta:+,.4f} {delta_label}"
+    return f"{delta:+,.2f} {delta_label}"
 
 
 def render_kpi_card(
@@ -669,6 +883,8 @@ def render_kpi_card(
     kind: str,
     icon: str,
     inverse_good: bool = False,
+    tooltip: str = "",
+    delta_label: str = "vs prev",
 ) -> None:
     if kind in {"int", "token"}:
         value_text = fmt_int(value)
@@ -694,10 +910,11 @@ def render_kpi_card(
         delta_class = "delta-down"
         arrow = "▼"
 
-    delta_text = format_delta(float(delta), kind)
+    delta_text = format_delta(float(delta), kind, delta_label)
+    tooltip_html = f' title="{tooltip}"' if tooltip else ""
     st.markdown(
         f"""
-        <div class="kpi-card">
+        <div class="kpi-card"{tooltip_html}>
           <div class="kpi-head">
             <span class="kpi-label">{title}</span>
             <span class="kpi-icon">{icon}</span>
@@ -791,27 +1008,83 @@ pricing_row = get_pricing_row()
 input_price = float(pricing_row["input_price_per_million"])
 output_price = float(pricing_row["output_price_per_million"])
 
+def set_preset(days: int | None = None, is_month: bool = False):
+    now = datetime.now()
+    if is_month:
+        st.session_state["filter_start_date"] = now.replace(day=1).date()
+        st.session_state["filter_start_time"] = datetime.min.time()
+        st.session_state["filter_end_date"] = now.date()
+        st.session_state["filter_end_time"] = now.time().replace(second=0, microsecond=0)
+    elif days is not None:
+        start = now - timedelta(days=days)
+        st.session_state["filter_start_date"] = start.date()
+        st.session_state["filter_start_time"] = start.time().replace(second=0, microsecond=0)
+        st.session_state["filter_end_date"] = now.date()
+        st.session_state["filter_end_time"] = now.time().replace(second=0, microsecond=0)
+
 with st.sidebar:
-    st.markdown("### Control Center")
-    st.caption("Filter timeframe, channels/categories, and token pricing.")
+    st.markdown(f"### {t('control_center')}")
+    st.caption(t("page_subtitle"))
+
+    # Language Switcher
+    lang_choice = st.selectbox(
+        t("language"), 
+        ["English", "العربية"], 
+        index=0 if st.session_state["lang"] == "en" else 1
+    )
+    new_lang = "en" if lang_choice == "English" else "ar"
+    if new_lang != st.session_state["lang"]:
+        st.session_state["lang"] = new_lang
+        st.rerun()
+
+    # Auto-Refresh
+    refresh_option = st.selectbox(
+        t("auto_refresh"),
+        [t("refresh_off"), t("refresh_30s"), t("refresh_60s")],
+        index=0
+    )
+    if refresh_option == t("refresh_30s"):
+        st_autorefresh(interval=30000, key="data_refresh_30")
+    elif refresh_option == t("refresh_60s"):
+        st_autorefresh(interval=60000, key="data_refresh_60")
+
+    st.markdown(f"#### {t('presets')}")
+    col_p1, col_p2 = st.columns(2)
+    col_p3, col_p4 = st.columns(2)
+    with col_p1:
+        if st.button(t("today"), use_container_width=True):
+            set_preset(days=0)
+            st.rerun()
+    with col_p2:
+        if st.button(t("last_7"), use_container_width=True):
+            set_preset(days=7)
+            st.rerun()
+    with col_p3:
+        if st.button(t("last_30"), use_container_width=True):
+            set_preset(days=30)
+            st.rerun()
+    with col_p4:
+        if st.button(t("this_month"), use_container_width=True):
+            set_preset(is_month=True)
+            st.rerun()
 
     with st.form("filters_form", clear_on_submit=False):
-        st.markdown("#### Date & Time")
+        st.markdown(f"#### {t('date_time')}")
         cols_dt_1 = st.columns(2)
-        cols_dt_1[0].date_input("From date", key="filter_start_date")
-        cols_dt_1[1].time_input("From time", key="filter_start_time", step=60)
+        cols_dt_1[0].date_input(t("from_date"), key="filter_start_date")
+        cols_dt_1[1].time_input(t("from_time"), key="filter_start_time", step=60)
 
         cols_dt_2 = st.columns(2)
-        cols_dt_2[0].date_input("To date", key="filter_end_date")
-        cols_dt_2[1].time_input("To time", key="filter_end_time", step=60)
+        cols_dt_2[0].date_input(t("to_date"), key="filter_end_date")
+        cols_dt_2[1].time_input(t("to_time"), key="filter_end_time", step=60)
 
-        st.markdown("#### Scope")
-        st.multiselect("Channel", options=channel_options, key="filter_channels")
-        st.multiselect("Category", options=category_options, key="filter_categories")
+        st.markdown(f"#### {t('scope')}")
+        st.multiselect(t("channel"), options=channel_options, key="filter_channels")
+        st.multiselect(t("category"), options=category_options, key="filter_categories")
 
         col_apply, col_reset = st.columns(2)
-        apply_filters_btn = col_apply.form_submit_button("Apply", use_container_width=True)
-        reset_filters_btn = col_reset.form_submit_button("Reset", use_container_width=True)
+        apply_filters_btn = col_apply.form_submit_button(t("apply"), use_container_width=True)
+        reset_filters_btn = col_reset.form_submit_button(t("reset"), use_container_width=True)
 
     if reset_filters_btn:
         st.session_state["filter_start_date"] = default_start.date()
@@ -823,29 +1096,30 @@ with st.sidebar:
         st.rerun()
 
     if apply_filters_btn:
-        st.success("Filters applied.")
+        st.success("Filters applied." if st.session_state["lang"] == "en" else "تم تطبيق الفلاتر.")
 
-    st.markdown("---")
-    st.markdown("### Pricing & Cost")
-    with st.form("pricing_form", clear_on_submit=False):
-        input_price = st.number_input(
-            "Input price / 1M",
-            min_value=0.0,
-            value=float(pricing_row["input_price_per_million"]),
-            step=0.01,
-            format="%.6f",
-        )
-        output_price = st.number_input(
-            "Output price / 1M",
-            min_value=0.0,
-            value=float(pricing_row["output_price_per_million"]),
-            step=0.01,
-            format="%.6f",
-        )
-        save_pricing_btn = st.form_submit_button("Save pricing", use_container_width=True)
-        if save_pricing_btn:
-            save_pricing(input_price, output_price)
-            st.success("Pricing updated.")
+    if st.session_state.get("role") == "admin":
+        st.markdown("---")
+        st.markdown(f"### {t('pricing_cost')}")
+        with st.form("pricing_form", clear_on_submit=False):
+            input_price = st.number_input(
+                "Input price / 1M",
+                min_value=0.0,
+                value=float(pricing_row["input_price_per_million"]),
+                step=0.01,
+                format="%.6f",
+            )
+            output_price = st.number_input(
+                "Output price / 1M",
+                min_value=0.0,
+                value=float(pricing_row["output_price_per_million"]),
+                step=0.01,
+                format="%.6f",
+            )
+            save_pricing_btn = st.form_submit_button(t("save_pricing"), use_container_width=True)
+            if save_pricing_btn:
+                save_pricing(input_price, output_price)
+                st.success("Pricing updated." if st.session_state["lang"] == "en" else "تم تحديث التسعير.")
 
 start_dt = datetime.combine(st.session_state["filter_start_date"], st.session_state["filter_start_time"])
 end_dt = datetime.combine(st.session_state["filter_end_date"], st.session_state["filter_end_time"])
@@ -879,6 +1153,8 @@ with st.spinner("Loading analytics data..."):
         output_price,
     )
 
+    delta_label = f"{t('vs')} {prev_start_utc:%m/%d} - {prev_end_utc:%m/%d}"
+
 bucket_rule, bucket_label = infer_time_bucket(start_utc, end_utc)
 
 filter_chips = [
@@ -891,9 +1167,9 @@ filter_chips = [
 st.markdown(
     f"""
     <div class="page-hero">
-      <h1 class="page-title">WhatsApp AI Support Analytics</h1>
+      <h1 class="page-title">{t("page_title")}</h1>
       <p class="page-subtitle">
-        Premium operations view for message flow, OTP performance, token usage, cost, and support escalations.
+        {t("page_subtitle")}
       </p>
       <div class="chip-row">
         {''.join([f"<span class='chip'>{item}</span>" for item in filter_chips])}
@@ -903,132 +1179,143 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown("<div class='section-title'>Operational Overview</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='section-title'>{t('op_overview')}</div>", unsafe_allow_html=True)
 core_cards = [
-    ("Total Messages", current_kpis["total_messages"], current_kpis["total_messages"] - previous_kpis["total_messages"], "int", "💬", False),
-    ("New Conversations", current_kpis["new_conversations"], current_kpis["new_conversations"] - previous_kpis["new_conversations"], "int", "🧵", False),
+    (t("total_messages"), current_kpis["total_messages"], current_kpis["total_messages"] - previous_kpis["total_messages"], "int", "💬", False, t("tt_total_messages")),
+    (t("new_conversations"), current_kpis["new_conversations"], current_kpis["new_conversations"] - previous_kpis["new_conversations"], "int", "🧵", False, ""),
     (
-        "Avg Msg / Conversation",
+        t("avg_msg_conv"),
         current_kpis["avg_messages_per_conversation"],
         current_kpis["avg_messages_per_conversation"] - previous_kpis["avg_messages_per_conversation"],
         "float",
         "📈",
         False,
+        ""
     ),
     (
-        "Support Escalations",
+        t("support_escalations"),
         current_kpis["support_escalation_count"],
         current_kpis["support_escalation_count"] - previous_kpis["support_escalation_count"],
         "int",
         "🆘",
         True,
+        t("tt_escalations")
     ),
 ]
 core_cols = st.columns(len(core_cards))
-for col, (title, value, delta, kind, icon, inverse_good) in zip(core_cols, core_cards):
+for col, (title, value, delta, kind, icon, inverse_good, tooltip) in zip(core_cols, core_cards):
     with col:
-        render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good)
+        render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good, tooltip=tooltip, delta_label=delta_label)
 
-st.markdown("<div class='section-title'>OTP & Request Performance</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='section-title'>{t('otp_perf')}</div>", unsafe_allow_html=True)
 otp_cards = [
     (
-        "Disney Customers",
+        t("disney_customers"),
         current_kpis["disney_customers"],
         current_kpis["disney_customers"] - previous_kpis["disney_customers"],
         "int",
         "🎬",
         False,
+        ""
     ),
     (
-        "Disney Code Requests",
+        t("disney_code_req"),
         current_kpis["disney_code_requests"],
         current_kpis["disney_code_requests"] - previous_kpis["disney_code_requests"],
         "int",
         "🔐",
         False,
+        ""
     ),
     (
-        "OTP Success",
+        t("otp_success"),
         current_kpis["otp_success_count"],
         current_kpis["otp_success_count"] - previous_kpis["otp_success_count"],
         "int",
         "✅",
         False,
+        ""
     ),
     (
-        "OTP Failed",
+        t("otp_failed"),
         current_kpis["otp_failed_count"],
         current_kpis["otp_failed_count"] - previous_kpis["otp_failed_count"],
         "int",
         "❌",
         True,
+        t("tt_otp_failed")
     ),
     (
-        "OTP Unconfirmed",
+        t("otp_unconfirmed"),
         current_kpis["otp_unconfirmed_count"],
         current_kpis["otp_unconfirmed_count"] - previous_kpis["otp_unconfirmed_count"],
         "int",
         "⏳",
         True,
+        t("tt_otp_unconfirmed")
     ),
     (
-        "OTP Not Sent",
+        t("otp_not_sent"),
         current_kpis["otp_not_sent_count"],
         current_kpis["otp_not_sent_count"] - previous_kpis["otp_not_sent_count"],
         "int",
         "📭",
         True,
+        t("tt_otp_not_sent")
     ),
 ]
 otp_cols = st.columns(len(otp_cards))
-for col, (title, value, delta, kind, icon, inverse_good) in zip(otp_cols, otp_cards):
+for col, (title, value, delta, kind, icon, inverse_good, tooltip) in zip(otp_cols, otp_cards):
     with col:
-        render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good)
+        render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good, tooltip=tooltip, delta_label=delta_label)
 
-st.markdown("<div class='section-title'>Token Usage & Cost</div>", unsafe_allow_html=True)
-token_cards = [
-    ("Input Tokens", current_kpis["input_tokens_total"], current_kpis["input_tokens_total"] - previous_kpis["input_tokens_total"], "token", "⬇️", False),
-    ("Output Tokens", current_kpis["output_tokens_total"], current_kpis["output_tokens_total"] - previous_kpis["output_tokens_total"], "token", "⬆️", False),
-    (
-        "Avg Input / Conversation",
-        current_kpis["avg_input_tokens_per_conversation"],
-        current_kpis["avg_input_tokens_per_conversation"] - previous_kpis["avg_input_tokens_per_conversation"],
-        "float",
-        "🧠",
-        False,
-    ),
-    (
-        "Avg Output / Conversation",
-        current_kpis["avg_output_tokens_per_conversation"],
-        current_kpis["avg_output_tokens_per_conversation"] - previous_kpis["avg_output_tokens_per_conversation"],
-        "float",
-        "🗣️",
-        False,
-    ),
-]
-token_cols = st.columns(len(token_cards))
-for col, (title, value, delta, kind, icon, inverse_good) in zip(token_cols, token_cards):
-    with col:
-        render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good)
+if st.session_state.get("role") == "admin":
+    st.markdown(f"<div class='section-title'>{t('token_usage')}</div>", unsafe_allow_html=True)
+    token_cards = [
+        (t("input_tokens"), current_kpis["input_tokens_total"], current_kpis["input_tokens_total"] - previous_kpis["input_tokens_total"], "token", "⬇️", False, ""),
+        (t("output_tokens"), current_kpis["output_tokens_total"], current_kpis["output_tokens_total"] - previous_kpis["output_tokens_total"], "token", "⬆️", False, ""),
+        (
+            t("avg_input"),
+            current_kpis["avg_input_tokens_per_conversation"],
+            current_kpis["avg_input_tokens_per_conversation"] - previous_kpis["avg_input_tokens_per_conversation"],
+            "float",
+            "🧠",
+            False,
+            ""
+        ),
+        (
+            t("avg_output"),
+            current_kpis["avg_output_tokens_per_conversation"],
+            current_kpis["avg_output_tokens_per_conversation"] - previous_kpis["avg_output_tokens_per_conversation"],
+            "float",
+            "🗣️",
+            False,
+            ""
+        ),
+    ]
+    token_cols = st.columns(len(token_cards))
+    for col, (title, value, delta, kind, icon, inverse_good, tooltip) in zip(token_cols, token_cards):
+        with col:
+            render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good, tooltip=tooltip, delta_label=delta_label)
 
-cost_cards = [
-    ("Input Cost", current_kpis["input_cost"], current_kpis["input_cost"] - previous_kpis["input_cost"], "currency", "💠", True),
-    ("Output Cost", current_kpis["output_cost"], current_kpis["output_cost"] - previous_kpis["output_cost"], "currency", "💠", True),
-    ("Total Cost", current_kpis["total_cost"], current_kpis["total_cost"] - previous_kpis["total_cost"], "currency", "💲", True),
-]
-cost_cols = st.columns(len(cost_cards))
-for col, (title, value, delta, kind, icon, inverse_good) in zip(cost_cols, cost_cards):
-    with col:
-        render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good)
+    cost_cards = [
+        (t("input_cost"), current_kpis["input_cost"], current_kpis["input_cost"] - previous_kpis["input_cost"], "currency", "💠", True, ""),
+        (t("output_cost"), current_kpis["output_cost"], current_kpis["output_cost"] - previous_kpis["output_cost"], "currency", "💠", True, ""),
+        (t("total_cost"), current_kpis["total_cost"], current_kpis["total_cost"] - previous_kpis["total_cost"], "currency", "💲", True, ""),
+    ]
+    cost_cols = st.columns(len(cost_cards))
+    for col, (title, value, delta, kind, icon, inverse_good, tooltip) in zip(cost_cols, cost_cards):
+        with col:
+            render_kpi_card(title, value, delta, kind, icon, inverse_good=inverse_good, tooltip=tooltip, delta_label=delta_label)
 
-st.markdown("<div class='section-title'>Trends & Analytics</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='section-title'>{t('trends_analytics')}</div>", unsafe_allow_html=True)
 
 chart_config = {"displayModeBar": False, "responsive": True}
 
 row_1_col_1, row_1_col_2 = st.columns([2, 1])
 with row_1_col_1:
     with st.container(border=True):
-        st.markdown("**Messages Trend**")
+        st.markdown(f"**{t('messages_trend')}**")
         messages_df = events_df[events_df["event_type"].isin(["inbound_message", "outbound_message"])].copy()
         if messages_df.empty:
             render_empty_panel("No message data in the selected period.")
@@ -1052,11 +1339,11 @@ with row_1_col_1:
                 labels={"event_time": "Time", "messages": "Messages", "direction_group": "Direction"},
             )
             fig_messages = style_figure(fig_messages, "Messages")
-            st.plotly_chart(fig_messages, use_container_width=True, config=chart_config)
+            st.plotly_chart(fig_messages, use_container_width=True, config=chart_config, on_select="rerun")
 
 with row_1_col_2:
     with st.container(border=True):
-        st.markdown("**New Conversations Trend**")
+        st.markdown(f"**{t('new_conv_trend')}**")
         if all_inbound_df.empty:
             render_empty_panel("No inbound conversations available.")
         else:
@@ -1082,12 +1369,12 @@ with row_1_col_2:
                     labels={"first_contact_at": "Time", "new_conversations": "New conversations"},
                 )
                 fig_conv = style_figure(fig_conv, "New conversations")
-                st.plotly_chart(fig_conv, use_container_width=True, config=chart_config)
+                st.plotly_chart(fig_conv, use_container_width=True, config=chart_config, on_select="rerun")
 
 row_2_col_1, row_2_col_2 = st.columns([1, 1])
 with row_2_col_1:
     with st.container(border=True):
-        st.markdown("**OTP Outcomes**")
+        st.markdown(f"**{t('otp_outcomes')}**")
         otp_df = events_df[events_df["event_type"] == "otp_outcome"].copy()
         if otp_df.empty:
             render_empty_panel("No OTP outcomes in the selected period.")
@@ -1114,11 +1401,11 @@ with row_2_col_1:
                 labels={"status": "OTP status", "count": "Count"},
             )
             fig_otp = style_figure(fig_otp, "Outcomes")
-            st.plotly_chart(fig_otp, use_container_width=True, config=chart_config)
+            st.plotly_chart(fig_otp, use_container_width=True, config=chart_config, on_select="rerun")
 
 with row_2_col_2:
     with st.container(border=True):
-        st.markdown("**Escalations Trend**")
+        st.markdown(f"**{t('escalations_trend')}**")
         escalation_df = events_df[events_df["event_type"] == "support_escalation"].copy()
         if escalation_df.empty:
             render_empty_panel("No escalations in the selected period.")
@@ -1139,100 +1426,101 @@ with row_2_col_2:
                 labels={"event_time": "Time", "escalations": "Escalations"},
             )
             fig_esc = style_figure(fig_esc, "Escalations")
-            st.plotly_chart(fig_esc, use_container_width=True, config=chart_config)
+            st.plotly_chart(fig_esc, use_container_width=True, config=chart_config, on_select="rerun")
 
-row_3_col_1, row_3_col_2 = st.columns([1, 1])
-with row_3_col_1:
-    with st.container(border=True):
-        st.markdown("**Token Trend (Input vs Output)**")
-        if events_df.empty:
-            render_empty_panel("No token data for selected period.")
-        else:
-            token_trend = (
-                events_df.dropna(subset=["event_time"])
-                .set_index("event_time")
-                .resample(bucket_rule)[["token_input", "token_output"]]
-                .sum()
-                .reset_index()
-            )
-            if token_trend.empty:
+if st.session_state.get("role") == "admin":
+    row_3_col_1, row_3_col_2 = st.columns([1, 1])
+    with row_3_col_1:
+        with st.container(border=True):
+            st.markdown(f"**{t('token_trend')}**")
+            if events_df.empty:
                 render_empty_panel("No token data for selected period.")
             else:
-                token_long = token_trend.melt(
-                    id_vars=["event_time"],
-                    value_vars=["token_input", "token_output"],
-                    var_name="token_type",
-                    value_name="tokens",
+                token_trend = (
+                    events_df.dropna(subset=["event_time"])
+                    .set_index("event_time")
+                    .resample(bucket_rule)[["token_input", "token_output"]]
+                    .sum()
+                    .reset_index()
                 )
-                token_long["token_type"] = token_long["token_type"].replace(
-                    {"token_input": "Input tokens", "token_output": "Output tokens"}
-                )
-                fig_tokens = px.line(
-                    token_long,
-                    x="event_time",
-                    y="tokens",
-                    color="token_type",
-                    markers=True,
-                    color_discrete_map={
-                        "Input tokens": CHART_COLORS["input_tokens"],
-                        "Output tokens": CHART_COLORS["output_tokens"],
-                    },
-                    labels={"event_time": "Time", "tokens": "Tokens", "token_type": ""},
-                )
-                fig_tokens = style_figure(fig_tokens, "Tokens")
-                st.plotly_chart(fig_tokens, use_container_width=True, config=chart_config)
+                if token_trend.empty:
+                    render_empty_panel("No token data for selected period.")
+                else:
+                    token_long = token_trend.melt(
+                        id_vars=["event_time"],
+                        value_vars=["token_input", "token_output"],
+                        var_name="token_type",
+                        value_name="tokens",
+                    )
+                    token_long["token_type"] = token_long["token_type"].replace(
+                        {"token_input": "Input tokens", "token_output": "Output tokens"}
+                    )
+                    fig_tokens = px.line(
+                        token_long,
+                        x="event_time",
+                        y="tokens",
+                        color="token_type",
+                        markers=True,
+                        color_discrete_map={
+                            "Input tokens": CHART_COLORS["input_tokens"],
+                            "Output tokens": CHART_COLORS["output_tokens"],
+                        },
+                        labels={"event_time": "Time", "tokens": "Tokens", "token_type": ""},
+                    )
+                    fig_tokens = style_figure(fig_tokens, "Tokens")
+                    st.plotly_chart(fig_tokens, use_container_width=True, config=chart_config, on_select="rerun")
 
-with row_3_col_2:
-    with st.container(border=True):
-        st.markdown("**Cost Trend**")
-        if events_df.empty:
-            render_empty_panel("No cost data for selected period.")
-        else:
-            cost_trend = (
-                events_df.dropna(subset=["event_time"])
-                .set_index("event_time")
-                .resample(bucket_rule)[["token_input", "token_output"]]
-                .sum()
-                .reset_index()
-            )
-            if cost_trend.empty:
+    with row_3_col_2:
+        with st.container(border=True):
+            st.markdown(f"**{t('cost_trend')}**")
+            if events_df.empty:
                 render_empty_panel("No cost data for selected period.")
             else:
-                cost_trend["input_cost"] = (cost_trend["token_input"] / 1_000_000) * input_price
-                cost_trend["output_cost"] = (cost_trend["token_output"] / 1_000_000) * output_price
-                cost_trend["total_cost"] = cost_trend["input_cost"] + cost_trend["output_cost"]
-                fig_cost = go.Figure()
-                fig_cost.add_trace(
-                    go.Scatter(
-                        x=cost_trend["event_time"],
-                        y=cost_trend["input_cost"],
-                        mode="lines+markers",
-                        name="Input cost",
-                        line=dict(color=CHART_COLORS["input_cost"], width=2.2),
-                    )
+                cost_trend = (
+                    events_df.dropna(subset=["event_time"])
+                    .set_index("event_time")
+                    .resample(bucket_rule)[["token_input", "token_output"]]
+                    .sum()
+                    .reset_index()
                 )
-                fig_cost.add_trace(
-                    go.Scatter(
-                        x=cost_trend["event_time"],
-                        y=cost_trend["output_cost"],
-                        mode="lines+markers",
-                        name="Output cost",
-                        line=dict(color=CHART_COLORS["output_cost"], width=2.2),
+                if cost_trend.empty:
+                    render_empty_panel("No cost data for selected period.")
+                else:
+                    cost_trend["input_cost"] = (cost_trend["token_input"] / 1_000_000) * input_price
+                    cost_trend["output_cost"] = (cost_trend["token_output"] / 1_000_000) * output_price
+                    cost_trend["total_cost"] = cost_trend["input_cost"] + cost_trend["output_cost"]
+                    fig_cost = go.Figure()
+                    fig_cost.add_trace(
+                        go.Scatter(
+                            x=cost_trend["event_time"],
+                            y=cost_trend["input_cost"],
+                            mode="lines+markers",
+                            name="Input cost",
+                            line=dict(color=CHART_COLORS["input_cost"], width=2.2),
+                        )
                     )
-                )
-                fig_cost.add_trace(
-                    go.Scatter(
-                        x=cost_trend["event_time"],
-                        y=cost_trend["total_cost"],
-                        mode="lines+markers",
-                        name="Total cost",
-                        line=dict(color=CHART_COLORS["total_cost"], width=2.5),
+                    fig_cost.add_trace(
+                        go.Scatter(
+                            x=cost_trend["event_time"],
+                            y=cost_trend["output_cost"],
+                            mode="lines+markers",
+                            name="Output cost",
+                            line=dict(color=CHART_COLORS["output_cost"], width=2.2),
+                        )
                     )
-                )
-                fig_cost = style_figure(fig_cost, "Cost ($)")
-                st.plotly_chart(fig_cost, use_container_width=True, config=chart_config)
+                    fig_cost.add_trace(
+                        go.Scatter(
+                            x=cost_trend["event_time"],
+                            y=cost_trend["total_cost"],
+                            mode="lines+markers",
+                            name="Total cost",
+                            line=dict(color=CHART_COLORS["total_cost"], width=2.5),
+                        )
+                    )
+                    fig_cost = style_figure(fig_cost, "Cost ($)")
+                    st.plotly_chart(fig_cost, use_container_width=True, config=chart_config, on_select="rerun")
 
-st.markdown("<div class='section-title'>Escalation / Support Monitoring</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='section-title'>{t('support_monitoring')}</div>", unsafe_allow_html=True)
 with st.container(border=True):
     escalation_table = build_escalation_table(events_df)
     if escalation_table.empty:
@@ -1255,7 +1543,7 @@ with st.container(border=True):
             },
         )
 
-st.markdown("<div class='section-title'>Event Stream (Recent 200)</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='section-title'>{t('event_stream')}</div>", unsafe_allow_html=True)
 with st.container(border=True):
     if events_df.empty:
         render_empty_panel("No events available for selected filters.")
