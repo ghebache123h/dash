@@ -2,6 +2,7 @@
     title: string;
     value: string | number;
     subtitle?: string;
+    tooltip?: string;
     icon: React.ReactNode;
     trend?: {
         value: string;
@@ -19,12 +20,13 @@ const accentMap = {
     cyan: { glow: 'glow-cyan', color: 'var(--accent-cyan)', bg: 'var(--accent-cyan-glow)' },
 };
 
-export function KpiCard({ title, value, subtitle, icon, trend, accentColor }: KpiCardProps) {
+export function KpiCard({ title, value, subtitle, tooltip, icon, trend, accentColor }: KpiCardProps) {
     const accent = accentMap[accentColor];
 
     return (
         <div className={`glass-card ${accent.glow}`}
             style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}
+            title={tooltip}
         >
             {/* Accent gradient overlay */}
             <div style={{
@@ -63,13 +65,21 @@ export function KpiCard({ title, value, subtitle, icon, trend, accentColor }: Kp
                             fontWeight: 600,
                         }}
                     >
-                        {trend.positive ? '+' : '-'} {trend.value}
+                        {trend.positive ? '▲' : '▼'} {trend.value}
                     </span>
                 )}
             </div>
 
             <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '6px' }}>
                 {title}
+                {tooltip && (
+                    <span style={{
+                        marginLeft: 6,
+                        fontSize: 12,
+                        cursor: 'help',
+                        opacity: 0.5,
+                    }} title={tooltip}>ⓘ</span>
+                )}
             </div>
             <div style={{ fontSize: '32px', fontWeight: 700, color: 'var(--text-highlight)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
                 {value}
@@ -82,4 +92,3 @@ export function KpiCard({ title, value, subtitle, icon, trend, accentColor }: Kp
         </div>
     );
 }
-

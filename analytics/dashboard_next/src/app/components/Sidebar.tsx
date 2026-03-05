@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from './AuthProvider';
+import { useI18n } from './I18nProvider';
 
 const navItems = [
     {
-        label: 'Overview',
+        labelKey: 'overview',
         href: '/',
         icon: (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -14,7 +16,7 @@ const navItems = [
         ),
     },
     {
-        label: 'Escalations',
+        labelKey: 'escalations',
         href: '/crm',
         icon: (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -23,7 +25,7 @@ const navItems = [
         ),
     },
     {
-        label: 'Settings',
+        labelKey: 'settings',
         href: '/settings',
         icon: (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -35,6 +37,8 @@ const navItems = [
 
 export function Sidebar() {
     const pathname = usePathname();
+    const { username, role, logout } = useAuth();
+    const { t, lang, setLang } = useI18n();
 
     return (
         <aside style={{
@@ -79,10 +83,19 @@ export function Sidebar() {
                 </div>
             </div>
 
+            {/* Language */}
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-color)' }}>
+                <label className="small-label">{t('language')}</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => setLang('en')} className={lang === 'en' ? 'btn-primary' : 'btn-secondary'} style={{ flex: 1, padding: '6px 0', justifyContent: 'center', fontSize: 12 }}>English</button>
+                    <button onClick={() => setLang('ar')} className={lang === 'ar' ? 'btn-primary' : 'btn-secondary'} style={{ flex: 1, padding: '6px 0', justifyContent: 'center', fontSize: 12 }}>العربية</button>
+                </div>
+            </div>
+
             {/* Nav */}
             <nav style={{ padding: '16px 12px', flex: 1 }}>
                 <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', padding: '0 12px', marginBottom: '8px' }}>
-                    Menu
+                    {t('menu')}
                 </div>
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
@@ -106,7 +119,7 @@ export function Sidebar() {
                             }}
                         >
                             <span style={{ opacity: isActive ? 1 : 0.6 }}>{item.icon}</span>
-                            {item.label}
+                            {t(item.labelKey)}
                             {isActive && (
                                 <div style={{
                                     width: '6px',
@@ -122,9 +135,34 @@ export function Sidebar() {
                 })}
             </nav>
 
+            {/* User + Logout */}
+            <div style={{
+                padding: '12px 16px',
+                borderTop: '1px solid var(--border-color)',
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-highlight)' }}>{username}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{role === 'admin' ? t('role_admin') : t('role_user')}</div>
+                    </div>
+                    <button onClick={logout} style={{
+                        background: 'var(--accent-rose-glow)',
+                        border: '1px solid rgba(244, 63, 94, 0.2)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '6px 12px',
+                        color: 'var(--accent-rose)',
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: 500,
+                    }}>
+                        {t('logout')}
+                    </button>
+                </div>
+            </div>
+
             {/* Footer */}
             <div style={{
-                padding: '16px 20px',
+                padding: '12px 20px',
                 borderTop: '1px solid var(--border-color)',
                 fontSize: '11px',
                 color: 'var(--text-muted)',
@@ -138,7 +176,7 @@ export function Sidebar() {
                         boxShadow: '0 0 8px var(--accent-emerald)',
                         animation: 'pulse-glow 2s ease-in-out infinite',
                     }} />
-                    System Online
+                    {t('system_online')}
                 </div>
             </div>
         </aside>
