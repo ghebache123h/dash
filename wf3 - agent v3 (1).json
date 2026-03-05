@@ -563,6 +563,112 @@
     },
     {
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "otp_outcome",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['otp_sent', String($('Code: Normalize OTP Result').first().json.conversation_id || ''), String($execution.id || ''), String($('Code: Normalize OTP Result').first().json.phone || '')].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($('Code: Normalize OTP Result').first().json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ String($('Code: Evaluate Loop Condition').first().json.phone || $('Code: Normalize OTP Result').first().json.phone || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "outbound",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "disney",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "otp_sent",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "sent",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'wf3', source_event_id: String($execution.id || ''), otp_code: String($('Code: Normalize OTP Result').first().json.code || '') }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3c7aef4d-8b5e-4f4a-8d1e-ccad1b8a4b2a",
+      "name": "Analytics Event: OTP Sent",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2328,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ANALYTICS_INGEST_URL || 'http://localhost:8000/events' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "4a5f7b8c-9f21-4a9b-b1a5-8dd4f6b4e6f5",
+      "name": "Analytics: Send Event OTP Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2528,
+        576
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -593,6 +699,251 @@
         -1216,
         1296
       ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "otp_outcome",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['otp_unconfirmed', String($('Code: Evaluate Loop Condition').first().json.conversation_id || ''), String($execution.id || ''), 'timeout'].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($('Code: Evaluate Loop Condition').first().json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ String($('Code: Evaluate Loop Condition').first().json.phone || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "outbound",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "disney",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "otp_timeout",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "unconfirmed",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "timeout",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'wf3', source_event_id: String($execution.id || ''), reason: 'time_expired_or_not_received' }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b1f5d5a5-cf2e-4ad1-8cb4-6f4e8f6b6e2d",
+      "name": "Analytics Event: OTP Timeout/Unconfirmed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1120,
+        1344
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ANALYTICS_INGEST_URL || 'http://localhost:8000/events' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "9d2b0c0a-3ad6-4f2a-9bde-4f2f3f0d6f3e",
+      "name": "Analytics: Send Event OTP Timeout",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -920,
+        1344
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d0e5f6f9-9e0f-4f9d-b2c6-ff6ec9f0d8d7",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "Wait_Feedback",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8c4f6ef4-2f9d-4f9a-a9f3-9a5f2f8f2c0b",
+      "name": "IF: OTP code was sent",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1400,
+        1344
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "otp_outcome",
+              "type": "string"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['otp_not_sent', String($('Code: Evaluate Loop Condition').first().json.conversation_id || ''), String($execution.id || ''), 'timeout_not_sent'].join('|') }}",
+              "type": "string"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($('Code: Evaluate Loop Condition').first().json.conversation_id || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ String($('Code: Evaluate Loop Condition').first().json.phone || '') }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "outbound",
+              "type": "string"
+            },
+            {
+              "name": "category",
+              "value": "disney",
+              "type": "string"
+            },
+            {
+              "name": "intent",
+              "value": "otp_not_sent",
+              "type": "string"
+            },
+            {
+              "name": "otp_status",
+              "value": "not_sent",
+              "type": "string"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "timeout",
+              "type": "string"
+            },
+            {
+              "name": "token_input",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "token_output",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'wf3', source_event_id: String($execution.id || ''), reason: 'timeout_without_sent_code' }) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b4f5f8d2-7cc6-4e1b-8f8d-9f3ab5d6c8d1",
+      "name": "Analytics Event: OTP Not Sent",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -920,
+        1456
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ANALYTICS_INGEST_URL || 'http://localhost:8000/events' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "3c9f8f4a-31ea-48f2-9e5b-6d0d9f1a4e2f",
+      "name": "Analytics: Send Event OTP Not Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -720,
+        1456
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -1823,6 +2174,28 @@
       "main": [
         [
           {
+            "node": "Analytics Event: OTP Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: OTP Sent": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event OTP Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics: Send Event OTP Sent": {
+      "main": [
+        [
+          {
             "node": "Wait Node (5s)",
             "type": "main",
             "index": 0
@@ -1834,7 +2207,7 @@
       "main": [
         [
           {
-            "node": "Chatwoot: Session Timeout",
+            "node": "IF: OTP code was sent",
             "type": "main",
             "index": 0
           }
@@ -1842,6 +2215,68 @@
         [
           {
             "node": "Redis DEL: user_state (Success)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: OTP Timeout/Unconfirmed": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event OTP Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics: Send Event OTP Timeout": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Session Timeout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: OTP code was sent": {
+      "main": [
+        [
+          {
+            "node": "Analytics Event: OTP Timeout/Unconfirmed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analytics Event: OTP Not Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: OTP Not Sent": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event OTP Not Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics: Send Event OTP Not Sent": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Session Timeout",
             "type": "main",
             "index": 0
           }

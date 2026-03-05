@@ -6,7 +6,7 @@ interface DashboardChartsProps {
     messageTrendData: { name: string; inbound: number; outbound: number }[];
     conversationTrendData: { name: string; value: number }[];
     tokenTrendData: { name: string; input: number; output: number }[];
-    otpTrendData: { name: string; Requested: number; Success: number; Failed: number; Unconfirmed: number }[];
+    otpTrendData: { name: string; Requested: number; Success: number; Failed: number; Unconfirmed: number; NotSent: number }[];
     otpDonutData: { name: string; value: number; color: string }[];
     escalationTrendData: { name: string; value: number }[];
     costTrendData: { name: string; input: number; output: number; total: number }[];
@@ -41,7 +41,7 @@ export function DashboardCharts({
 
             {/* Row 2: OTP + Escalations */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-                <ChartCard title="OTP Outcomes" subtitle="Request, success, failed, unconfirmed">
+                <ChartCard title="OTP Outcomes" subtitle="Request, success, failed, unconfirmed, not sent">
                     <GroupedBarChart
                         data={otpTrendData}
                         bars={[
@@ -49,6 +49,7 @@ export function DashboardCharts({
                             { key: 'Success', color: '#10b981', label: 'Success' },
                             { key: 'Failed', color: '#f43f5e', label: 'Failed' },
                             { key: 'Unconfirmed', color: '#8b5cf6', label: 'Unconfirmed' },
+                            { key: 'NotSent', color: '#64748b', label: 'Not Sent' },
                         ]}
                     />
                 </ChartCard>

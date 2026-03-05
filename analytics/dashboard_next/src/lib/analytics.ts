@@ -40,6 +40,7 @@ export type DashboardKpis = {
   otpSuccessCount: number;
   otpFailedCount: number;
   otpUnconfirmedCount: number;
+  otpNotSentCount: number;
   supportEscalationCount: number;
   avgMessagesPerConversation: number;
   inputTokensTotal: number;
@@ -59,7 +60,7 @@ export type DashboardData = {
   messageTrendData: { name: string; inbound: number; outbound: number }[];
   conversationTrendData: { name: string; value: number }[];
   tokenTrendData: { name: string; input: number; output: number }[];
-  otpTrendData: { name: string; Requested: number; Success: number; Failed: number; Unconfirmed: number }[];
+  otpTrendData: { name: string; Requested: number; Success: number; Failed: number; Unconfirmed: number; NotSent: number }[];
   otpDonutData: { name: string; value: number; color: string }[];
   escalationTrendData: { name: string; value: number }[];
   costTrendData: { name: string; input: number; output: number; total: number }[];
@@ -330,6 +331,9 @@ function computeKpis(
   const otpUnconfirmedCount = events.filter(
     (event) => event.event_type === "otp_outcome" && event.otp_status === "unconfirmed",
   ).length;
+  const otpNotSentCount = events.filter(
+    (event) => event.event_type === "otp_outcome" && event.otp_status === "not_sent",
+  ).length;
   const supportEscalationCount = events.filter((event) => event.event_type === "support_escalation").length;
 
   const conversationSet = new Set(events.map((event) => event.conversation_id).filter((id): id is string => Boolean(id)));
@@ -362,6 +366,7 @@ function computeKpis(
     otpSuccessCount,
     otpFailedCount,
     otpUnconfirmedCount,
+    otpNotSentCount,
     supportEscalationCount,
     avgMessagesPerConversation,
     inputTokensTotal,
@@ -532,6 +537,7 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
       Success: list.filter((event) => event.event_type === "otp_outcome" && event.otp_status === "success").length,
       Failed: list.filter((event) => event.event_type === "otp_outcome" && event.otp_status === "failed").length,
       Unconfirmed: list.filter((event) => event.event_type === "otp_outcome" && event.otp_status === "unconfirmed").length,
+      NotSent: list.filter((event) => event.event_type === "otp_outcome" && event.otp_status === "not_sent").length,
     };
   });
 
@@ -585,6 +591,7 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
     { name: "Success", value: kpis.otpSuccessCount, color: "#10b981" },
     { name: "Failed", value: kpis.otpFailedCount, color: "#f43f5e" },
     { name: "Unconfirmed", value: kpis.otpUnconfirmedCount, color: "#f59e0b" },
+    { name: "Not Sent", value: kpis.otpNotSentCount, color: "#475569" },
   ];
 
   const escalationRows = buildEscalationRows(events);

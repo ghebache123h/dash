@@ -49,6 +49,7 @@ CHART_COLORS = {
     "success": "#22C55E",
     "failed": "#EF4444",
     "unconfirmed": "#F59E0B",
+    "not_sent": "#64748B",
     "escalation": "#F97316",
     "input_tokens": "#22D3EE",
     "output_tokens": "#A3E635",
@@ -519,10 +520,11 @@ def compute_kpis(
             "new_conversations": new_conversations,
             "disney_customers": 0,
             "disney_code_requests": 0,
-            "otp_success_count": 0,
-            "otp_failed_count": 0,
-            "otp_unconfirmed_count": 0,
-            "support_escalation_count": 0,
+    "otp_success_count": 0,
+    "otp_failed_count": 0,
+    "otp_unconfirmed_count": 0,
+    "otp_not_sent_count": 0,
+    "support_escalation_count": 0,
             "avg_messages_per_conversation": 0.0,
             "input_tokens_total": 0,
             "output_tokens_total": 0,
@@ -554,6 +556,9 @@ def compute_kpis(
     otp_unconfirmed_count = int(
         ((events_df["event_type"] == "otp_outcome") & (events_df["otp_status"] == "unconfirmed")).sum()
     )
+    otp_not_sent_count = int(
+        ((events_df["event_type"] == "otp_outcome") & (events_df["otp_status"] == "not_sent")).sum()
+    )
     support_escalation_count = int((events_df["event_type"] == "support_escalation").sum())
 
     conversation_count = int(events_df["conversation_id"].dropna().nunique())
@@ -583,6 +588,7 @@ def compute_kpis(
         "otp_success_count": otp_success_count,
         "otp_failed_count": otp_failed_count,
         "otp_unconfirmed_count": otp_unconfirmed_count,
+        "otp_not_sent_count": otp_not_sent_count,
         "support_escalation_count": support_escalation_count,
         "avg_messages_per_conversation": avg_messages_per_conversation,
         "input_tokens_total": input_tokens_total,
@@ -925,16 +931,52 @@ for col, (title, value, delta, kind, icon, inverse_good) in zip(core_cols, core_
 
 st.markdown("<div class='section-title'>OTP & Request Performance</div>", unsafe_allow_html=True)
 otp_cards = [
-    ("Disney Customers", current_kpis["disney_customers"], current_kpis["disney_customers"] - previous_kpis["disney_customers"], "int", "🎬", False),
-    ("Disney Code Requests", current_kpis["disney_code_requests"], current_kpis["disney_code_requests"] - previous_kpis["disney_code_requests"], "int", "🔐", False),
-    ("OTP Success", current_kpis["otp_success_count"], current_kpis["otp_success_count"] - previous_kpis["otp_success_count"], "int", "✅", False),
-    ("OTP Failed", current_kpis["otp_failed_count"], current_kpis["otp_failed_count"] - previous_kpis["otp_failed_count"], "int", "❌", True),
+    (
+        "Disney Customers",
+        current_kpis["disney_customers"],
+        current_kpis["disney_customers"] - previous_kpis["disney_customers"],
+        "int",
+        "🎬",
+        False,
+    ),
+    (
+        "Disney Code Requests",
+        current_kpis["disney_code_requests"],
+        current_kpis["disney_code_requests"] - previous_kpis["disney_code_requests"],
+        "int",
+        "🔐",
+        False,
+    ),
+    (
+        "OTP Success",
+        current_kpis["otp_success_count"],
+        current_kpis["otp_success_count"] - previous_kpis["otp_success_count"],
+        "int",
+        "✅",
+        False,
+    ),
+    (
+        "OTP Failed",
+        current_kpis["otp_failed_count"],
+        current_kpis["otp_failed_count"] - previous_kpis["otp_failed_count"],
+        "int",
+        "❌",
+        True,
+    ),
     (
         "OTP Unconfirmed",
         current_kpis["otp_unconfirmed_count"],
         current_kpis["otp_unconfirmed_count"] - previous_kpis["otp_unconfirmed_count"],
         "int",
         "⏳",
+        True,
+    ),
+    (
+        "OTP Not Sent",
+        current_kpis["otp_not_sent_count"],
+        current_kpis["otp_not_sent_count"] - previous_kpis["otp_not_sent_count"],
+        "int",
+        "📭",
         True,
     ),
 ]
@@ -1054,7 +1096,7 @@ with row_2_col_1:
                 otp_df["otp_status"]
                 .fillna("unconfirmed")
                 .value_counts()
-                .reindex(["success", "failed", "unconfirmed"], fill_value=0)
+                .reindex(["success", "failed", "unconfirmed", "not_sent"], fill_value=0)
                 .rename_axis("status")
                 .reset_index(name="count")
             )
@@ -1067,6 +1109,7 @@ with row_2_col_1:
                     "success": CHART_COLORS["success"],
                     "failed": CHART_COLORS["failed"],
                     "unconfirmed": CHART_COLORS["unconfirmed"],
+                    "not_sent": CHART_COLORS["not_sent"],
                 },
                 labels={"status": "OTP status", "count": "Count"},
             )

@@ -149,7 +149,7 @@ export default async function DashboardPage({
         <KpiCard
           title="OTP Success"
           value={data.kpis.otpSuccessCount.toLocaleString()}
-          subtitle={`Failed: ${data.kpis.otpFailedCount.toLocaleString()} | Unconfirmed: ${data.kpis.otpUnconfirmedCount.toLocaleString()}`}
+          subtitle={`Failed: ${data.kpis.otpFailedCount.toLocaleString()} | Unconfirmed: ${data.kpis.otpUnconfirmedCount.toLocaleString()} | Not Sent: ${data.kpis.otpNotSentCount.toLocaleString()}`}
           accentColor="emerald"
           trend={{
             value: trendValue(data.kpis.otpSuccessCount, data.prevKpis.otpSuccessCount),
