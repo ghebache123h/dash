@@ -59,6 +59,11 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
         tt_otp_success: 'OTP verified successfully by the customer.',
         configure_pricing: 'Configure Pricing',
         vs: 'vs',
+        performance_gauges: 'Performance Metrics',
+        otp_success_rate: 'OTP Success Rate',
+        otp_delivery_rate: 'OTP Delivery Rate',
+        automation_rate: 'AI Automation Rate',
+        self_service_rate: 'Self-Service Rate',
     },
     ar: {
         page_title: 'لوحة القيادة',
@@ -114,6 +119,11 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
         tt_otp_success: 'تم التحقق من رمز OTP بنجاح.',
         configure_pricing: 'إعدادات التسعير',
         vs: 'مقارنة بـ',
+        performance_gauges: 'مقاييس الأداء',
+        otp_success_rate: 'معدل نجاح الرمز',
+        otp_delivery_rate: 'معدل التوصيل',
+        automation_rate: 'معدل الأتمتة',
+        self_service_rate: 'معدل الخدمة الذاتية',
     },
 };
 
