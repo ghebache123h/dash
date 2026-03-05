@@ -10,6 +10,7 @@ interface DashboardChartsProps {
     otpDonutData: { name: string; value: number; color: string }[];
     escalationTrendData: { name: string; value: number }[];
     costTrendData: { name: string; input: number; output: number; total: number }[];
+    showTokenCostCharts?: boolean;
 }
 
 export function DashboardCharts({
@@ -20,10 +21,11 @@ export function DashboardCharts({
     otpDonutData,
     escalationTrendData,
     costTrendData,
+    showTokenCostCharts = true,
 }: DashboardChartsProps) {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
-            {/* Row 1: Messages + OTP */}
+            {/* Row 1: Messages + Conversations */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
                 <ChartCard title="Message Volume" subtitle="User vs AI messages over time">
                     <GroupedBarChart
@@ -58,35 +60,39 @@ export function DashboardCharts({
                 </ChartCard>
             </div>
 
-            {/* Row 3: Token Usage + OTP Donut  */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '20px' }}>
-                <ChartCard title="Token Usage" subtitle="Input vs Output tokens consumed">
-                    <GroupedBarChart
-                        data={tokenTrendData}
-                        bars={[
-                            { key: 'input', color: '#06b6d4', label: 'Input Tokens' },
-                            { key: 'output', color: '#8b5cf6', label: 'Output Tokens' },
-                        ]}
-                    />
-                </ChartCard>
+            {/* Row 3: Token Usage + OTP Donut — token chart admin only */}
+            <div style={{ display: 'grid', gridTemplateColumns: showTokenCostCharts ? 'minmax(0, 2fr) minmax(0, 1fr)' : '1fr', gap: '20px' }}>
+                {showTokenCostCharts && (
+                    <ChartCard title="Token Usage" subtitle="Input vs Output tokens consumed">
+                        <GroupedBarChart
+                            data={tokenTrendData}
+                            bars={[
+                                { key: 'input', color: '#06b6d4', label: 'Input Tokens' },
+                                { key: 'output', color: '#8b5cf6', label: 'Output Tokens' },
+                            ]}
+                        />
+                    </ChartCard>
+                )}
                 <ChartCard title="OTP Distribution" subtitle="Overall success rate">
                     <DonutChart data={otpDonutData} />
                 </ChartCard>
             </div>
 
-            {/* Row 4: Cost Trend */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-                <ChartCard title="LLM Cost Trend" subtitle="Input, output, and total spend over time">
-                    <GroupedBarChart
-                        data={costTrendData}
-                        bars={[
-                            { key: 'input', color: '#06b6d4', label: 'Input Cost' },
-                            { key: 'output', color: '#10b981', label: 'Output Cost' },
-                            { key: 'total', color: '#f59e0b', label: 'Total Cost' },
-                        ]}
-                    />
-                </ChartCard>
-            </div>
+            {/* Row 4: Cost Trend — admin only */}
+            {showTokenCostCharts && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+                    <ChartCard title="LLM Cost Trend" subtitle="Input, output, and total spend over time">
+                        <GroupedBarChart
+                            data={costTrendData}
+                            bars={[
+                                { key: 'input', color: '#06b6d4', label: 'Input Cost' },
+                                { key: 'output', color: '#10b981', label: 'Output Cost' },
+                                { key: 'total', color: '#f59e0b', label: 'Total Cost' },
+                            ]}
+                        />
+                    </ChartCard>
+                </div>
+            )}
         </div>
     );
 }
