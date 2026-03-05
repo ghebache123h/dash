@@ -102,16 +102,18 @@ function pct(numerator: number, denominator: number): string {
     return `${((numerator / denominator) * 100).toFixed(1)}%`;
 }
 
-const eventLabelMap: Record<string, string> = {
-    inbound_message: '📩 Inbound',
-    outbound_message: '📤 Outbound',
-    conversation_created: '💬 New conversation',
-    otp_request: '🔑 OTP request',
-    otp_outcome: '🛡️ OTP outcome',
-    support_escalation: '🎧 Escalation',
-    ai_usage: '🤖 AI usage',
-    intent_classification: '🎯 Intent',
-};
+function getEventLabelMap(t: (k: string) => string): Record<string, string> {
+    return {
+        inbound_message: t('event_inbound'),
+        outbound_message: t('event_outbound'),
+        conversation_created: t('event_new_conv'),
+        otp_request: t('event_otp_req'),
+        otp_outcome: t('event_otp_outcome'),
+        support_escalation: t('event_escalation'),
+        ai_usage: t('event_ai_usage'),
+        intent_classification: t('event_intent'),
+    };
+}
 
 function safeLocaleDate(value: string | Date): string {
     const date = new Date(value);
@@ -159,15 +161,15 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
     const { role } = useAuth();
     const { t } = useI18n();
     const router = useRouter();
-    const [refreshInterval, setRefreshInterval] = useState(0);
     const isAdmin = role === 'admin';
 
-    // Auto-refresh
+    // Mandatory 15s Auto-refresh
     useEffect(() => {
-        if (refreshInterval <= 0) return;
-        const timer = setInterval(() => router.refresh(), refreshInterval);
+        const timer = setInterval(() => router.refresh(), 15000);
         return () => clearInterval(timer);
-    }, [refreshInterval, router]);
+    }, [router]);
+
+    const eventLabelMap = getEventLabelMap(t);
 
     // Computed analytics
     const k = data.kpis;
@@ -202,41 +204,13 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
             <header style={{ marginBottom: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
                     <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-highlight)', margin: 0, letterSpacing: '-0.02em' }}>
-                        📊 {t('page_title')}
+                        {t('page_title')}
                     </h1>
                 </div>
                 <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px' }}>
                     {t('page_subtitle')} — {data.bucketLabel}
                 </p>
             </header>
-
-            {/* Auto-refresh controls */}
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-                <span className="small-label" style={{ marginBottom: 0 }}>⚡ {t('auto_refresh')}</span>
-                {[
-                    { label: t('refresh_off'), ms: 0 },
-                    { label: t('refresh_30s'), ms: 30000 },
-                    { label: t('refresh_60s'), ms: 60000 },
-                ].map(opt => (
-                    <button
-                        key={opt.ms}
-                        type="button"
-                        className={refreshInterval === opt.ms ? 'btn-primary' : 'btn-secondary'}
-                        style={{ padding: '5px 12px', fontSize: 12 }}
-                        onClick={() => setRefreshInterval(opt.ms)}
-                    >
-                        {opt.label}
-                        {refreshInterval === opt.ms && refreshInterval > 0 && (
-                            <span style={{
-                                display: 'inline-block', width: 6, height: 6,
-                                borderRadius: '50%', background: 'var(--accent-emerald)',
-                                boxShadow: '0 0 6px var(--accent-emerald)', marginLeft: 6,
-                                animation: 'pulse-glow 2s ease-in-out infinite',
-                            }} />
-                        )}
-                    </button>
-                ))}
-            </div>
 
             {/* Filters */}
             <FilterBar basePath="/" filters={filters} channels={channels} categories={categories} />
@@ -246,7 +220,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                 <KpiCard
                     title={t('total_messages')}
                     value={k.totalMessages.toLocaleString()}
-                    subtitle={`📩 In: ${(k.totalMessages - k.newConversations).toLocaleString()} · 📤 Out: ${k.newConversations.toLocaleString()}`}
+                    subtitle={`In: ${(k.totalMessages - k.newConversations).toLocaleString()} · Out: ${k.newConversations.toLocaleString()}`}
                     tooltip={t('tt_total_messages')}
                     accentColor="blue"
                     trend={{ value: trendValue(k.totalMessages, pk.totalMessages), positive: trendPositive(k.totalMessages, pk.totalMessages) }}
@@ -255,7 +229,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                 <KpiCard
                     title={t('new_conversations')}
                     value={k.newConversations.toLocaleString()}
-                    subtitle="💬 First inbound in period"
+                    subtitle="First inbound in period"
                     accentColor="purple"
                     trend={{ value: trendValue(k.newConversations, pk.newConversations), positive: trendPositive(k.newConversations, pk.newConversations) }}
                     icon={Icons.conversations}
@@ -263,7 +237,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                 <KpiCard
                     title={t('disney_customers')}
                     value={k.disneyCustomers.toLocaleString()}
-                    subtitle="👥 Unique Disney users"
+                    subtitle="Unique Disney users"
                     tooltip={t('tt_disney_customers')}
                     accentColor="cyan"
                     trend={{ value: trendValue(k.disneyCustomers, pk.disneyCustomers), positive: trendPositive(k.disneyCustomers, pk.disneyCustomers) }}
@@ -272,7 +246,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                 <KpiCard
                     title={t('disney_code_req')}
                     value={k.disneyCodeRequests.toLocaleString()}
-                    subtitle={`📬 Delivery rate: ${pct(otpSentTotal, k.disneyCodeRequests)}`}
+                    subtitle={`Delivery rate: ${pct(otpSentTotal, k.disneyCodeRequests)}`}
                     tooltip={t('tt_disney_code_req')}
                     accentColor="amber"
                     trend={{ value: trendValue(k.disneyCodeRequests, pk.disneyCodeRequests), positive: trendPositive(k.disneyCodeRequests, pk.disneyCodeRequests) }}
@@ -283,18 +257,18 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
             {/* ═══════════ KPI Row 2 — OTP Performance ═══════════ */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                 <KpiCard
-                    title={`✅ ${t('otp_success')}`}
+                    title={t('otp_success')}
                     value={k.otpSuccessCount.toLocaleString()}
-                    subtitle={`🔓 Confirmed: ${k.otpSuccessCount} · ⏳ Unconfirmed: ${k.otpUnconfirmedCount} (counted as success)`}
+                    subtitle={`Confirmed: ${k.otpSuccessCount} · Unconfirmed: ${k.otpUnconfirmedCount} (counted as success)`}
                     tooltip={t('tt_otp_success')}
                     accentColor="emerald"
                     trend={{ value: trendValue(k.otpSuccessCount, pk.otpSuccessCount), positive: trendPositive(k.otpSuccessCount, pk.otpSuccessCount) }}
                     icon={Icons.shieldCheck}
                 />
                 <KpiCard
-                    title={`❌ ${t('otp_failed')}`}
+                    title={t('otp_failed')}
                     value={k.otpFailedCount.toLocaleString()}
-                    subtitle={`🚫 Not sent: ${k.otpNotSentCount} · Failure rate: ${otpFailureRate.toFixed(1)}%`}
+                    subtitle={`Not sent: ${k.otpNotSentCount} · Failure rate: ${otpFailureRate.toFixed(1)}%`}
                     tooltip={t('tt_otp_failed')}
                     accentColor="rose"
                     trend={{ value: trendValue(k.otpFailedCount, pk.otpFailedCount), positive: trendPositive(k.otpFailedCount, pk.otpFailedCount, true) }}
@@ -303,7 +277,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                 <KpiCard
                     title={t('escalations')}
                     value={k.supportEscalationCount.toLocaleString()}
-                    subtitle={`🎧 Escalation rate: ${escalationRate.toFixed(1)}%`}
+                    subtitle={`Escalation rate: ${escalationRate.toFixed(1)}%`}
                     tooltip={t('tt_escalations')}
                     accentColor="rose"
                     trend={{ value: trendValue(k.supportEscalationCount, pk.supportEscalationCount), positive: trendPositive(k.supportEscalationCount, pk.supportEscalationCount, true) }}
@@ -312,7 +286,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                 <KpiCard
                     title={t('avg_msg_conv')}
                     value={k.avgMessagesPerConversation.toFixed(2)}
-                    subtitle="📊 Conversation density"
+                    subtitle="Conversation density"
                     accentColor="blue"
                     trend={{ value: trendValue(k.avgMessagesPerConversation, pk.avgMessagesPerConversation), positive: trendPositive(k.avgMessagesPerConversation, pk.avgMessagesPerConversation) }}
                     icon={Icons.barChart}
@@ -322,7 +296,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
             {/* ═══════════ Analytics Gauges — Success & Automation ═══════════ */}
             <div className="glass-card" style={{ padding: 28, marginBottom: 20 }}>
                 <h2 style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 600, color: 'var(--text-highlight)' }}>
-                    📈 {t('performance_gauges') || 'Performance Metrics'}
+                    {t('performance_gauges') || 'Performance Metrics'}
                 </h2>
                 <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 24 }}>
                     <PercentRing
@@ -397,7 +371,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                     <KpiCard
                         title={t('token_totals')}
                         value={(k.inputTokensTotal + k.outputTokensTotal).toLocaleString()}
-                        subtitle={`⬇️ In ${k.inputTokensTotal.toLocaleString()} · ⬆️ Out ${k.outputTokensTotal.toLocaleString()}`}
+                        subtitle={`In ${k.inputTokensTotal.toLocaleString()} · Out ${k.outputTokensTotal.toLocaleString()}`}
                         accentColor="purple"
                         trend={{
                             value: trendValue(k.inputTokensTotal + k.outputTokensTotal, pk.inputTokensTotal + pk.outputTokensTotal),
@@ -436,7 +410,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
             {/* ═══════════ Recent Events Table ═══════════ */}
             <div className="glass-card" style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '20px 20px 10px' }}>
-                    <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-highlight)' }}>📋 {t('recent_events')}</h2>
+                    <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-highlight)' }}>{t('recent_events')}</h2>
                     <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
                         Latest 200 events in selected range
                     </p>
@@ -444,15 +418,15 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                 <table className="data-table">
                     <thead>
                         <tr>
-                            <th>⏱️ Time</th>
-                            <th>📌 Event</th>
-                            <th>💬 Conversation</th>
-                            <th>👤 Customer</th>
-                            <th>📂 Category</th>
-                            <th>🎯 Intent</th>
-                            <th>🔑 OTP</th>
-                            {isAdmin && <th>⬇️ In tokens</th>}
-                            {isAdmin && <th>⬆️ Out tokens</th>}
+                            <th>{t('th_time')}</th>
+                            <th>{t('th_event')}</th>
+                            <th>{t('th_conversation')}</th>
+                            <th>{t('th_customer')}</th>
+                            <th>{t('th_category')}</th>
+                            <th>{t('th_intent')}</th>
+                            <th>{t('th_otp')}</th>
+                            {isAdmin && <th>{t('th_in_tokens')}</th>}
+                            {isAdmin && <th>{t('th_out_tokens')}</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -465,11 +439,11 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                                 <td>{event.category || '-'}</td>
                                 <td>{event.intent || '-'}</td>
                                 <td>
-                                    {event.otp_status === 'success' && '✅ '}
-                                    {event.otp_status === 'failed' && '❌ '}
-                                    {event.otp_status === 'unconfirmed' && '⏳ '}
-                                    {event.otp_status === 'not_sent' && '🚫 '}
-                                    {event.otp_status || '-'}
+                                    {event.otp_status === 'success' && 'Success'}
+                                    {event.otp_status === 'failed' && 'Failed'}
+                                    {event.otp_status === 'unconfirmed' && 'Unconfirmed'}
+                                    {event.otp_status === 'not_sent' && 'Not Sent'}
+                                    {!['success', 'failed', 'unconfirmed', 'not_sent'].includes(event.otp_status || '') && (event.otp_status || '-')}
                                 </td>
                                 {isAdmin && <td>{Number(event.token_input || 0).toLocaleString()}</td>}
                                 {isAdmin && <td>{Number(event.token_output || 0).toLocaleString()}</td>}

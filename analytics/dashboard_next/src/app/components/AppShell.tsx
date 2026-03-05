@@ -5,23 +5,26 @@ import { AuthProvider, useAuth } from './AuthProvider';
 import { I18nProvider } from './I18nProvider';
 import { LoginScreen } from './LoginScreen';
 import { Sidebar } from './Sidebar';
+import { ThemeProvider } from './ThemeProvider';
 
 function AuthGate({ children }: { children: ReactNode }) {
     const { authenticated } = useAuth();
     if (!authenticated) return <LoginScreen />;
     return (
-        <div style={{ display: 'flex', minHeight: '100vh' }}>
-            <Sidebar />
-            <main style={{
-                flex: 1,
-                marginLeft: 'var(--sidebar-width)',
-                padding: '32px',
-                minHeight: '100vh',
-                overflow: 'auto',
-            }}>
-                {children}
-            </main>
-        </div>
+        <ThemeProvider>
+            <div style={{ display: 'flex', minHeight: '100vh' }}>
+                <Sidebar />
+                <main style={{
+                    flex: 1,
+                    marginLeft: 'var(--sidebar-width)',
+                    padding: '32px',
+                    minHeight: '100vh',
+                    overflow: 'auto',
+                }}>
+                    {children}
+                </main>
+            </div>
+        </ThemeProvider>
     );
 }
 
