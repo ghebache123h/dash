@@ -8,6 +8,7 @@ export type FilterState = {
   toLocal: string;
   channels: string[];
   categories: string[];
+  conversationId: string | null;
 };
 
 export type EventRow = {
@@ -165,6 +166,8 @@ export function parseFilters(
     ? requestedCategories.filter((item) => availableCategories.includes(item))
     : availableCategories;
 
+  const conversationId = (Array.isArray(params.conversationId) ? params.conversationId[0] : params.conversationId) || null;
+
   return {
     from,
     to: fixedTo,
@@ -172,6 +175,7 @@ export function parseFilters(
     toLocal: datetimeLocalValue(fixedTo),
     channels,
     categories,
+    conversationId,
   };
 }
 
@@ -200,6 +204,7 @@ function buildWhere(
   to: Date,
   channels: string[],
   categories: string[],
+  conversationId: string | null,
   startingParamIndex = 1,
 ): { clause: string; params: unknown[] } {
   const params: unknown[] = [from.toISOString(), to.toISOString()];
@@ -215,6 +220,12 @@ function buildWhere(
   if (categories.length > 0) {
     pieces.push(`category = ANY($${nextIndex})`);
     params.push(categories);
+    nextIndex += 1;
+  }
+
+  if (conversationId) {
+    pieces.push(`conversation_id = $${nextIndex}`);
+    params.push(conversationId);
   }
 
   return {
@@ -251,8 +262,8 @@ export async function updatePricing(input: number, output: number): Promise<void
   );
 }
 
-async function fetchEvents(from: Date, to: Date, channels: string[], categories: string[]): Promise<EventRow[]> {
-  const where = buildWhere(from, to, channels, categories);
+async function fetchEvents(from: Date, to: Date, channels: string[], categories: string[], conversationId: string | null): Promise<EventRow[]> {
+  const where = buildWhere(from, to, channels, categories, conversationId);
   const rows = await query<RawEventRow>(
     `
       SELECT
@@ -288,7 +299,7 @@ async function fetchEvents(from: Date, to: Date, channels: string[], categories:
   });
 }
 
-async function fetchAllInbound(channels: string[], categories: string[]): Promise<EventRow[]> {
+async function fetchAllInbound(channels: string[], categories: string[], conversationId: string | null): Promise<EventRow[]> {
   const params: unknown[] = [];
   const clauses = ["event_type = 'inbound_message'", "conversation_id IS NOT NULL"];
   let idx = 1;
@@ -301,6 +312,13 @@ async function fetchAllInbound(channels: string[], categories: string[]): Promis
   if (categories.length > 0) {
     clauses.push(`category = ANY($${idx})`);
     params.push(categories);
+    idx += 1;
+  }
+
+  if (conversationId) {
+    clauses.push(`conversation_id = $${idx}`);
+    params.push(conversationId);
+    idx += 1;
   }
 
   const rows = await query<RawEventRow>(
@@ -520,14 +538,14 @@ function buildEscalationRows(events: EventRow[]): DashboardData["escalationRows"
 export async function getDashboardData(filters: FilterState): Promise<DashboardData> {
   const pricing = await getPricing();
   const [events, allInbound] = await Promise.all([
-    fetchEvents(filters.from, filters.to, filters.channels, filters.categories),
-    fetchAllInbound(filters.channels, filters.categories),
+    fetchEvents(filters.from, filters.to, filters.channels, filters.categories, filters.conversationId),
+    fetchAllInbound(filters.channels, filters.categories, filters.conversationId),
   ]);
 
   const durationMs = filters.to.getTime() - filters.from.getTime();
   const prevStart = new Date(filters.from.getTime() - durationMs);
   const prevEnd = filters.from;
-  const prevEvents = await fetchEvents(prevStart, prevEnd, filters.channels, filters.categories);
+  const prevEvents = await fetchEvents(prevStart, prevEnd, filters.channels, filters.categories, filters.conversationId);
 
   const kpis = computeKpis(
     events,

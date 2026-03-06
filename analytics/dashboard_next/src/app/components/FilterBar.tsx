@@ -70,6 +70,9 @@ export function FilterBar({ basePath, filters, channels, categories }: FilterBar
     for (const cat of filters.categories) {
       params.append('category', cat);
     }
+    if (filters.conversationId) {
+      params.append('conversationId', filters.conversationId);
+    }
     router.push(`${basePath}?${params.toString()}`);
   };
 
@@ -216,6 +219,32 @@ export function FilterBar({ basePath, filters, channels, categories }: FilterBar
                 <input type="datetime-local" name="to" defaultValue={filters.toLocal} className="input-dark" />
               </div>
             </div>
+          </div>
+
+          {/* Conversation ID Filter (Testing Mode) */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-purple)"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-highlight)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                🔍 {t('test_mode_conversation') || 'Testing Mode: Conversation ID'}
+              </span>
+            </div>
+            <input
+              type="text"
+              name="conversationId"
+              defaultValue={filters.conversationId || ''}
+              placeholder="Paste exact conversation ID to strictly filter dashboard..."
+              style={{
+                width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-color)', background: 'var(--bg-card)',
+                color: 'var(--text-primary)', fontSize: 13, outline: 'none',
+              }}
+            />
           </div>
 
           {/* Divider */}
