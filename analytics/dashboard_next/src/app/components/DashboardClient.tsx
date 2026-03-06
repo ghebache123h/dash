@@ -429,7 +429,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
             id: 'total_messages',
             title: t('total_messages'),
             value: k.totalMessages.toLocaleString(),
-            subtitle: `In: ${(k.totalMessages - k.newConversations).toLocaleString()} · Out: ${k.newConversations.toLocaleString()}`,
+            subtitle: `In: ${k.inboundMessages.toLocaleString()} · Out: ${k.outboundMessages.toLocaleString()}`,
             tooltip: t('tt_total_messages'),
             accentColor: 'blue',
             trend: { value: trendValue(k.totalMessages, pk.totalMessages), positive: trendPositive(k.totalMessages, pk.totalMessages) },

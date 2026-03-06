@@ -1,5 +1,5 @@
 {
-  "name": "W1: AIdf Agent",
+  "name": "W1: AI Agent",
   "nodes": [
     {
       "parameters": {
@@ -78,7 +78,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        -1424,
+        -1696,
         7296
       ],
       "webhookId": "04ae77f5-088f-40c9-9f6e-070b196f3065"
@@ -204,7 +204,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1120,
+        -1168,
         7280
       ]
     },
@@ -303,8 +303,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2704,
-        6496
+        2688,
+        6272
       ],
       "credentials": {
         "chatwootApi": {
@@ -351,8 +351,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        3072,
-        6496
+        3056,
+        6272
       ]
     },
     {
@@ -370,8 +370,8 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.6,
       "position": [
-        3248,
-        6496
+        3232,
+        6272
       ]
     },
     {
@@ -461,8 +461,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        3376,
-        6848
+        3184,
+        6560
       ]
     },
     {
@@ -475,7 +475,7 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2704,
+        2752,
         7184
       ],
       "credentials": {
@@ -539,8 +539,8 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2704,
-        7936
+        2720,
+        7984
       ],
       "credentials": {
         "redis": {
@@ -559,7 +559,7 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2944,
+        2992,
         7184
       ],
       "credentials": {
@@ -579,8 +579,8 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2912,
-        7936
+        2928,
+        7984
       ],
       "credentials": {
         "redis": {
@@ -598,8 +598,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2864,
-        6496
+        2848,
+        6272
       ]
     },
     {
@@ -631,8 +631,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -944,
-        7280
+        -912,
+        7296
       ]
     },
     {
@@ -762,8 +762,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1632,
-        6464
+        1440,
+        6240
       ]
     },
     {
@@ -777,16 +777,16 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        3232,
-        6704
+        3040,
+        6560
       ],
       "id": "7e301ece-0255-4e6b-9f2e-58495a0f051e",
       "name": "Google Gemini Chat Model",
       "retryOnFail": true,
       "credentials": {
         "googlePalmApi": {
-          "id": "urWGK40OGKvJRZEM",
-          "name": "Early Store"
+          "id": "nmV2wmSxOCucGKCF",
+          "name": "New Early Store API Key"
         }
       }
     },
@@ -803,8 +803,8 @@
       "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
       "typeVersion": 1,
       "position": [
-        1904,
-        6320
+        1712,
+        6080
       ],
       "credentials": {
         "chatwootApi": {
@@ -866,8 +866,8 @@
       "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
       "typeVersion": 1,
       "position": [
-        3136,
-        7936
+        3152,
+        7984
       ],
       "credentials": {
         "chatwootApi": {
@@ -912,7 +912,7 @@
       "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
       "typeVersion": 1,
       "position": [
-        3152,
+        3200,
         7184
       ],
       "credentials": {
@@ -957,26 +957,26 @@
     },
     {
       "parameters": {
-        "content": "## AI agent - المسؤول عن بداية المحادثة مع العميل على حسب الحالة \n\n",
-        "height": 732,
-        "width": 1608,
-        "color": 7
+        "content": "## AI agent - المسؤول عن بداية المحادثة مع العميل على حسب الحالة \nهذا النمط يبدأ بالتحديد وقت المرسل ثم توقيفه من تلقي الرد مرة اخرى من الذكاء الاصطناعي في 10 ثواني ثم استخراج رسالته وتقدرمها للذكاء الاصطناعي ",
+        "height": 860,
+        "width": 1832,
+        "color": 4
       },
       "id": "8ed6d140-d092-4ff6-a70b-eff3074b9862",
       "name": "Sticky: W1 AI Support1",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        2128,
-        6224
+        1888,
+        6000
       ],
       "disabled": true
     },
     {
       "parameters": {
         "content": "## في حالة ما اذا كان العميل داخل مرحلة استخراج كود ديزني \nسوف يتم توجيه الامر على حسب رده الثابت بالردود الثابت \n\n\n",
-        "height": 1068,
-        "width": 1624,
+        "height": 1548,
+        "width": 1656,
         "color": 2
       },
       "id": "d89d853f-3bd7-439a-8eab-b47224a676b2",
@@ -985,7 +985,7 @@
       "typeVersion": 1,
       "position": [
         2112,
-        7184
+        7088
       ],
       "disabled": true
     },
@@ -1224,8 +1224,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        2256,
-        7520
+        2128,
+        7552
       ],
       "id": "09b38bf3-f436-4bf5-906c-747da455310c",
       "name": "Switch: Button Type"
@@ -1309,8 +1309,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        3520,
-        6848
+        3328,
+        6560
       ],
       "id": "b548dacd-8113-4d63-b695-352d9681a567",
       "name": "Call 'esclation v3'"
@@ -1328,8 +1328,8 @@
       "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
       "typeVersion": 1,
       "position": [
-        2704,
-        8160
+        2544,
+        8464
       ],
       "credentials": {
         "chatwootApi": {
@@ -1401,24 +1401,6 @@
       }
     },
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.googleDocsTool",
-      "typeVersion": 2,
-      "position": [
-        3264,
-        6896
-      ],
-      "id": "7b668ca0-4862-4593-bd39-c47a0e8ca734",
-      "name": "Create a document in Google Docs",
-      "credentials": {
-        "googleDocsOAuth2Api": {
-          "id": "GqLsxDgqPzbOtwZA",
-          "name": "Google Docs account"
-        }
-      },
-      "disabled": true
-    },
-    {
       "parameters": {
         "conditions": {
           "options": {
@@ -1465,33 +1447,13 @@
       "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
       "typeVersion": 1,
       "position": [
-        1872,
-        7856
+        1840,
+        8112
       ],
       "credentials": {
         "chatwootApi": {
           "id": "px6EIZp51k70B9Xp",
           "name": "Chatwoot account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "model": "openai/gpt-4o",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        3104,
-        6800
-      ],
-      "id": "88015976-8755-4269-ac33-18e8ae5576e2",
-      "name": "OpenRouter Chat Model",
-      "credentials": {
-        "openRouterApi": {
-          "id": "ryLGzfacpnHkSHMf",
-          "name": "OpenRouter account"
         }
       }
     },
@@ -1523,61 +1485,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1616,
-        7664
+        1584,
+        7952
       ],
       "id": "e1d49e4e-217c-414b-bfb2-0bf8626bcbca",
       "name": "If exiting from waitting list"
-    },
-    {
-      "parameters": {
-        "descriptionType": "manual",
-        "toolDescription": "USE THIS TOOL TO SEND INTERACTIVE BUTTONS OR LISTS. \nCall this tool when you want to give the user predefined, clickable choices (e.g., \"Yes\", \"No\", \"Try Again\") to streamline the conversation and improve UX. Do not use this for standard conversational replies.\n",
-        "resource": "message",
-        "operation": "create",
-        "conversationId": "={{ $('Set: AI Context').first().json.conversation_id }}",
-        "sendMode": "json",
-        "customJson": "={{ JSON.stringify({ content: $fromAI('message', 'The main text to show above the options', 'string'), content_type: 'input_select', content_attributes: { sent_by_ai: true, items: JSON.parse($fromAI('options_json_array', 'Strict JSON stringified array of objects. Example: [{\"title\":\"Yes\",\"value\":\"yes\"}, {\"title\":\"No\",\"value\":\"no\"}]', 'string') || '[]') } }) }}"
-      },
-      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwootTool",
-      "typeVersion": 1,
-      "position": [
-        4000,
-        6736
-      ],
-      "id": "1cb49a7b-ef3b-4c5b-93cb-3084518edd48",
-      "name": "Tool: Send Options Message1",
-      "credentials": {
-        "chatwootApi": {
-          "id": "px6EIZp51k70B9Xp",
-          "name": "Chatwoot account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "descriptionType": "manual",
-        "toolDescription": "USE THIS TOOL TO SEND A STANDARD TEXT MESSAGE. \nCall this tool for normal conversational responses, answering questions, or asking the user for their Email/Order Number. Use this for all standard interactions unless you are intentionally routing them to the OTP or Escalation tools.\n",
-        "resource": "message",
-        "operation": "create",
-        "conversationId": "={{ $json.conversation_id }}",
-        "sendMode": "json",
-        "customJson": "={{ JSON.stringify({ content: $fromAI('message', 'The standard text message to send to the user', 'string'), content_attributes: { sent_by_ai: true } }) }}"
-      },
-      "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwootTool",
-      "typeVersion": 1,
-      "position": [
-        4144,
-        6704
-      ],
-      "id": "32cfb2d8-5755-49a6-bf48-1e5018333c54",
-      "name": "Tool: Send normal Text Message1",
-      "credentials": {
-        "chatwootApi": {
-          "id": "px6EIZp51k70B9Xp",
-          "name": "Chatwoot account"
-        }
-      }
     },
     {
       "parameters": {
@@ -1625,8 +1537,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        3696,
-        6832
+        3504,
+        6544
       ],
       "id": "a3170b1a-54a9-475a-bf12-37b2438de7a9",
       "name": "Tool: Send normal Text Message"
@@ -1638,8 +1550,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1904,
-        6480
+        1920,
+        6256
       ],
       "id": "95aba9f4-a4a1-483c-9737-46de37fd890b",
       "name": "Code in JavaScript"
@@ -1679,8 +1591,8 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2112,
-        6480
+        2096,
+        6256
       ],
       "id": "d65832b2-7864-448d-be1f-dc600ecc5ade",
       "name": "Redis: Check Block",
@@ -1705,8 +1617,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        2288,
-        6480
+        2272,
+        6256
       ],
       "id": "a96174ca-529c-432e-8c72-2354a2501f6b",
       "name": "If User is Blocked?"
@@ -1722,8 +1634,8 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2528,
-        6496
+        2512,
+        6272
       ],
       "id": "131338de-35f6-46a9-b39d-a895276ab10d",
       "name": "Redis: Block User 10s",
@@ -1742,8 +1654,8 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2528,
-        6304
+        2512,
+        6112
       ],
       "id": "db663b97-4689-4225-8a8a-aa6d0ac4fa16",
       "name": "remove blocked user",
@@ -1841,8 +1753,8 @@
       "type": "@pixelinfinito/n8n-nodes-chatwoot.chatwoot",
       "typeVersion": 1,
       "position": [
-        2704,
-        8416
+        2640,
+        8272
       ],
       "credentials": {
         "chatwootApi": {
@@ -1886,8 +1798,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        3136,
-        8416
+        3072,
+        8272
       ],
       "id": "ac576a7a-39d0-4bfd-bf9a-c8632ca0e8bf",
       "credentials": {
@@ -1911,8 +1823,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2912,
-        8416
+        2848,
+        8272
       ],
       "id": "41059beb-9a3f-41ec-8de6-a25a52906a87",
       "name": "HTTP Request2"
@@ -1932,8 +1844,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        3520,
-        8416
+        3456,
+        8272
       ],
       "id": "a8b57069-8b97-47d3-87c0-3a798863b51f",
       "credentials": {
@@ -2003,8 +1915,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        2272,
-        8912
+        2208,
+        8992
       ],
       "id": "bedda044-e821-4c0a-91d2-4d193a59dafe",
       "name": "state swith to use options"
@@ -2016,8 +1928,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        3328,
-        8416
+        3264,
+        8272
       ],
       "id": "50ed24af-b482-4cdf-8acf-863346f7c6cb",
       "name": "Wait",
@@ -2038,8 +1950,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        2480,
-        9072
+        2528,
+        9168
       ],
       "id": "dfea1b99-7989-43a1-b94f-dc4ece72101a",
       "credentials": {
@@ -2064,8 +1976,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        2496,
-        8800
+        2544,
+        8896
       ],
       "id": "7ef215b6-4f6e-4d2a-b086-04a5532f17d5",
       "credentials": {
@@ -2077,190 +1989,155 @@
     },
     {
       "parameters": {
-        "dataTableId": {
-          "__rl": true,
-          "value": "jnykWV7jaH3IVASO",
-          "mode": "list",
-          "cachedResultName": "tokens usage",
-          "cachedResultUrl": "/projects/lQgjPPyrJr4zMTgY/datatables/jnykWV7jaH3IVASO"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "tokens_usage_per_run": "={{ $json.intermediateSteps[0].action.messageLog[0].kwargs.usage_metadata.total_tokens }}",
-            "tokens_usage_per_run2": "={{ $json.safe_total_tokens }}",
-            "id2": "={{ $json.intermediateSteps[0].action.toolCallId }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "tokens_usage_per_run",
-              "displayName": "tokens_usage_per_run",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "tokens_usage_per_run2",
-              "displayName": "tokens_usage_per_run2",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "id2",
-              "displayName": "id2",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        4000,
-        6496
-      ],
-      "id": "03147044-dfb6-44b2-98a9-d2001f545b64",
-      "name": "Insert row"
-    },
-    {
-      "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "160DftV9xapY4_kNo1rNZQwIfy9NIfZimaCjjxfrkkDU",
-          "mode": "list",
-          "cachedResultName": "Early AI Store Bots",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/160DftV9xapY4_kNo1rNZQwIfy9NIfZimaCjjxfrkkDU/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 1006114582,
-          "mode": "list",
-          "cachedResultName": "Token Usage",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/160DftV9xapY4_kNo1rNZQwIfy9NIfZimaCjjxfrkkDU/edit#gid=1006114582"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "tokens_usage_per_run": "={{ $('Code in JavaScript1').item.json.safe_total_tokens }}",
-            "id": "={{ $('Code in JavaScript1').item.json.intermediateSteps[0].action.toolCallId }}",
-            "Date": "={{ $now.setZone('Asia/Riyadh').toFormat('yyyy-MM-dd HH:mm:ss') }}"
-          },
-          "matchingColumns": [
-            "id"
-          ],
-          "schema": [
-            {
-              "id": "Date",
-              "displayName": "Date",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "id",
-              "displayName": "id",
-              "required": false,
-              "defaultMatch": true,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "tokens_usage_per_run",
-              "displayName": "tokens_usage_per_run",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "cost_usd",
-              "displayName": "cost_usd",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            },
-            {
-              "id": "Assumptions",
-              "displayName": "Assumptions",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
-      "position": [
-        4304,
-        6496
-      ],
-      "id": "12fa3a9a-426b-4d8d-bd99-aca6dfdd9894",
-      "name": "Append row in sheet",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "H1id8F2PdYyf8bvK",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "// Extract token usage metadata from the AI Agent response and normalize it for analytics.\nconst aiOutput = $input.first().json;\n\nfunction findKey(obj, keyToFind) {\n  if (obj === null || typeof obj !== 'object') return null;\n  if (Object.prototype.hasOwnProperty.call(obj, keyToFind)) return obj[keyToFind];\n\n  for (const key of Object.keys(obj)) {\n    const result = findKey(obj[key], keyToFind);\n    if (result !== null) return result;\n  }\n\n  return null;\n}\n\nconst usageMeta = findKey(aiOutput, 'usage_metadata') || {};\n\nconst inputTokens = Number(\n  usageMeta.input_tokens\n  || usageMeta.prompt_tokens\n  || usageMeta.promptTokenCount\n  || usageMeta.promptTokens\n  || findKey(aiOutput, 'input_tokens')\n  || findKey(aiOutput, 'prompt_tokens')\n  || 0\n);\n\nconst outputTokens = Number(\n  usageMeta.output_tokens\n  || usageMeta.completion_tokens\n  || usageMeta.candidatesTokenCount\n  || usageMeta.outputTokens\n  || findKey(aiOutput, 'output_tokens')\n  || findKey(aiOutput, 'completion_tokens')\n  || 0\n);\n\nconst totalTokens = Number(\n  usageMeta.total_tokens\n  || usageMeta.totalTokenCount\n  || (inputTokens + outputTokens)\n  || 0\n);\n\nconst cacheRead = Number(\n  usageMeta.cachedContentTokenCount\n  || findKey(aiOutput, 'cache_read')\n  || 0\n);\n\nreturn [{\n  json: {\n    ...aiOutput,\n    safe_total_tokens: totalTokens,\n    safe_input_tokens: inputTokens,\n    safe_output_tokens: outputTokens,\n    safe_cache_read: cacheRead,\n  }\n}];"
+        "jsCode": "// 1. Grab the raw output from the AI Agent\nconst aiOutput = $input.first().json;\n\nlet totalTokens = 0;\nlet cacheRead = 0;\n\n// 2. Recursive function to safely hunt for a specific key anywhere in the JSON\nfunction findKey(obj, keyToFind) {\n  if (obj === null || typeof obj !== 'object') return null;\n  if (obj.hasOwnProperty(keyToFind)) return obj[keyToFind];\n  \n  for (const key in obj) {\n    const result = findKey(obj[key], keyToFind);\n    if (result !== null) return result;\n  }\n  return null;\n}\n\n// 3. Search for the 'usage_metadata' object\nconst usageMeta = findKey(aiOutput, 'usage_metadata');\n\nif (usageMeta) {\n    totalTokens = usageMeta.total_tokens || 0;\n    // Handle Gemini's specific cache key\n    cacheRead = usageMeta.cachedContentTokenCount || findKey(aiOutput, 'cache_read') || 0; \n}\n\n// 4. Output a clean, flat object for your database node\nreturn [{\n  json: {\n    ...aiOutput, // Keep the AI's actual text output intact\n    safe_total_tokens: totalTokens,\n    safe_cache_read: cacheRead\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3776,
-        6496
+        3840,
+        6272
       ],
       "id": "ae2f7c14-5b05-473d-a0c2-264e4388c88c",
       "name": "Code in JavaScript1"
     },
     {
       "parameters": {
-        "content": "## Analytics Tracking\nThis branch sends non-blocking analytics events to an external API.\nMain support behavior is unchanged.",
-        "height": 240,
-        "width": 560
+        "assignments": {
+          "assignments": [
+            {
+              "name": "event_type",
+              "value": "ai_usage",
+              "type": "string",
+              "id": "d64312a2-9aeb-4917-a638-492cab3f5533"
+            },
+            {
+              "name": "event_key",
+              "value": "={{ ['ai_usage', $('Set: Extract Incoming').first().json.conversation_id || '', ($json.intermediateSteps?.[0]?.action?.toolCallId || $execution.id || '')].join('|') }}",
+              "type": "string",
+              "id": "80cdd806-3c3c-438b-91ce-d3ac22495185"
+            },
+            {
+              "name": "event_time",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string",
+              "id": "9e82ffd1-f488-490c-9719-6092f05b088a"
+            },
+            {
+              "name": "conversation_id",
+              "value": "={{ String($('Set: Extract Incoming').first().json.conversation_id || '') }}",
+              "type": "string",
+              "id": "f28e6dd5-1bba-4a40-bb08-1d846ac08d64"
+            },
+            {
+              "name": "customer_id",
+              "value": "={{ $('Set: Extract Incoming').first().json.phone || '' }}",
+              "type": "string",
+              "id": "3f763a89-fbec-48b0-84b3-f188c5fbb23e"
+            },
+            {
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string",
+              "id": "408f8960-9535-4adf-8245-31ce45dcab9a"
+            },
+            {
+              "name": "direction",
+              "value": "system",
+              "type": "string",
+              "id": "29499c06-1788-4674-8ac7-43d1cfbd8255"
+            },
+            {
+              "name": "category",
+              "value": "={{ /disney|ديزني/i.test($('Set: Extract Incoming').first().json.message_text || '') ? 'disney' : (/fasel|فاصل/i.test($('Set: Extract Incoming').first().json.message_text || '') ? 'fasel' : 'general') }}",
+              "type": "string",
+              "id": "983ae96d-3cb9-4d36-89e1-aba860721020"
+            },
+            {
+              "name": "intent",
+              "value": "ai_response",
+              "type": "string",
+              "id": "a51c2960-5b9f-4479-9957-5cc581fb9820"
+            },
+            {
+              "name": "otp_status",
+              "value": "",
+              "type": "string",
+              "id": "50b517df-5c31-4466-a51b-f97d9fe26c42"
+            },
+            {
+              "name": "escalation_reason",
+              "value": "",
+              "type": "string",
+              "id": "99fff432-ba71-4379-970c-c3e470e458ee"
+            },
+            {
+              "name": "token_input",
+              "value": "={{ $json.intermediateSteps[0].action.messageLog[0].kwargs.usage_metadata.input_tokens }}",
+              "type": "number",
+              "id": "96d2553b-916c-466c-a25b-3a3294ccba10"
+            },
+            {
+              "name": "token_output",
+              "value": "={{ $json.intermediateSteps[0].action.messageLog[0].kwargs.usage_metadata.output_tokens }}",
+              "type": "number",
+              "id": "e1babe2f-a634-4bb0-a8a3-0406e7401a74"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ ({ source: 'W1', source_event_id: ($json.intermediateSteps?.[0]?.action?.toolCallId || ''), execution_id: ($execution.id || ''), total_tokens: Number($json.safe_total_tokens || 0) }) }}",
+              "type": "json",
+              "id": "91f0694e-80d5-4b75-9057-6312b41c7cfc"
+            }
+          ]
+        },
+        "options": {}
       },
-      "id": "55020d87-e990-4860-a947-e8e057fb1735",
-      "name": "Sticky: Analytics Instrumentation",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
+      "id": "1c994d69-51b7-44b6-9adc-86fe02c0cca8",
+      "name": "Analytics Event: AI Usage",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
       "position": [
-        -1120,
-        1600
-      ]
+        4096,
+        6272
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://serverkarim-dash-erymxj-ap374e95-72-61-186-244.traefik.me/events",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "9d65ba5c-62e8-4e04-acb4-cbea2f04eda4",
+      "name": "Analytics: Send Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4368,
+        6272
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "content": "#  ارسال احصائيات التوكن المستخدم \n \n\n\n\n\n",
+        "height": 864,
+        "width": 880,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3744,
+        6000
+      ],
+      "typeVersion": 1,
+      "id": "45b2f0e8-b2e7-4784-a575-85e9cb7bca79",
+      "name": "Sticky Note4"
     },
     {
       "parameters": {
@@ -2269,7 +2146,7 @@
             "caseSensitive": true,
             "leftValue": "",
             "typeValidation": "strict",
-            "version": 3
+            "version": 2
           },
           "conditions": [
             {
@@ -2286,47 +2163,15 @@
         },
         "options": {}
       },
-      "id": "b0a36d75-e520-445c-b29c-c1cd4f9c1a63",
+      "id": "47f9a90c-ca84-4531-88f7-e47698ab340a",
       "name": "Analytics IF: Incoming?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -960,
-        1840
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "6191c38b-e4f5-44d1-8421-05f95ef71702",
-              "leftValue": "={{ (($(\"Webhook (Chatwoot)\").item.json.body.message_type === 'outgoing' || $(\"Webhook (Chatwoot)\").item.json.body.message_type === 1) && ($(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_ai === true || $(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_otp === true)) }}",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "1b86cb53-577a-4328-be1a-97256482857f",
-      "name": "Analytics IF: Outbound AI/Bot?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -960,
-        1560
-      ]
+        -1136,
+        8544
+      ],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -2352,13 +2197,13 @@
         },
         "options": {}
       },
-      "id": "13c5ecfe-889a-4e7f-a285-55998252bbc1",
+      "id": "dcdeb176-1aa9-4d81-8371-b86e1cb086a8",
       "name": "Analytics IF: Conversation Created?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -640,
-        1960
+        -608,
+        8720
       ]
     },
     {
@@ -2439,13 +2284,13 @@
         },
         "options": {}
       },
-      "id": "3294a2b3-0c90-4dd8-aed5-b1f8a0136eb3",
+      "id": "34d096e6-fccc-47a3-9a92-738627c980b8",
       "name": "Analytics Event: Inbound Message",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -640,
-        1840
+        -416,
+        8528
       ]
     },
     {
@@ -2526,13 +2371,13 @@
         },
         "options": {}
       },
-      "id": "67f0346e-8fe3-4111-bc21-61608852965d",
+      "id": "ec284c07-e014-40a4-bd35-426a6936204b",
       "name": "Analytics Event: Intent Classification",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -640,
-        1700
+        -416,
+        8352
       ]
     },
     {
@@ -2613,100 +2458,13 @@
         },
         "options": {}
       },
-      "id": "ed6b2bd7-b1fc-4b0d-abc5-f3e057e21620",
+      "id": "9564387d-45ed-4b49-ae30-424443dc689d",
       "name": "Analytics Event: Conversation Created",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -320,
-        1960
-      ]
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "event_type",
-              "value": "outbound_message",
-              "type": "string"
-            },
-            {
-              "name": "event_key",
-              "value": "={{ ['outbound_message', $json.conversation_id || '', $json.message_id || ''].join('|') }}",
-              "type": "string"
-            },
-            {
-              "name": "event_time",
-              "value": "={{ new Date((Number($(\"Webhook (Chatwoot)\").item.json.body.created_at || Math.floor(Date.now()/1000)) * 1000)).toISOString() }}",
-              "type": "string"
-            },
-            {
-              "name": "conversation_id",
-              "value": "={{ String($json.conversation_id || '') }}",
-              "type": "string"
-            },
-            {
-              "name": "customer_id",
-              "value": "={{ $json.phone || '' }}",
-              "type": "string"
-            },
-            {
-              "name": "channel",
-              "value": "whatsapp",
-              "type": "string"
-            },
-            {
-              "name": "direction",
-              "value": "outbound",
-              "type": "string"
-            },
-            {
-              "name": "category",
-              "value": "={{ /disney|ديزني/i.test($json.message_text || '') ? 'disney' : (/fasel|فاصل/i.test($json.message_text || '') ? 'fasel' : 'general') }}",
-              "type": "string"
-            },
-            {
-              "name": "intent",
-              "value": "agent_response",
-              "type": "string"
-            },
-            {
-              "name": "otp_status",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "escalation_reason",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "token_input",
-              "value": 0,
-              "type": "number"
-            },
-            {
-              "name": "token_output",
-              "value": 0,
-              "type": "number"
-            },
-            {
-              "name": "metadata",
-              "value": "={{ ({ source: 'W1', source_event_id: $json.message_id || '', sent_by_ai: $(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_ai === true, sent_by_otp: $(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_otp === true }) }}",
-              "type": "json"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "a850c300-f284-4dea-bce9-b5080bd5828b",
-      "name": "Analytics Event: Outbound Message",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -640,
-        1560
+        -160,
+        8704
       ]
     },
     {
@@ -2787,14 +2545,15 @@
         },
         "options": {}
       },
-      "id": "a842390e-9e19-4863-b118-3722164c5531",
+      "id": "8d492e5d-0bfd-471e-b985-1a5a0c1d163b",
       "name": "Analytics Event: OTP Outcome Success",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -320,
-        2300
-      ]
+        3920,
+        7184
+      ],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -2874,14 +2633,15 @@
         },
         "options": {}
       },
-      "id": "368755c0-6df1-4565-a104-0d4202226407",
+      "id": "cf8d70e6-6e84-4e9e-8051-b2da7449e2a0",
       "name": "Analytics Event: OTP Outcome Failed",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -320,
-        2460
-      ]
+        3936,
+        7552
+      ],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -2961,13 +2721,68 @@
         },
         "options": {}
       },
-      "id": "aba6cee8-ac59-4825-b2e3-5587cabf6614",
+      "id": "9a7a1966-26bb-49a6-bdf7-3578916df0c5",
       "name": "Analytics Event: OTP Outcome Unconfirmed",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -320,
-        2620
+        3952,
+        7968
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://serverkarim-dash-erymxj-ap374e95-72-61-186-244.traefik.me/events",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "ec9b5cbc-29f1-4283-a3a7-d342da329f75",
+      "name": "Analytics: Send Event1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        8496
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6191c38b-e4f5-44d1-8421-05f95ef71702",
+              "leftValue": "={{ (($(\"Webhook (Chatwoot)\").item.json.body.message_type === 'outgoing' || $(\"Webhook (Chatwoot)\").item.json.body.message_type === 1) && ($(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_ai === true || $(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_otp === true)) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5ee5cce0-55e7-42d4-bc19-3943b8459134",
+      "name": "Analytics IF: Outbound AI/Bot?1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1104,
+        8112
       ]
     },
     {
@@ -2976,27 +2791,27 @@
           "assignments": [
             {
               "name": "event_type",
-              "value": "ai_usage",
+              "value": "outbound_message",
               "type": "string"
             },
             {
               "name": "event_key",
-              "value": "={{ ['ai_usage', $('Set: Extract Incoming').first().json.conversation_id || '', ($json.intermediateSteps?.[0]?.action?.toolCallId || $execution.id || '')].join('|') }}",
+              "value": "={{ ['outbound_message', $json.conversation_id || '', $json.message_id || ''].join('|') }}",
               "type": "string"
             },
             {
               "name": "event_time",
-              "value": "={{ new Date().toISOString() }}",
+              "value": "={{ new Date((Number($(\"Webhook (Chatwoot)\").item.json.body.created_at || Math.floor(Date.now()/1000)) * 1000)).toISOString() }}",
               "type": "string"
             },
             {
               "name": "conversation_id",
-              "value": "={{ String($('Set: Extract Incoming').first().json.conversation_id || '') }}",
+              "value": "={{ String($json.conversation_id || '') }}",
               "type": "string"
             },
             {
               "name": "customer_id",
-              "value": "={{ $('Set: Extract Incoming').first().json.phone || '' }}",
+              "value": "={{ $json.phone || '' }}",
               "type": "string"
             },
             {
@@ -3006,17 +2821,17 @@
             },
             {
               "name": "direction",
-              "value": "system",
+              "value": "outbound",
               "type": "string"
             },
             {
               "name": "category",
-              "value": "={{ /disney|ديزني/i.test($('Set: Extract Incoming').first().json.message_text || '') ? 'disney' : (/fasel|فاصل/i.test($('Set: Extract Incoming').first().json.message_text || '') ? 'fasel' : 'general') }}",
+              "value": "={{ /disney|ديزني/i.test($json.message_text || '') ? 'disney' : (/fasel|فاصل/i.test($json.message_text || '') ? 'fasel' : 'general') }}",
               "type": "string"
             },
             {
               "name": "intent",
-              "value": "ai_response",
+              "value": "agent_response",
               "type": "string"
             },
             {
@@ -3031,50 +2846,269 @@
             },
             {
               "name": "token_input",
-              "value": "={{ Number($json.safe_input_tokens || 0) }}",
+              "value": 0,
               "type": "number"
             },
             {
               "name": "token_output",
-              "value": "={{ Number($json.safe_output_tokens || 0) }}",
+              "value": 0,
               "type": "number"
             },
             {
               "name": "metadata",
-              "value": "={{ ({ source: 'W1', source_event_id: ($json.intermediateSteps?.[0]?.action?.toolCallId || ''), execution_id: ($execution.id || ''), total_tokens: Number($json.safe_total_tokens || 0) }) }}",
+              "value": "={{ ({ source: 'W1', source_event_id: $json.message_id || '', sent_by_ai: $(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_ai === true, sent_by_otp: $(\"Webhook (Chatwoot)\").item.json.body.content_attributes?.sent_by_otp === true }) }}",
               "type": "json"
             }
           ]
         },
         "options": {}
       },
-      "id": "23840072-e200-4132-964e-ee7f9549bb8d",
-      "name": "Analytics Event: AI Usage",
+      "id": "a9c6c7d5-c54d-475c-a51a-886f72c0eae5",
+      "name": "Analytics Event: Outbound Message1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        880,
-        2920
-      ]
+        -832,
+        8096
+      ],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.ANALYTICS_INGEST_URL || 'http://localhost:8000/events' }}",
+        "url": "=http://serverkarim-dash-erymxj-ap374e95-72-61-186-244.traefik.me/events",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ $json }}",
-        "options": {}
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
       },
-      "id": "b0c6ee93-4f1b-4847-99c9-e25a1fec203a",
-      "name": "Analytics: Send Event",
+      "id": "7957f673-3a46-46ab-9f0a-15d5b7668fc7",
+      "name": "Analytics: Send Event2",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -40,
-        1800
+        -544,
+        8096
       ],
       "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://serverkarim-dash-erymxj-ap374e95-72-61-186-244.traefik.me/events",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "d62df6b7-0c97-4379-b183-696ff26b81ac",
+      "name": "Analytics: Send Event3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4640,
+        7648
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "content": "#  ارسال احصائيات التوكن المستخدم \n \n\n\n\n\n",
+        "height": 1072,
+        "width": 1056,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3792,
+        7088
+      ],
+      "typeVersion": 1,
+      "id": "c1b7ba96-22d1-4f1e-aeff-f5cae3a0074e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "#  ارسال احصائيات  \n \n\n\n\n\n",
+        "height": 944,
+        "width": 1920,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1232,
+        8000
+      ],
+      "typeVersion": 1,
+      "id": "3507e13a-6a02-4d13-ad8d-fb716d3c12d2",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## تنبيه للمستخدم باننا نقبل فقط النص \n\n\n",
+        "height": 860,
+        "width": 504,
+        "color": 7
+      },
+      "id": "c49123ca-235a-45ab-a037-79e5d6e5df3e",
+      "name": "Sticky: W1 AI Support",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        6000
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "#  تنبيه المرسل على انك داخل عملية استخراج الرمز يرجى اختيار الرد المناسب - على حسب الحالة \n \n\n\n\n\n",
+        "height": 656,
+        "width": 1616,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2176,
+        8672
+      ],
+      "typeVersion": 1,
+      "id": "2cbf4fa1-de51-46cb-b0e4-bec8a0ff2fa1",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## تصفية الرسائل المتلقية فقط واستخراج حالة المرسل \nواجراءت مثل تقيد البوت اذا تم ارسال الرسالة من طرف الدعم الفني او تنبيه المستخدم على عدم دعم الصور والفيديوهات ",
+        "height": 860,
+        "width": 2888,
+        "color": 7
+      },
+      "id": "29229785-dea3-4bb8-ba21-1ea7651be3b9",
+      "name": "Sticky: W1 AI Support3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        6784
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "##  نجاح الزمز\n\n \n\n\n\n\n",
+        "height": 256,
+        "width": 1184,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2512,
+        7136
+      ],
+      "typeVersion": 1,
+      "id": "db4b435d-dcf4-4153-ac77-480795f6e7b2",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "##  فشل الزمز\n\n \n\n\n\n\n",
+        "height": 256,
+        "width": 1184,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2512,
+        7408
+      ],
+      "typeVersion": 1,
+      "id": "3edd191f-4d37-40e8-bf2d-f8fb39368ca3",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "##  خطأ اثناء تسجيل المستخدم\n\n \n\n\n\n\n",
+        "height": 224,
+        "width": 1184,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2512,
+        7680
+      ],
+      "typeVersion": 1,
+      "id": "6e575829-2cf6-4f28-887c-931e03160049",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "##  خروج المستخدم من عملية الانتظاراو استخراد الرمز\n\n \n\n\n\n\n",
+        "height": 224,
+        "width": 1184,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2512,
+        7936
+      ],
+      "typeVersion": 1,
+      "id": "fea595d6-1df8-46cc-9660-706da1f529ff",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "##  استكمال لعملية استخراج الرمز للعميل - رد ايجابي \n\n \n\n\n\n\n",
+        "height": 224,
+        "width": 1184,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2512,
+        8208
+      ],
+      "typeVersion": 1,
+      "id": "3447af37-1bc7-4bed-a24d-c88b51dbb174",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e9b7cc00-1c00-4b10-8b01-1e11400a0000",
+              "leftValue": "={{ $json.body.event }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "message_created"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ab12c34d-5678-90ef-bdfg-34567890abcd",
+      "name": "IF: Message Created?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1400,
+        7296
+      ]
     }
   ],
   "pinData": {
@@ -3084,7 +3118,7 @@
           "headers": {
             "host": "n8n.aura-reply.cloud",
             "user-agent": "axios/1.12.0",
-            "content-length": "2598",
+            "content-length": "2805",
             "accept": "application/json,text/html,application/xhtml+xml,application/xml,text/*;q=0.9, image/*;q=0.8, */*;q=0.7",
             "accept-encoding": "gzip, compress, deflate, br",
             "content-type": "application/json",
@@ -3103,62 +3137,68 @@
               "name": "Inblaj"
             },
             "additional_attributes": {},
-            "content_attributes": {},
+            "content_attributes": {
+              "in_reply_to_external_id": "wamid.HBgMOTY2NTUwNjYzNTEzFQIAERgSODI2OTlDMjkwOTUzMUY3M0ZDAA==",
+              "in_reply_to": 499590174
+            },
             "content_type": "text",
-            "content": "نعم",
+            "content": "❌ماشتغل",
             "conversation": {
               "additional_attributes": {},
               "can_reply": true,
               "channel": "Channel::Whatsapp",
               "contact_inbox": {
-                "id": 719175935,
-                "contact_id": 720833879,
+                "id": 725361656,
+                "contact_id": 727001072,
                 "inbox_id": 96755,
-                "source_id": "966550875958",
-                "created_at": "2026-03-02T06:50:40.969Z",
-                "updated_at": "2026-03-02T06:50:40.969Z",
+                "source_id": "966550663513",
+                "created_at": "2026-03-05T20:52:19.022Z",
+                "updated_at": "2026-03-05T20:52:19.022Z",
                 "hmac_verified": false,
-                "pubsub_token": "NmDpR7yZCdob6nKJNrjHUotg"
+                "pubsub_token": "15SeF5D4eoxUX4wfqxiAGr35"
               },
-              "id": 2026,
+              "id": 2893,
               "inbox_id": 96755,
               "messages": [
                 {
-                  "id": 491898573,
-                  "content": "نعم",
+                  "id": 499590821,
+                  "content": "❌ماشتغل",
                   "account_id": 152788,
                   "inbox_id": 96755,
-                  "conversation_id": 2026,
+                  "conversation_id": 2893,
                   "message_type": 0,
-                  "created_at": 1772436191,
-                  "updated_at": "2026-03-02T07:23:11.281Z",
+                  "created_at": 1772744294,
+                  "updated_at": "2026-03-05T20:58:14.558Z",
                   "private": false,
                   "status": "sent",
-                  "source_id": "wamid.HBgMOTY2NTUwODc1OTU4FQIAEhggQUM2RjhGRURGMjhDMDg3OUE1RDJEQ0NDQzE2NjJEQkYA",
+                  "source_id": "wamid.HBgMOTY2NTUwNjYzNTEzFQIAEhgUM0E3RUQyM0VFNkM0MDIyRTZCNEEA",
                   "content_type": "text",
-                  "content_attributes": {},
+                  "content_attributes": {
+                    "in_reply_to_external_id": "wamid.HBgMOTY2NTUwNjYzNTEzFQIAERgSODI2OTlDMjkwOTUzMUY3M0ZDAA==",
+                    "in_reply_to": 499590174
+                  },
                   "sender_type": "Contact",
-                  "sender_id": 720833879,
+                  "sender_id": 727001072,
                   "external_source_ids": {},
                   "additional_attributes": {},
-                  "processed_message_content": "نعم",
+                  "processed_message_content": "❌ماشتغل",
                   "sentiment": {},
                   "conversation": {
                     "assignee_id": 162487,
                     "unread_count": 10,
-                    "last_activity_at": 1772436191,
+                    "last_activity_at": 1772744294,
                     "contact_inbox": {
-                      "source_id": "966550875958"
+                      "source_id": "966550663513"
                     }
                   },
                   "sender": {
                     "additional_attributes": {},
                     "custom_attributes": {},
                     "email": null,
-                    "id": 720833879,
+                    "id": 727001072,
                     "identifier": null,
-                    "name": "manazer",
-                    "phone_number": "+966550875958",
+                    "name": "ً",
+                    "phone_number": "+966550663513",
                     "thumbnail": "",
                     "blocked": false,
                     "type": "contact"
@@ -3171,10 +3211,10 @@
                   "additional_attributes": {},
                   "custom_attributes": {},
                   "email": null,
-                  "id": 720833879,
+                  "id": 727001072,
                   "identifier": null,
-                  "name": "manazer",
-                  "phone_number": "+966550875958",
+                  "name": "ً",
+                  "phone_number": "+966550663513",
                   "thumbnail": "",
                   "blocked": false,
                   "type": "contact"
@@ -3196,18 +3236,18 @@
               "custom_attributes": {},
               "snoozed_until": null,
               "unread_count": 10,
-              "first_reply_created_at": "2026-03-02T06:50:44.284Z",
+              "first_reply_created_at": "2026-03-05T20:52:22.798Z",
               "priority": null,
-              "waiting_since": 1772436191,
+              "waiting_since": 1772744294,
               "agent_last_seen_at": 0,
               "contact_last_seen_at": 0,
-              "last_activity_at": 1772436191,
-              "timestamp": 1772436191,
-              "created_at": 1772434241,
-              "updated_at": 1772436191.3201962
+              "last_activity_at": 1772744294,
+              "timestamp": 1772744294,
+              "created_at": 1772743939,
+              "updated_at": 1772744294.618649
             },
-            "created_at": "2026-03-02T07:23:11.281Z",
-            "id": 491898573,
+            "created_at": "2026-03-05T20:58:14.558Z",
+            "id": 499590821,
             "inbox": {
               "id": 96755,
               "name": "واتس اب"
@@ -3223,18 +3263,21 @@
               "avatar": "",
               "custom_attributes": {},
               "email": null,
-              "id": 720833879,
+              "id": 727001072,
               "identifier": null,
-              "name": "manazer",
-              "phone_number": "+966550875958",
+              "name": "ً",
+              "phone_number": "+966550663513",
               "thumbnail": "",
               "blocked": false
             },
-            "source_id": "wamid.HBgMOTY2NTUwODc1OTU4FQIAEhggQUM2RjhGRURGMjhDMDg3OUE1RDJEQ0NDQzE2NjJEQkYA",
+            "source_id": "wamid.HBgMOTY2NTUwNjYzNTEzFQIAEhgUM0E3RUQyM0VFNkM0MDIyRTZCNEEA",
             "event": "message_created"
           },
           "webhookUrl": "https://n8n.aura-reply.cloud/webhook/enterprise-chatwootv2",
           "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
         }
       }
     ]
@@ -3252,6 +3295,17 @@
       ]
     },
     "Webhook (Chatwoot)": {
+      "main": [
+        [
+          {
+            "node": "IF: Message Created?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Message Created?": {
       "main": [
         [
           {
@@ -3276,7 +3330,7 @@
             "index": 0
           },
           {
-            "node": "Analytics IF: Outbound AI/Bot?",
+            "node": "Analytics IF: Outbound AI/Bot?1",
             "type": "main",
             "index": 0
           }
@@ -3564,11 +3618,6 @@
             "node": "Redis DEL: user_state (Success)",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Analytics Event: OTP Outcome Success",
-            "type": "main",
-            "index": 0
           }
         ],
         [
@@ -3843,22 +3892,6 @@
         ]
       ]
     },
-    "OpenRouter Chat Model": {
-      "ai_languageModel": [
-        []
-      ]
-    },
-    "Insert row": {
-      "main": [
-        [
-          {
-            "node": "Append row in sheet",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "AI Agent (Master Prompt)": {
       "main": [
         [
@@ -3870,21 +3903,22 @@
         ]
       ]
     },
-    "Append row in sheet": {
-      "main": [
-        []
-      ]
-    },
     "Code in JavaScript1": {
       "main": [
         [
           {
-            "node": "Insert row",
+            "node": "Analytics Event: AI Usage",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Analytics Event: AI Usage": {
+      "main": [
+        [
           {
-            "node": "Analytics Event: AI Usage",
+            "node": "Analytics: Send Event",
             "type": "main",
             "index": 0
           }
@@ -3923,22 +3957,11 @@
         ]
       ]
     },
-    "Analytics IF: Outbound AI/Bot?": {
-      "main": [
-        [
-          {
-            "node": "Analytics Event: Outbound Message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Analytics Event: Inbound Message": {
       "main": [
         [
           {
-            "node": "Analytics: Send Event",
+            "node": "Analytics: Send Event1",
             "type": "main",
             "index": 0
           }
@@ -3949,7 +3972,7 @@
       "main": [
         [
           {
-            "node": "Analytics: Send Event",
+            "node": "Analytics: Send Event1",
             "type": "main",
             "index": 0
           }
@@ -3960,18 +3983,7 @@
       "main": [
         [
           {
-            "node": "Analytics: Send Event",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Analytics Event: Outbound Message": {
-      "main": [
-        [
-          {
-            "node": "Analytics: Send Event",
+            "node": "Analytics: Send Event1",
             "type": "main",
             "index": 0
           }
@@ -3982,7 +3994,7 @@
       "main": [
         [
           {
-            "node": "Analytics: Send Event",
+            "node": "Analytics: Send Event3",
             "type": "main",
             "index": 0
           }
@@ -3993,7 +4005,7 @@
       "main": [
         [
           {
-            "node": "Analytics: Send Event",
+            "node": "Analytics: Send Event3",
             "type": "main",
             "index": 0
           }
@@ -4004,18 +4016,40 @@
       "main": [
         [
           {
-            "node": "Analytics: Send Event",
+            "node": "Analytics: Send Event3",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Analytics Event: AI Usage": {
+    "Chatwoot: Press Resend2": {
       "main": [
         [
           {
-            "node": "Analytics: Send Event",
+            "node": "Analytics Event: OTP Outcome Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics IF: Outbound AI/Bot?1": {
+      "main": [
+        [
+          {
+            "node": "Analytics Event: Outbound Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analytics Event: Outbound Message1": {
+      "main": [
+        [
+          {
+            "node": "Analytics: Send Event2",
             "type": "main",
             "index": 0
           }
@@ -4031,7 +4065,7 @@
     "timeSavedMode": "fixed",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "46c4fd0a-d99b-404a-bfb4-72d151483819",
+  "versionId": "54bffc55-45f4-44f8-ad74-d63ab85d06e0",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "98c9121775f2c350960fe151740521cb03acfc1cee54bd926992bb3e7c435f9d"

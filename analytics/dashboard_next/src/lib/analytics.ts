@@ -34,6 +34,8 @@ export type PricingRow = {
 
 export type DashboardKpis = {
   totalMessages: number;
+  inboundMessages: number;
+  outboundMessages: number;
   newConversations: number;
   disneyCustomers: number;
   disneyCodeRequests: number;
@@ -348,8 +350,9 @@ function computeKpis(
     }
   }
 
-  const totalMessages = events.filter((event) => event.event_type === "inbound_message" || event.event_type === "outbound_message")
-    .length;
+  const inboundMessages = events.filter((event) => event.event_type === "inbound_message").length;
+  const outboundMessages = events.filter((event) => event.event_type === "ai_usage").length;
+  const totalMessages = inboundMessages + outboundMessages;
 
   const disneyCustomerSet = new Set<string>();
   for (const event of events) {
@@ -369,8 +372,8 @@ function computeKpis(
   ).length;
   const supportEscalationCount = events.filter((event) => event.event_type === "support_escalation").length;
 
-  const conversationSet = new Set(events.map((event) => event.conversation_id).filter((id): id is string => Boolean(id)));
-  const avgMessagesPerConversation = conversationSet.size > 0 ? Number((totalMessages / conversationSet.size).toFixed(2)) : 0;
+  const conversationSet = new Set(events.filter((event) => event.event_type === "inbound_message" && event.conversation_id).map((event) => event.conversation_id as string));
+  const avgMessagesPerConversation = conversationSet.size > 0 ? Number((inboundMessages / conversationSet.size).toFixed(2)) : 0;
 
   const inputTokensTotal = events.reduce((sum, event) => sum + Number(event.token_input || 0), 0);
   const outputTokensTotal = events.reduce((sum, event) => sum + Number(event.token_output || 0), 0);
@@ -393,6 +396,8 @@ function computeKpis(
 
   return {
     totalMessages,
+    inboundMessages,
+    outboundMessages,
     newConversations,
     disneyCustomers: disneyCustomerSet.size,
     disneyCodeRequests,
@@ -550,7 +555,7 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
     return {
       name: labelFromBucketKey(key, bucketInfo.type),
       inbound: list.filter((event) => event.event_type === "inbound_message").length,
-      outbound: list.filter((event) => event.event_type === "outbound_message").length,
+      outbound: list.filter((event) => event.event_type === "ai_usage").length,
     };
   });
 
