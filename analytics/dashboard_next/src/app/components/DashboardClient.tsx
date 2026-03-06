@@ -119,7 +119,7 @@ function getEventLabelMap(t: (k: string) => string): Record<string, string> {
 function safeLocaleDate(value: string | Date): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '-';
-    return date.toLocaleString();
+    return date.toLocaleString('en-US', { timeZone: 'Asia/Riyadh', hour12: true });
 }
 
 /* ------------------------------------------------------------------ */

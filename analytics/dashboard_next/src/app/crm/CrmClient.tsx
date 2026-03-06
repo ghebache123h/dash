@@ -13,7 +13,7 @@ function safeLocaleDate(value: string | Date | undefined): string {
     if (Number.isNaN(date.getTime())) {
         return "-";
     }
-    return date.toLocaleString();
+    return date.toLocaleString('en-US', { timeZone: 'Asia/Riyadh', hour12: true });
 }
 
 interface CrmClientProps {
