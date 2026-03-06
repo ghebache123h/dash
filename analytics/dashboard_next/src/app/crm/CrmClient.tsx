@@ -31,8 +31,10 @@ export function CrmClient({ data, filters, channels, categories }: CrmClientProp
     // CRM State for marking resolved escalations
     const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
     const [showResolved, setShowResolved] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         try {
             const saved = localStorage.getItem('crm-resolved-escalations');
             if (saved) setResolvedIds(new Set(JSON.parse(saved)));
@@ -60,8 +62,8 @@ export function CrmClient({ data, filters, channels, categories }: CrmClientProp
         notifyEscalation(data.kpis.supportEscalationCount);
     }, [data.kpis.supportEscalationCount, notifyEscalation]);
 
-    const activeRows = data.escalationRows.filter(r => !resolvedIds.has(`${r.customerId}|${r.conversationId}`));
-    const displayRows = showResolved ? data.escalationRows : activeRows;
+    const activeRows = !mounted ? data.escalationRows : data.escalationRows.filter(r => !resolvedIds.has(`${r.customerId}|${r.conversationId}`));
+    const displayRows = !mounted ? data.escalationRows : (showResolved ? data.escalationRows : activeRows);
 
     return (
         <div style={{ maxWidth: "1500px", margin: "0 auto" }}>

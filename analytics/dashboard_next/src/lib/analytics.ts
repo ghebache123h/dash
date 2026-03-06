@@ -353,12 +353,12 @@ function computeKpis(
 
   const disneyCustomerSet = new Set<string>();
   for (const event of events) {
-    if (event.event_type === "inbound_message" && event.category === "disney") {
+    if (event.event_type === "workflow_entry" && event.category === "disney") {
       disneyCustomerSet.add(event.customer_id || event.conversation_id || "unknown");
     }
   }
 
-  const disneyCodeRequests = events.filter((event) => event.event_type === "otp_request").length;
+  const disneyCodeRequests = events.filter((event) => event.event_type === "otp_request" && event.otp_status === "confirmed").length;
   const otpSuccessCount = events.filter((event) => event.event_type === "otp_outcome" && event.otp_status === "success").length;
   const otpFailedCount = events.filter((event) => event.event_type === "otp_outcome" && event.otp_status === "failed").length;
   const otpUnconfirmedCount = events.filter(

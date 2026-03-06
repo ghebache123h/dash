@@ -161,6 +161,11 @@ function OtpTable({ data, allCols, t }: {
     const [visible, setVisible] = useState<Set<OtpColKey>>(() =>
         new Set(allCols.filter(c => c.default).map(c => c.key))
     );
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const toggle = (key: OtpColKey) => {
         setVisible(prev => {
@@ -171,8 +176,8 @@ function OtpTable({ data, allCols, t }: {
         });
     };
 
-    const show = (key: OtpColKey) => visible.has(key);
-    const visibleCount = visible.size;
+    const show = (key: OtpColKey) => !mounted ? allCols.find(c => c.key === key)?.default : visible.has(key);
+    const visibleCount = mounted ? visible.size : allCols.filter(c => c.default).length;
 
     return (
         <div className="glass-card animate-fade-in-up delay-200" style={{ overflow: 'hidden', marginBottom: 20 }}>
@@ -182,7 +187,7 @@ function OtpTable({ data, allCols, t }: {
                 {/* Column toggles */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
                     {allCols.map(col => {
-                        const on = visible.has(col.key);
+                        const on = show(col.key);
                         return (
                             <button key={col.key} type="button" onClick={() => toggle(col.key)} style={{
                                 padding: '4px 12px', fontSize: 11, fontWeight: 600, borderRadius: 99,
@@ -279,8 +284,10 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
     const defaultKpis = ['total_messages', 'new_conversations', 'disney_customers', 'disney_code_req', 'otp_success', 'otp_failed', 'escalations', 'avg_msg_conv'];
     const [visibleKpis, setVisibleKpis] = useState<string[]>(defaultKpis);
     const [showKpiMenu, setShowKpiMenu] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const saved = localStorage.getItem('visible-kpis');
         if (saved) {
             try { setVisibleKpis(JSON.parse(saved)); } catch (e) { }
@@ -294,6 +301,8 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
             return next;
         });
     };
+
+    const isKpiVisible = (id: string) => !mounted ? defaultKpis.includes(id) : visibleKpis.includes(id);
 
     // Mandatory 15s Auto-refresh
     useEffect(() => {
@@ -449,7 +458,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                 {kpiDefinitions.map(kpi => (
                                     <label key={kpi.id} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                                        <input type="checkbox" checked={visibleKpis.includes(kpi.id)} onChange={() => toggleKpi(kpi.id)} style={{ cursor: 'pointer', accentColor: 'var(--accent-blue)' }} />
+                                        <input type="checkbox" checked={isKpiVisible(kpi.id)} onChange={() => toggleKpi(kpi.id)} style={{ cursor: 'pointer', accentColor: 'var(--accent-blue)' }} />
                                         {kpi.title}
                                     </label>
                                 ))}
@@ -464,7 +473,7 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
 
             {/* ═══════════ KPI Grid ═══════════ */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                {kpiDefinitions.filter(kpi => visibleKpis.includes(kpi.id)).map((kpi, index) => (
+                {kpiDefinitions.filter(kpi => isKpiVisible(kpi.id)).map((kpi, index) => (
                     <div key={kpi.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 50}ms` }}>
                         <KpiCard
                             title={kpi.title}
