@@ -191,13 +191,21 @@ function OtpTable({ data, allCols, t }: {
     const filteredRows = data.otpPerUserRows.filter(row => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
+
+        const custId = String(row.customerId || '').toLowerCase();
+        const convUrl = String(row.conversationUrl || '').toLowerCase();
+        const succ = String(row.success || 0);
+        const fail = String(row.failed || 0);
+        const tot = String(row.total || 0);
+        const rate = Number(row.successRate || 0).toFixed(1);
+
         return (
-            row.customerId.toLowerCase().includes(query) ||
-            (row.conversationUrl && row.conversationUrl.toLowerCase().includes(query)) ||
-            row.success.toString().includes(query) ||
-            row.failed.toString().includes(query) ||
-            row.total.toString().includes(query) ||
-            row.successRate.toFixed(1).includes(query)
+            custId.includes(query) ||
+            convUrl.includes(query) ||
+            succ.includes(query) ||
+            fail.includes(query) ||
+            tot.includes(query) ||
+            rate.includes(query)
         );
     });
 
