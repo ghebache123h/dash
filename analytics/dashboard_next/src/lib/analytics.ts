@@ -633,11 +633,21 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
     .slice(0, 200);
 
   // --- OTP per user ---
+  // First, build a customer→conversation_url lookup from ALL events
+  const customerUrlMap = new Map<string, string>();
+  for (const event of events) {
+    const url = typeof event.metadata?.conversation_url === 'string' ? event.metadata.conversation_url : '';
+    if (url) {
+      const uid = event.customer_id || event.conversation_id || '';
+      if (uid) customerUrlMap.set(uid, url);
+    }
+  }
+
   const otpUserMap = new Map<string, { requested: number; success: number; failed: number; unconfirmed: number; notSent: number; conversationUrl: string }>();
   for (const event of events) {
     if (event.event_type !== 'otp_request' && event.event_type !== 'otp_outcome') continue;
     const uid = event.customer_id || event.conversation_id || 'unknown';
-    if (!otpUserMap.has(uid)) otpUserMap.set(uid, { requested: 0, success: 0, failed: 0, unconfirmed: 0, notSent: 0, conversationUrl: '' });
+    if (!otpUserMap.has(uid)) otpUserMap.set(uid, { requested: 0, success: 0, failed: 0, unconfirmed: 0, notSent: 0, conversationUrl: customerUrlMap.get(uid) || '' });
     const entry = otpUserMap.get(uid)!;
     if (event.event_type === 'otp_request') entry.requested++;
     if (event.event_type === 'otp_outcome') {
@@ -646,7 +656,7 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
       else if (event.otp_status === 'unconfirmed') entry.unconfirmed++;
       else if (event.otp_status === 'not_sent') entry.notSent++;
     }
-    // Grab the latest conversation URL from metadata
+    // Also try from this event directly
     const url = typeof event.metadata?.conversation_url === 'string' ? event.metadata.conversation_url : '';
     if (url) entry.conversationUrl = url;
   }

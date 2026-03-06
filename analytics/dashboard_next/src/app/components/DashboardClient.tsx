@@ -149,6 +149,117 @@ function PercentRing({ value, color, label, size = 100 }: { value: number; color
 }
 
 /* ------------------------------------------------------------------ */
+/*  OTP Table with column visibility toggles                            */
+/* ------------------------------------------------------------------ */
+type OtpColKey = 'customer' | 'requested' | 'success' | 'failed' | 'unconfirmed' | 'notSent' | 'total' | 'successRate' | 'reference';
+
+function OtpTable({ data, allCols, t }: {
+    data: DashboardData;
+    allCols: readonly { key: OtpColKey; label: string; default: boolean }[];
+    t: (k: string) => string;
+}) {
+    const [visible, setVisible] = useState<Set<OtpColKey>>(() =>
+        new Set(allCols.filter(c => c.default).map(c => c.key))
+    );
+
+    const toggle = (key: OtpColKey) => {
+        setVisible(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { if (next.size > 1) next.delete(key); }
+            else next.add(key);
+            return next;
+        });
+    };
+
+    const show = (key: OtpColKey) => visible.has(key);
+    const visibleCount = visible.size;
+
+    return (
+        <div className="glass-card animate-fade-in-up delay-200" style={{ overflow: 'hidden', marginBottom: 20 }}>
+            <div style={{ padding: '20px 20px 10px' }}>
+                <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-highlight)' }}>{t('otp_per_user_title')}</h2>
+                <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>{t('otp_per_user_sub')}</p>
+                {/* Column toggles */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
+                    {allCols.map(col => {
+                        const on = visible.has(col.key);
+                        return (
+                            <button key={col.key} type="button" onClick={() => toggle(col.key)} style={{
+                                padding: '4px 12px', fontSize: 11, fontWeight: 600, borderRadius: 99,
+                                border: `1px solid ${on ? 'var(--accent-blue)' : 'var(--border-color)'}`,
+                                background: on ? 'var(--accent-blue-glow)' : 'transparent',
+                                color: on ? 'var(--accent-blue)' : 'var(--text-muted)',
+                                cursor: 'pointer', transition: 'all 0.15s ease',
+                                textTransform: 'uppercase', letterSpacing: '0.03em',
+                            }}>
+                                {col.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+            <table className="data-table">
+                <thead>
+                    <tr>
+                        {show('customer') && <th>{t('th_customer')}</th>}
+                        {show('requested') && <th>{t('th_requested')}</th>}
+                        {show('success') && <th>{t('th_success')}</th>}
+                        {show('failed') && <th>{t('th_failed')}</th>}
+                        {show('unconfirmed') && <th>{t('th_unconfirmed')}</th>}
+                        {show('notSent') && <th>{t('th_not_sent')}</th>}
+                        {show('total') && <th>{t('th_total')}</th>}
+                        {show('successRate') && <th>{t('th_success_rate')}</th>}
+                        {show('reference') && <th>{t('th_reference')}</th>}
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.otpPerUserRows.map((row) => (
+                        <tr key={row.customerId}>
+                            {show('customer') && <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{row.customerId}</td>}
+                            {show('requested') && <td>{row.requested}</td>}
+                            {show('success') && <td style={{ color: 'var(--accent-emerald)' }}>{row.success}</td>}
+                            {show('failed') && <td style={{ color: 'var(--accent-rose)' }}>{row.failed}</td>}
+                            {show('unconfirmed') && <td style={{ color: 'var(--accent-amber)' }}>{row.unconfirmed}</td>}
+                            {show('notSent') && <td style={{ color: 'var(--text-muted)' }}>{row.notSent}</td>}
+                            {show('total') && <td style={{ fontWeight: 600 }}>{row.total}</td>}
+                            {show('successRate') && (
+                                <td>
+                                    <span style={{
+                                        padding: '3px 10px', borderRadius: 99, fontSize: 12, fontWeight: 600,
+                                        background: row.successRate >= 70 ? 'var(--accent-emerald-glow)' : row.successRate >= 40 ? 'var(--accent-amber-glow)' : 'var(--accent-rose-glow)',
+                                        color: row.successRate >= 70 ? 'var(--accent-emerald)' : row.successRate >= 40 ? 'var(--accent-amber)' : 'var(--accent-rose)',
+                                    }}>
+                                        {row.successRate.toFixed(1)}%
+                                    </span>
+                                </td>
+                            )}
+                            {show('reference') && (
+                                <td>
+                                    {row.conversationUrl ? (
+                                        <a href={row.conversationUrl} target="_blank" rel="noreferrer"
+                                            style={{ color: 'var(--accent-blue)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                                <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                                            </svg>
+                                            {t('action_open')}
+                                        </a>
+                                    ) : '-'}
+                                </td>
+                            )}
+                        </tr>
+                    ))}
+                    {data.otpPerUserRows.length === 0 && (
+                        <tr><td colSpan={visibleCount} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{t('no_otp_data')}</td></tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main client component                                              */
 /* ------------------------------------------------------------------ */
 interface Props {
@@ -485,59 +596,26 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
             )}
 
             {/* ═══════════ OTP Metrics by Customer ═══════════ */}
-            <div className="glass-card animate-fade-in-up delay-200" style={{ overflow: 'hidden', marginBottom: 20 }}>
-                <div style={{ padding: '20px 20px 10px' }}>
-                    <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-highlight)' }}>{t('otp_per_user_title')}</h2>
-                    <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>{t('otp_per_user_sub')}</p>
-                </div>
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            <th>{t('th_customer')}</th>
-                            <th>{t('th_requested')}</th>
-                            <th>{t('th_success')}</th>
-                            <th>{t('th_failed')}</th>
-                            <th>{t('th_unconfirmed')}</th>
-                            <th>{t('th_not_sent')}</th>
-                            <th>{t('th_total')}</th>
-                            <th>{t('th_success_rate')}</th>
-                            <th>{t('th_reference')}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.otpPerUserRows.map((row) => (
-                            <tr key={row.customerId}>
-                                <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{row.customerId}</td>
-                                <td>{row.requested}</td>
-                                <td style={{ color: 'var(--accent-emerald)' }}>{row.success}</td>
-                                <td style={{ color: 'var(--accent-rose)' }}>{row.failed}</td>
-                                <td style={{ color: 'var(--accent-amber)' }}>{row.unconfirmed}</td>
-                                <td style={{ color: 'var(--text-muted)' }}>{row.notSent}</td>
-                                <td style={{ fontWeight: 600 }}>{row.total}</td>
-                                <td>
-                                    <span style={{
-                                        padding: '3px 10px', borderRadius: 99, fontSize: 12, fontWeight: 600,
-                                        background: row.successRate >= 70 ? 'var(--accent-emerald-glow)' : row.successRate >= 40 ? 'var(--accent-amber-glow)' : 'var(--accent-rose-glow)',
-                                        color: row.successRate >= 70 ? 'var(--accent-emerald)' : row.successRate >= 40 ? 'var(--accent-amber)' : 'var(--accent-rose)',
-                                    }}>
-                                        {row.successRate.toFixed(1)}%
-                                    </span>
-                                </td>
-                                <td>
-                                    {row.conversationUrl ? (
-                                        <a href={row.conversationUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-blue)' }}>
-                                            {t('action_open')}
-                                        </a>
-                                    ) : '-'}
-                                </td>
-                            </tr>
-                        ))}
-                        {data.otpPerUserRows.length === 0 && (
-                            <tr><td colSpan={9} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{t('no_otp_data')}</td></tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            {(() => {
+                const allCols = [
+                    { key: 'customer', label: t('th_customer'), default: true },
+                    { key: 'requested', label: t('th_requested'), default: true },
+                    { key: 'success', label: t('th_success'), default: true },
+                    { key: 'failed', label: t('th_failed'), default: true },
+                    { key: 'unconfirmed', label: t('th_unconfirmed'), default: true },
+                    { key: 'notSent', label: t('th_not_sent'), default: true },
+                    { key: 'total', label: t('th_total'), default: true },
+                    { key: 'successRate', label: t('th_success_rate'), default: true },
+                    { key: 'reference', label: t('th_reference'), default: true },
+                ] as const;
+                return (
+                    <OtpTable
+                        data={data}
+                        allCols={allCols}
+                        t={t}
+                    />
+                );
+            })()}
 
             {/* ═══════════ Token Usage by Conversation ═══════════ */}
             {isAdmin && (
