@@ -162,10 +162,18 @@ function OtpTable({ data, allCols, t }: {
         new Set(allCols.filter(c => c.default).map(c => c.key))
     );
     const [mounted, setMounted] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Reset page on search change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
 
     const toggle = (key: OtpColKey) => {
         setVisible(prev => {
@@ -179,11 +187,52 @@ function OtpTable({ data, allCols, t }: {
     const show = (key: OtpColKey) => !mounted ? allCols.find(c => c.key === key)?.default : visible.has(key);
     const visibleCount = mounted ? visible.size : allCols.filter(c => c.default).length;
 
+    // Filter logic
+    const filteredRows = data.otpPerUserRows.filter(row => {
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+            row.customerId.toLowerCase().includes(query) ||
+            (row.conversationUrl && row.conversationUrl.toLowerCase().includes(query)) ||
+            row.success.toString().includes(query) ||
+            row.failed.toString().includes(query) ||
+            row.total.toString().includes(query) ||
+            row.successRate.toFixed(1).includes(query)
+        );
+    });
+
+    // Pagination logic
+    const isSearching = searchQuery.trim().length > 0;
+    const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+    const displayRows = isSearching ? filteredRows : filteredRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
     return (
         <div className="glass-card animate-fade-in-up delay-200" style={{ overflow: 'hidden', marginBottom: 20 }}>
             <div style={{ padding: '20px 20px 10px' }}>
-                <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-highlight)' }}>{t('otp_per_user_title')}</h2>
-                <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>{t('otp_per_user_sub')}</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                        <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text-highlight)' }}>{t('otp_per_user_title')}</h2>
+                        <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>{t('otp_per_user_sub')}</p>
+                    </div>
+                    <div style={{ flex: '1 1 200px', maxWidth: '300px' }}>
+                        <input
+                            type="text"
+                            placeholder="Search by customer, status, rate..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-color)',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                color: 'var(--text-primary)',
+                                fontSize: '13px',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
+                </div>
                 {/* Column toggles */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14 }}>
                     {allCols.map(col => {
@@ -203,7 +252,7 @@ function OtpTable({ data, allCols, t }: {
                     })}
                 </div>
             </div>
-            <table className="data-table">
+            <table className="data-table" style={{ width: '100%' }}>
                 <thead>
                     <tr>
                         {show('customer') && <th>{t('th_customer')}</th>}
@@ -218,7 +267,7 @@ function OtpTable({ data, allCols, t }: {
                     </tr>
                 </thead>
                 <tbody>
-                    {data.otpPerUserRows.map((row) => (
+                    {displayRows.map((row) => (
                         <tr key={row.customerId}>
                             {show('customer') && <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{row.customerId}</td>}
                             {show('requested') && <td>{row.requested}</td>}
@@ -255,11 +304,33 @@ function OtpTable({ data, allCols, t }: {
                             )}
                         </tr>
                     ))}
-                    {data.otpPerUserRows.length === 0 && (
+                    {displayRows.length === 0 && (
                         <tr><td colSpan={visibleCount} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{t('no_otp_data')}</td></tr>
                     )}
                 </tbody>
             </table>
+            {/* Pagination Controls */}
+            {!isSearching && totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, padding: '16px' }}>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        style={{ padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: currentPage === 1 ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.05)', color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)', border: '1px solid var(--border-color)' }}
+                    >
+                        Previous
+                    </button>
+                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        style={{ padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', background: 'rgba(255,255,255,0.05)', color: currentPage === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', border: '1px solid var(--border-color)' }}
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
@@ -559,23 +630,6 @@ export function DashboardClient({ data, filters, channels, categories }: Props) 
                     </div>
                 </div>
             </div>
-
-            {/* Admin-only: Token Totals KPI */}
-            {isAdmin && (
-                <div className="animate-fade-in-up delay-100" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-                    <KpiCard
-                        title={t('token_totals')}
-                        value={(k.inputTokensTotal + k.outputTokensTotal).toLocaleString()}
-                        subtitle={`In ${k.inputTokensTotal.toLocaleString()} · Out ${k.outputTokensTotal.toLocaleString()}`}
-                        accentColor="purple"
-                        trend={{
-                            value: trendValue(k.inputTokensTotal + k.outputTokensTotal, pk.inputTokensTotal + pk.outputTokensTotal),
-                            positive: trendPositive(k.inputTokensTotal + k.outputTokensTotal, pk.inputTokensTotal + pk.outputTokensTotal, true),
-                        }}
-                        icon={Icons.zap}
-                    />
-                </div>
-            )}
 
             {/* Charts */}
             <div className="animate-fade-in-up delay-200">
