@@ -263,13 +263,27 @@ async function fetchEvents(from: Date, to: Date, channels: string[], categories:
     where.params,
   );
 
-  return rows.map((row) => ({
-    ...row,
-    event_time: row.event_time,
-    token_input: Number(row.token_input || 0),
-    token_output: Number(row.token_output || 0),
-    metadata: row.metadata ?? {},
-  }));
+  return rows.map((row) => {
+    let tokenIn = Number(row.token_input || 0);
+    let tokenOut = Number(row.token_output || 0);
+    const meta = row.metadata ?? {};
+
+    // Fallback: if top-level tokens are 0 but metadata has total_tokens, use that
+    if (tokenIn === 0 && tokenOut === 0 && meta.total_tokens) {
+      const total = Number(meta.total_tokens);
+      // Use metadata breakdown if available, otherwise estimate 80/20 split
+      tokenIn = Number(meta.prompt_tokens || meta.input_tokens || Math.round(total * 0.8));
+      tokenOut = Number(meta.completion_tokens || meta.output_tokens || total - tokenIn);
+    }
+
+    return {
+      ...row,
+      event_time: row.event_time,
+      token_input: tokenIn,
+      token_output: tokenOut,
+      metadata: meta,
+    };
+  });
 }
 
 async function fetchAllInbound(channels: string[], categories: string[]): Promise<EventRow[]> {

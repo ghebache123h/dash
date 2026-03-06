@@ -195,7 +195,14 @@ def insert_event(event_data: dict[str, Any]) -> bool:
               %(token_output)s,
               %(metadata)s
             )
-            ON CONFLICT (event_key) DO NOTHING
+            ON CONFLICT (event_key) DO UPDATE SET
+              token_input = CASE
+                WHEN EXCLUDED.token_input > analytics_events.token_input
+                THEN EXCLUDED.token_input ELSE analytics_events.token_input END,
+              token_output = CASE
+                WHEN EXCLUDED.token_output > analytics_events.token_output
+                THEN EXCLUDED.token_output ELSE analytics_events.token_output END,
+              metadata = analytics_events.metadata || EXCLUDED.metadata
             RETURNING id
             """,
             {
