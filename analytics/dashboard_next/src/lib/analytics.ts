@@ -478,8 +478,9 @@ function buildEscalationRows(events: EventRow[]): DashboardData["escalationRows"
     const conversationId = event.conversation_id || "unknown";
     const key = `${customerId}|${conversationId}`;
     const eventTime = toDate(event.event_time, new Date());
-    const metadata = (event.metadata ?? {}) as Record<string, unknown>;
-    const conversationReference = typeof metadata.conversation_url === "string" ? metadata.conversation_url : "";
+    const conversationReference = conversationId && conversationId !== "unknown"
+      ? `https://app.chatwoot.com/app/accounts/152788/inbox-view/conversation/${conversationId}`
+      : "";
 
     if (!grouped.has(key)) {
       grouped.set(key, {
@@ -633,21 +634,18 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
     .slice(0, 200);
 
   // --- OTP per user ---
-  // First, build a customer→conversation_url lookup from ALL events
-  const customerUrlMap = new Map<string, string>();
-  for (const event of events) {
-    const url = typeof event.metadata?.conversation_url === 'string' ? event.metadata.conversation_url : '';
-    if (url) {
-      const uid = event.customer_id || event.conversation_id || '';
-      if (uid) customerUrlMap.set(uid, url);
-    }
-  }
-
   const otpUserMap = new Map<string, { requested: number; success: number; failed: number; unconfirmed: number; notSent: number; conversationUrl: string }>();
   for (const event of events) {
     if (event.event_type !== 'otp_request' && event.event_type !== 'otp_outcome') continue;
+
+    // Default UID is string or explicit 'unknown'
     const uid = event.customer_id || event.conversation_id || 'unknown';
-    if (!otpUserMap.has(uid)) otpUserMap.set(uid, { requested: 0, success: 0, failed: 0, unconfirmed: 0, notSent: 0, conversationUrl: customerUrlMap.get(uid) || '' });
+
+    // Construct default static link if conversation_id is available
+    const url = event.conversation_id ? `https://app.chatwoot.com/app/accounts/152788/inbox-view/conversation/${event.conversation_id}` : '';
+
+    if (!otpUserMap.has(uid)) otpUserMap.set(uid, { requested: 0, success: 0, failed: 0, unconfirmed: 0, notSent: 0, conversationUrl: url });
+
     const entry = otpUserMap.get(uid)!;
     if (event.event_type === 'otp_request') entry.requested++;
     if (event.event_type === 'otp_outcome') {
@@ -656,9 +654,10 @@ export async function getDashboardData(filters: FilterState): Promise<DashboardD
       else if (event.otp_status === 'unconfirmed') entry.unconfirmed++;
       else if (event.otp_status === 'not_sent') entry.notSent++;
     }
-    // Also try from this event directly
-    const url = typeof event.metadata?.conversation_url === 'string' ? event.metadata.conversation_url : '';
-    if (url) entry.conversationUrl = url;
+    // Update the existing conversational URL if empty but found on current row
+    if (!entry.conversationUrl && url) {
+      entry.conversationUrl = url;
+    }
   }
   const otpPerUserRows = Array.from(otpUserMap.entries()).map(([customerId, counts]) => {
     const total = counts.success + counts.failed + counts.unconfirmed + counts.notSent;
