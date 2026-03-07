@@ -117,7 +117,10 @@ function toDate(value: string | Date | null | undefined, fallback: Date): Date {
 }
 
 export function datetimeLocalValue(value: Date): string {
-  return format(value, "yyyy-MM-dd'T'HH:mm");
+  // Convert UTC time to Saudi time explicitly for the HTML input values
+  const saudiTime = new Date(value.getTime() + 3 * 60 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${saudiTime.getUTCFullYear()}-${pad(saudiTime.getUTCMonth() + 1)}-${pad(saudiTime.getUTCDate())}T${pad(saudiTime.getUTCHours())}:${pad(saudiTime.getUTCMinutes())}`;
 }
 
 function parseDateParam(value: string | string[] | undefined, fallback: Date): Date {
@@ -125,7 +128,14 @@ function parseDateParam(value: string | string[] | undefined, fallback: Date): D
   if (!raw) {
     return fallback;
   }
-  const parsed = new Date(raw);
+
+  // If the browser submits a raw YYYY-MM-DDTHH:mm, we inject +03:00 to force SA time parsing
+  let toParse = raw;
+  if (raw.length === 16 && raw.includes('T')) {
+    toParse = `${raw}+03:00`;
+  }
+
+  const parsed = new Date(toParse);
   if (Number.isNaN(parsed.getTime())) {
     return fallback;
   }

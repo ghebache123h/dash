@@ -13,34 +13,45 @@ type FilterBarProps = {
 };
 
 function getPresetDates(preset: string): { from: string; to: string } {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const toLocal = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  // Saudi Standard Time UTC+3
+  const utcNow = new Date();
+  const saudiTime = new Date(utcNow.getTime() + 3 * 60 * 60 * 1000);
+  const tzOffsetS = 3 * 60 * 60 * 1000;
 
-  const toStr = toLocal(now);
-  let fromDate: Date;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const toLocalStr = (d: Date) => {
+    // d here represents a time where we pretend UTC is actually saudi time
+    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+  };
+
+  const toStr = toLocalStr(saudiTime);
+  let fromDate: Date; // Treated strictly as UTC for math purposes
 
   switch (preset) {
     case 'today':
-      fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      fromDate = new Date(Date.UTC(saudiTime.getUTCFullYear(), saudiTime.getUTCMonth(), saudiTime.getUTCDate(), 0, 0, 0));
       break;
     case 'yesterday':
-      fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0);
-      return { from: toLocal(fromDate), to: toLocal(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)) };
+      fromDate = new Date(Date.UTC(saudiTime.getUTCFullYear(), saudiTime.getUTCMonth(), saudiTime.getUTCDate() - 1, 0, 0, 0));
+      return {
+        from: toLocalStr(fromDate),
+        to: toLocalStr(new Date(Date.UTC(saudiTime.getUTCFullYear(), saudiTime.getUTCMonth(), saudiTime.getUTCDate(), 0, 0, 0)))
+      };
     case 'last_7':
-      fromDate = new Date(now.getTime() - 7 * 86400000);
+      // Move backwards relative to the pure epoch, then shift +3 again implicitly via toLocalStr.
+      fromDate = new Date(saudiTime.getTime() - 7 * 86400000);
       break;
     case 'last_30':
-      fromDate = new Date(now.getTime() - 30 * 86400000);
+      fromDate = new Date(saudiTime.getTime() - 30 * 86400000);
       break;
     case 'this_month':
-      fromDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+      fromDate = new Date(Date.UTC(saudiTime.getUTCFullYear(), saudiTime.getUTCMonth(), 1, 0, 0, 0));
       break;
     default:
-      fromDate = new Date(now.getTime() - 7 * 86400000);
+      fromDate = new Date(saudiTime.getTime() - 7 * 86400000);
   }
 
-  return { from: toLocal(fromDate), to: toStr };
+  return { from: toLocalStr(fromDate), to: toStr };
 }
 
 const presetConfig = [
