@@ -389,16 +389,49 @@ function computeKpis(
     }
   }
 
-  const disneyCodeRequests = events.filter((event) => event.event_type === "otp_request" && event.otp_status === "confirmed").length;
-  const otpSuccessCount = events.filter((event) => event.event_type === "otp_outcome" && event.otp_status === "success").length;
-  const otpFailedCount = events.filter((event) => event.event_type === "otp_outcome" && event.otp_status === "failed").length;
-  const otpUnconfirmedCount = events.filter(
-    (event) => event.event_type === "otp_outcome" && event.otp_status === "unconfirmed",
-  ).length;
-  const otpNotSentCount = events.filter(
-    (event) => event.event_type === "otp_outcome" && event.otp_status === "not_sent",
-  ).length;
-  const supportEscalationCount = events.filter((event) => event.event_type === "support_escalation").length;
+  // Group OTP outcomes, Code Requests, and Escalations uniquely by conversation ID
+  const otpOutcomesByConv = new Map<string, Set<string>>();
+  const disneyCodeRequestsSet = new Set<string>();
+  const supportEscalationSet = new Set<string>();
+
+  for (const event of events) {
+    if (!event.conversation_id) continue;
+
+    if (event.event_type === "otp_outcome" && event.otp_status) {
+      if (!otpOutcomesByConv.has(event.conversation_id)) {
+        otpOutcomesByConv.set(event.conversation_id, new Set());
+      }
+      otpOutcomesByConv.get(event.conversation_id)!.add(event.otp_status);
+    }
+
+    if (event.event_type === "otp_request" && event.otp_status === "confirmed") {
+      disneyCodeRequestsSet.add(event.conversation_id);
+    }
+
+    if (event.event_type === "support_escalation") {
+      supportEscalationSet.add(event.conversation_id);
+    }
+  }
+
+  let otpSuccessCount = 0;
+  let otpFailedCount = 0;
+  let otpUnconfirmedCount = 0;
+  let otpNotSentCount = 0;
+
+  for (const statuses of otpOutcomesByConv.values()) {
+    if (statuses.has("success")) {
+      otpSuccessCount++;
+    } else if (statuses.has("failed")) {
+      otpFailedCount++;
+    } else if (statuses.has("not_sent")) {
+      otpNotSentCount++;
+    } else if (statuses.has("unconfirmed")) {
+      otpUnconfirmedCount++;
+    }
+  }
+
+  const disneyCodeRequests = disneyCodeRequestsSet.size;
+  const supportEscalationCount = supportEscalationSet.size;
 
   const conversationSet = new Set(events.filter((event) => event.event_type === "inbound_message" && event.conversation_id).map((event) => event.conversation_id as string));
   const avgMessagesPerConversation = conversationSet.size > 0 ? Number((inboundMessages / conversationSet.size).toFixed(2)) : 0;
